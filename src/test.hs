@@ -22,6 +22,9 @@ getNextPlayerIndex g = (-) ((+) (-1) $ length $ players g) (activePlayer g)
 endRound :: Game -> Game
 endRound g = Game (players g) (getNextPlayerIndex g)
 
+pass :: Game -> Game
+pass g = g
+
 
 player1 = Player [] [Card "test"]
 player2 = Player [] [Card "test2"]
