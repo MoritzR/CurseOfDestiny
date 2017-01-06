@@ -17,7 +17,7 @@ getActivePlayer :: Game -> Player
 getActivePlayer g = (players g) !! (activePlayer g)
 
 getNextPlayerIndex :: Game -> Int
-getNextPlayerIndex g = (-) ((+) (-1) (length $ players g)) (activePlayer g)
+getNextPlayerIndex g = (-) ((+) (-1) $ length $ players g) (activePlayer g)
 
 endRound :: Game -> Game
 endRound g = Game (players g) (getNextPlayerIndex g)
