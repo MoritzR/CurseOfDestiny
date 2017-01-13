@@ -21,6 +21,7 @@ pass g = g
 actionStringToFunction :: String -> (GameState -> GameState)
 actionStringToFunction "end" = endRound
 actionStringToFunction "pass" = pass
+actionStringToFunction _ = id
 
 gameOver :: GameStateIO ()
 gameOver = do
