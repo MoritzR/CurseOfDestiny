@@ -42,8 +42,8 @@ gameLoop = do
 
 main :: IO ()
 main =  do
-    let player1 = Player 0 "player1" [] [Card "test"]
-    let player2 = Player 1 "player2" [] [Card "test2"]
+    let player1 = Player "player1" [] [Card "test"]
+    let player2 = Player "player2" [] [Card "test2"]
     let game = GameState (player1,player2) 0
     _ <- execStateT gameLoop game
     putStr "Game end"

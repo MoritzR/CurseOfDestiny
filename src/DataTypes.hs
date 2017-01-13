@@ -13,7 +13,6 @@ data GameState = GameState {
 } deriving (Show)
 
 data Player = Player {
-    _playerID :: Int,
     _playerName :: String,
     _deck :: [Card],
     _hand :: [Card]
