@@ -2,9 +2,11 @@ module DataTypes where
 import Control.Monad.State
 
 data GameState = GameState {
-    players :: [Player],
+    players :: Players,
     activePlayer :: Int
 } deriving (Show)
+
+type Players = (Player, Player)
 
 data Player = Player {
     playerID :: Int,

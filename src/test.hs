@@ -1,14 +1,16 @@
 import DataTypes
 import Control.Monad.State
 
-getPlayers :: GameState -> [Player]
+getPlayers :: GameState -> Players
 getPlayers g = players g
 
 getActivePlayer :: GameState -> Player
-getActivePlayer g = (players g) !! (activePlayer g)
+getActivePlayer g = if (activePlayer g == 0)
+    then fst $ players g
+    else snd $ players g
 
 getNextPlayerIndex :: GameState -> Int
-getNextPlayerIndex g = (-) ((+) (-1) $ length $ players g) (activePlayer g)
+getNextPlayerIndex g = 1 - (activePlayer g)
 
 endRound :: GameState -> GameState
 endRound g = GameState (players g) (getNextPlayerIndex g)
@@ -40,6 +42,6 @@ main :: IO ()
 main =  do
     let player1 = Player 0 "player1" [] [Card "test"]
     let player2 = Player 1 "player2" [] [Card "test2"]
-    let game = GameState [player1,player2] 0
+    let game = GameState (player1,player2) 0
     _ <- execStateT gameLoop game
     putStr "Game end"
