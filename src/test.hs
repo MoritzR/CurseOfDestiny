@@ -9,11 +9,11 @@ getActivePlayer g = if (activePlayer g == 0)
     then fst $ players g
     else snd $ players g
 
-getNextPlayerIndex :: GameState -> Int
-getNextPlayerIndex g = 1 - (activePlayer g)
+getNextPlayerIndex :: Int -> Int
+getNextPlayerIndex = (-) 1
 
 endRound :: GameState -> GameState
-endRound g = GameState (players g) (getNextPlayerIndex g)
+endRound g = GameState (players g) (getNextPlayerIndex $ activePlayer g)
 
 pass :: GameState -> GameState
 pass g = g
