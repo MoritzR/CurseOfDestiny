@@ -1,4 +1,5 @@
 module DataTypes where
+import Control.Monad.State
 
 data GameState = GameState {
     players :: [Player],
@@ -15,3 +16,5 @@ data Player = Player {
 data Card = Card {
     cardName :: String
 } deriving (Show)
+
+type GameStateIO a = StateT GameState IO a
