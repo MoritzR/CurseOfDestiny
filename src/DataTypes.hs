@@ -20,7 +20,9 @@ data Player = Player {
 
 data Card = Card {
     _cardName :: String
-} deriving (Show)
+}
+instance Show Card where
+  show c = _cardName c
 
 makeLenses ''GameState
 makeLenses ''Player

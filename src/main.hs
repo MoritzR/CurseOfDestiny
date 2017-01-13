@@ -24,12 +24,23 @@ actionStringToFunction "end" = endRound
 actionStringToFunction "pass" = pass
 actionStringToFunction _ = id
 
+displayCards :: [Card] -> IO ()
+displayCards cards = displayCardsH cards 0
+displayCardsH :: [Card] -> Int -> IO ()
+displayCardsH (c:cs) i = do 
+    putStr $ (show i) ++ ": " ++ (show c) ++ "\n"
+    displayCardsH cs (i + 1)
+displayCardsH [] _ = putStr "\n"
+
 gameOver :: GameStateIO ()
 gameOver = do
   lift $ putStrLn "k bye"
 
 gameLoop :: GameStateIO ()
 gameLoop = do
+    gs <- get
+    lift $ putStrLn "Player Hand:"
+    lift $ displayCards $ (getActivePlayer gs)^.hand
     lift $ putStr "Select action (pass/end): "
     inp <- lift $  getLine
     if inp=="exit" || inp=="q"
