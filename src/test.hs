@@ -1,19 +1,20 @@
 import DataTypes
 import Control.Monad.State
+import Control.Lens
 
 getPlayers :: GameState -> Players
-getPlayers g = players g
+getPlayers g = g^.players
 
 getActivePlayer :: GameState -> Player
-getActivePlayer g = if (activePlayer g == 0)
-    then fst $ players g
-    else snd $ players g
+getActivePlayer g = if (g^.activePlayer == 0)
+    then fst $ g^.players
+    else snd $ g^.players
 
 getNextPlayerIndex :: Int -> Int
 getNextPlayerIndex = (-) 1
 
 endRound :: GameState -> GameState
-endRound g = GameState (players g) (getNextPlayerIndex $ activePlayer g)
+endRound g = GameState (g^.players) (getNextPlayerIndex $ g^.activePlayer)
 
 pass :: GameState -> GameState
 pass g = g

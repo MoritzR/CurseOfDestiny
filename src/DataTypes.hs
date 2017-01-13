@@ -1,22 +1,28 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module DataTypes where
 import Control.Monad.State
-
-data GameState = GameState {
-    players :: Players,
-    activePlayer :: Int
-} deriving (Show)
+import Control.Lens
 
 type Players = (Player, Player)
+type GameStateIO a = StateT GameState IO a
+
+data GameState = GameState {
+    _players :: Players,
+    _activePlayer :: Int
+} deriving (Show)
 
 data Player = Player {
-    playerID :: Int,
-    playerName :: String,
-    deck :: [Card],
-    hand :: [Card]
+    _playerID :: Int,
+    _playerName :: String,
+    _deck :: [Card],
+    _hand :: [Card]
 } deriving (Show)
 
 data Card = Card {
-    cardName :: String
+    _cardName :: String
 } deriving (Show)
 
-type GameStateIO a = StateT GameState IO a
+makeLenses ''GameState
+makeLenses ''Player
+makeLenses ''Card
