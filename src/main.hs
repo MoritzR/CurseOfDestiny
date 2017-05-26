@@ -57,4 +57,4 @@ main =  do
     let player2 = Player "player2" [] [Card "test2"]
     let game = GameState (player1,player2) 0
     _ <- execStateT gameLoop game
-    putStr "Game end"
+    putStrLn "Game end"
