@@ -8,8 +8,7 @@ type Players = (Player, Player)
 type GameStateIO a = StateT GameState IO a
 
 data GameState = GameState {
-    _players :: Players,
-    _activePlayer :: Int
+    _players :: Players
 } deriving (Show)
 
 data Player = Player {

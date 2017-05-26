@@ -6,23 +6,21 @@ getPlayers :: GameState -> Players
 getPlayers g = g^.players
 
 getActivePlayer :: GameState -> Player
-getActivePlayer g = if (g^.activePlayer == 0)
-    then fst $ g^.players
-    else snd $ g^.players
+getActivePlayer g = fst $ g^.players
 
-getNextPlayerIndex :: Int -> Int
-getNextPlayerIndex = (-) 1
 
 endRound :: GameState -> GameState
-endRound g = GameState (g^.players) (getNextPlayerIndex $ g^.activePlayer)
+endRound g = GameState (snd $ g^.players, fst $ g^.players)
 
 pass :: GameState -> GameState
 pass g = g
+
 
 actionStringToFunction :: String -> (GameState -> GameState)
 actionStringToFunction "end" = endRound
 actionStringToFunction "pass" = pass
 actionStringToFunction _ = id
+
 
 displayCards :: [Card] -> IO ()
 displayCards cards = displayCardsH cards 0
@@ -55,6 +53,6 @@ main :: IO ()
 main =  do
     let player1 = Player "player1" [] [Card "test"]
     let player2 = Player "player2" [] [Card "test2"]
-    let game = GameState (player1,player2) 0
+    let game = GameState (player1,player2)
     _ <- execStateT gameLoop game
     putStrLn "Game end"
