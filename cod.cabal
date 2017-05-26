@@ -1,0 +1,25 @@
+name:                cod
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/MoritzR/CurseOfDestiny#readme
+license:             GNU
+license-file:        LICENSE
+category:            Web
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+executable cod-exe
+  hs-source-dirs:      src
+  main-is:             main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , cod
+                     , mtl
+                     , lens
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/MoritzR/CurseOfDestiny
