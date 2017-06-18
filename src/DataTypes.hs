@@ -16,8 +16,15 @@ data Player = Player {
     _hand :: [Card]
 } deriving (Show)
 
+data CardEffect = OnPlay GameAction
+
+data GameAction = Play Card
+    | Pass
+    | EndRound
+
 data Card = Card {
-    _cardName :: String
+    _cardName :: String,
+    _effects :: [CardEffect]
 }
 instance Show Card where
   show c = _cardName c

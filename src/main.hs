@@ -2,6 +2,9 @@ import DataTypes
 import Control.Monad.State
 import Control.Lens
 
+dragonEgg = Card "Dragon Egg" []
+dragon = Card "Dragon" [OnPlay $ Play dragonEgg]
+
 getPlayers :: GameState -> Players
 getPlayers g = g^.players
 
@@ -15,11 +18,16 @@ endRound g = GameState (snd $ g^.players, fst $ g^.players)
 pass :: GameState -> GameState
 pass g = g
 
+convertAction :: String -> GameAction
+convertAction "playDragon" = Play dragon
+convertAction "pass" = Pass
+convertAction "end" = EndRound
+convertAction _ = Pass
 
-actionStringToFunction :: String -> (GameState -> GameState)
-actionStringToFunction "end" = endRound
-actionStringToFunction "pass" = pass
-actionStringToFunction _ = id
+playGame :: GameAction -> GameState -> GameState
+playGame (Play card) = endRound
+playGame EndRound = endRound
+playGame Pass = pass
 
 
 displayCards :: [Card] -> IO ()
@@ -44,14 +52,14 @@ gameLoop game = do
     if inp=="exit" || inp=="q"
         then gameOver
         else do 
-            let gs' = actionStringToFunction inp gs
+            let gs' = playGame (convertAction inp) gs
             putStrLn $ show $ gs'
             gameLoop gs'
 
 main :: IO ()
 main =  do
-    let player1 = Player "player1" [] [Card "test"]
-    let player2 = Player "player2" [] [Card "test2"]
+    let player1 = Player "player1" [] [Card "test" []]
+    let player2 = Player "player2" [] [Card "test2" []]
     let game = GameState (player1,player2)
     _ <- gameLoop game
     putStrLn "Game end"
