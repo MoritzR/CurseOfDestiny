@@ -30,29 +30,28 @@ displayCardsH (c:cs) i = do
     displayCardsH cs (i + 1)
 displayCardsH [] _ = putStr "\n"
 
-gameOver :: GameStateIO ()
+gameOver :: IO ()
 gameOver = do
-  lift $ putStrLn "k bye"
+  putStrLn "k bye"
 
-gameLoop :: GameStateIO ()
-gameLoop = do
-    gs <- get
-    lift $ putStrLn "Player Hand:"
-    lift $ displayCards $ (getActivePlayer gs)^.hand
-    lift $ putStr "Select action (pass/end): "
-    inp <- lift $  getLine
+gameLoop :: GameState -> IO ()
+gameLoop game = do
+    let gs = game
+    putStrLn "Player Hand:"
+    displayCards $ (getActivePlayer gs)^.hand
+    putStr "Select action (pass/end): "
+    inp <- getLine
     if inp=="exit" || inp=="q"
         then gameOver
         else do 
-            modify $ actionStringToFunction inp
-            gs' <- get
-            lift $ putStrLn $ show $ gs'
-            gameLoop
+            let gs' = actionStringToFunction inp gs
+            putStrLn $ show $ gs'
+            gameLoop gs'
 
 main :: IO ()
 main =  do
     let player1 = Player "player1" [] [Card "test"]
     let player2 = Player "player2" [] [Card "test2"]
     let game = GameState (player1,player2)
-    _ <- execStateT gameLoop game
+    _ <- gameLoop game
     putStrLn "Game end"
