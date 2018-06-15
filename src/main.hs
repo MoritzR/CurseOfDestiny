@@ -8,12 +8,10 @@ dragon = Card "Dragon" [OnPlay $ Play dragonEgg]
 getPlayers :: GameState -> Players
 getPlayers g = g^.players
 
-getActivePlayer :: GameState -> Player
-getActivePlayer g = fst $ g^.players
-
+activePlayer = players._1
 
 endRound :: GameState -> GameState
-endRound g = GameState (snd $ g^.players, fst $ g^.players)
+endRound g = GameState (g^.players._2, g^.players._1)
 
 pass :: GameState -> GameState
 pass g = g
@@ -28,7 +26,6 @@ playGame :: GameAction -> GameState -> GameState
 playGame (Play card) = endRound
 playGame EndRound = endRound
 playGame Pass = pass
-
 
 displayCards :: [Card] -> IO ()
 displayCards cards = displayCardsH cards 0
@@ -46,7 +43,7 @@ gameLoop :: GameState -> IO ()
 gameLoop game = do
     let gs = game
     putStrLn "Player Hand:"
-    displayCards $ (getActivePlayer gs)^.hand
+    displayCards $ gs^.activePlayer.hand
     putStr "Select action (pass/end): "
     inp <- getLine
     if inp=="exit" || inp=="q"
