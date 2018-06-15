@@ -11,9 +11,10 @@ data GameState = GameState {
 } deriving (Show)
 
 data Player = Player {
-    _playerName :: String,
+    _name :: String,
     _deck :: [Card],
-    _hand :: [Card]
+    _hand :: [Card],
+    _field :: [Card]
 } deriving (Show)
 
 data CardEffect = OnPlay GameAction

@@ -8,6 +8,8 @@ dragon = Card "Dragon" [OnPlay $ Play dragonEgg]
 getPlayers :: GameState -> Players
 getPlayers g = g^.players
 
+-- activePlayer :: Functor f => (Player -> f Player) -> (GameState -> f GameState)
+activePlayer :: Lens GameState GameState Player Player
 activePlayer = players._1
 
 endRound :: GameState -> GameState
@@ -23,9 +25,12 @@ convertAction "end" = EndRound
 convertAction _ = Pass
 
 playGame :: GameAction -> GameState -> GameState
-playGame (Play card) = endRound
+playGame (Play card) = playCard card
 playGame EndRound = endRound
 playGame Pass = pass
+
+playCard :: Card -> GameState -> GameState
+playCard card g = over (activePlayer.field) (card:) g
 
 displayCards :: [Card] -> IO ()
 displayCards cards = displayCardsH cards 0
@@ -55,8 +60,8 @@ gameLoop game = do
 
 main :: IO ()
 main =  do
-    let player1 = Player "player1" [] [Card "test" []]
-    let player2 = Player "player2" [] [Card "test2" []]
+    let player1 = Player {_name = "player1", _deck = [], _hand = [Card "test" []], _field = []}
+    let player2 = Player {_name = "player2", _deck = [], _hand = [Card "test2" []], _field = []}
     let game = GameState (player1,player2)
     _ <- gameLoop game
     putStrLn "Game end"
