@@ -33,3 +33,6 @@ instance Show Card where
 makeLenses ''GameState
 makeLenses ''Player
 makeLenses ''Card
+
+activePlayer :: Lens' GameState Player
+activePlayer = players._1

@@ -1,6 +1,7 @@
 import DataTypes
 import Control.Monad.State
 import Control.Lens
+import Actions
 
 dragonEgg = Card "Dragon Egg" []
 dragon = Card "Dragon" [OnPlay $ Play dragonEgg]
@@ -8,29 +9,28 @@ dragon = Card "Dragon" [OnPlay $ Play dragonEgg]
 getPlayers :: GameState -> Players
 getPlayers g = g^.players
 
--- activePlayer :: Functor f => (Player -> f Player) -> (GameState -> f GameState)
-activePlayer :: Lens GameState GameState Player Player
-activePlayer = players._1
-
 endRound :: GameState -> GameState
 endRound g = GameState (g^.players._2, g^.players._1)
 
 pass :: GameState -> GameState
 pass g = g
 
-convertAction :: String -> GameAction
-convertAction "playDragon" = Play dragon
-convertAction "pass" = Pass
-convertAction "end" = EndRound
-convertAction _ = Pass
+parseGameAction :: String -> GameAction
+parseGameAction "playDragon" = Play dragon
+parseGameAction "pass" = Pass
+parseGameAction "end" = EndRound
+parseGameAction _ = Pass
 
-playGame :: GameAction -> GameState -> GameState
-playGame (Play card) = playCard card
-playGame EndRound = endRound
-playGame Pass = pass
+convertGameAction :: GameAction -> [Action]
+convertGameAction (Play c) = [AddToField c]
+convertGameAction _ = []
 
-playCard :: Card -> GameState -> GameState
-playCard card g = over (activePlayer.field) (card:) g
+parseActions = convertGameAction . parseGameAction
+
+playGame ::  [Action] -> GameState -> GameState
+playGame [] g = endRound g
+playGame (x:xs) g = playGame xs g'
+                        where g' = resolve x g
 
 displayCards :: [Card] -> IO ()
 displayCards cards = displayCardsH cards 0
@@ -54,7 +54,7 @@ gameLoop game = do
     if inp=="exit" || inp=="q"
         then gameOver
         else do 
-            let gs' = playGame (convertAction inp) gs
+            let gs' = playGame (parseActions inp) gs
             putStrLn $ show $ gs'
             gameLoop gs'
 
