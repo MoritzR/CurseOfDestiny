@@ -41,8 +41,7 @@ displayCardsH (c:cs) i = do
 displayCardsH [] _ = putStr "\n"
 
 gameOver :: IO ()
-gameOver = do
-  putStrLn "k bye"
+gameOver = putStrLn "k bye"
 
 gameLoop :: GameState -> IO ()
 gameLoop game = do
