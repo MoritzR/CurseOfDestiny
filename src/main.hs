@@ -4,7 +4,7 @@ import Control.Lens
 import Actions
 
 dragonEgg = Card "Dragon Egg" []
-dragon = Card "Dragon" [OnPlay $ Play dragonEgg]
+dragon = Card "Dragon" [OnPlay $ AddToField dragonEgg]
 
 endRound :: GameState -> GameState
 endRound g = GameState (g^.players._2, g^.players._1)
@@ -19,8 +19,13 @@ parseGameAction "end" = EndRound
 parseGameAction _ = Pass
 
 convertGameAction :: GameAction -> [Action]
-convertGameAction (Play c) = [AddToField c]
+convertGameAction (Play c) = (onPlayEffects . view effects) c ++ [AddToField c]
 convertGameAction _ = []
+
+onPlayEffects :: [CardEffect] -> [Action]
+onPlayEffects [] = []
+onPlayEffects ((OnPlay action):xs) = action : onPlayEffects xs
+onPlayEffects (_:xs) = onPlayEffects xs
 
 parseActions = convertGameAction . parseGameAction
 

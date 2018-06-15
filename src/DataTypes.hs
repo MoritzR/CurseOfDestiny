@@ -4,6 +4,10 @@ module DataTypes where
 import Control.Monad.State
 import Control.Lens
 
+data CardEffect = OnPlay Action
+
+data Action = AddToField Card
+
 type Players = (Player, Player)
 
 data GameState = GameState {
@@ -16,8 +20,6 @@ data Player = Player {
     _hand :: [Card],
     _field :: [Card]
 } deriving (Show)
-
-data CardEffect = OnPlay GameAction
 
 data GameAction = Play Card
     | Pass
