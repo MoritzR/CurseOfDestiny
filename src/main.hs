@@ -6,9 +6,6 @@ import Actions
 dragonEgg = Card "Dragon Egg" []
 dragon = Card "Dragon" [OnPlay $ Play dragonEgg]
 
-getPlayers :: GameState -> Players
-getPlayers g = g^.players
-
 endRound :: GameState -> GameState
 endRound g = GameState (g^.players._2, g^.players._1)
 
