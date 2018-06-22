@@ -6,6 +6,9 @@ import Control.Lens
 dragonEgg = Card "Dragon Egg" [OnTurnEnd $ AddToField dragon]
 dragon = Card "Dragon" [OnPlay $ AddToField dragonEgg]
 
+createPlayer :: String -> Player
+createPlayer name = Player {_name = name, _deck = [], _hand = [dragon], _field = []}
+
 endRound :: GameState -> GameState
 endRound = changeCurrentPlayer . applyTurnEnds
 
@@ -75,8 +78,8 @@ gameLoop game = do
 
 main :: IO ()
 main =  do
-    let player1 = Player {_name = "player1", _deck = [], _hand = [Card "test" []], _field = []}
-    let player2 = Player {_name = "player2", _deck = [], _hand = [Card "test2" []], _field = []}
+    let player1 = createPlayer "player1"
+    let player2 = createPlayer "player2"
     let game = GameState (player1,player2)
     _ <- gameLoop game
     putStrLn "Game end"
