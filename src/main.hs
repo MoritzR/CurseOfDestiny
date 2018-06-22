@@ -44,9 +44,9 @@ playGame (x:xs) g = playGame xs g'
                         where g' = resolve x g
 
 resolve :: Action -> GameState -> GameState
-resolve (AddToField c) g = over (activePlayer.field) (c:) g
-resolve EndTurn g = endRound g
-resolve _ g = g
+resolve (AddToField c) = over (activePlayer.field) (c:)
+resolve EndTurn = endRound
+resolve _ = id
 
 displayCards :: [Card] -> IO ()
 displayCards cards = displayCardsH cards 0
