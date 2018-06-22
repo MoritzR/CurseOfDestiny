@@ -5,6 +5,7 @@ import Control.Monad.State
 import Control.Lens
 
 data CardEffect = OnPlay Action
+    | OnTurnEnd Action
 
 data Action = AddToField Card
     | EndTurn

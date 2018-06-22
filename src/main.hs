@@ -3,11 +3,18 @@ import Data.Tuple
 import Control.Monad.State
 import Control.Lens
 
-dragonEgg = Card "Dragon Egg" []
+dragonEgg = Card "Dragon Egg" [OnTurnEnd $ AddToField dragon]
 dragon = Card "Dragon" [OnPlay $ AddToField dragonEgg]
 
 endRound :: GameState -> GameState
-endRound g = over players swap g
+endRound = changeCurrentPlayer . applyTurnEnds
+
+changeCurrentPlayer :: GameState -> GameState
+changeCurrentPlayer = over players swap
+
+applyTurnEnds :: GameState -> GameState
+applyTurnEnds g = playGame actions g
+    where actions = concat $ fmap onTurnEndEffects $ g^..activePlayer.field.traverse.effects
 
 pass :: GameState -> GameState
 pass g = g
@@ -25,6 +32,9 @@ convertGameAction _ = []
 
 onPlayEffects :: [CardEffect] -> [Action]
 onPlayEffects l = [a | OnPlay a <- l]
+
+onTurnEndEffects :: [CardEffect] -> [Action]
+onTurnEndEffects l = [a | OnTurnEnd a <- l]
 
 parseActions = convertGameAction . parseGameAction
 
