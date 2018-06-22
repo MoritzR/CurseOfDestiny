@@ -23,9 +23,7 @@ convertGameAction (Play c) = AddToField c : (onPlayEffects . view effects) c
 convertGameAction _ = []
 
 onPlayEffects :: [CardEffect] -> [Action]
-onPlayEffects [] = []
-onPlayEffects ((OnPlay action):xs) = action : onPlayEffects xs
-onPlayEffects (_:xs) = onPlayEffects xs
+onPlayEffects l = [a | OnPlay a <- l]
 
 parseActions = convertGameAction . parseGameAction
 
