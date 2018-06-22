@@ -2,7 +2,6 @@ import DataTypes
 import Data.Tuple
 import Control.Monad.State
 import Control.Lens
-import Actions
 
 dragonEgg = Card "Dragon Egg" []
 dragon = Card "Dragon" [OnPlay $ AddToField dragonEgg]
@@ -21,6 +20,7 @@ parseGameAction _ = Pass
 
 convertGameAction :: GameAction -> [Action]
 convertGameAction (Play c) = AddToField c : (onPlayEffects . view effects) c
+convertGameAction EndRound = return EndTurn
 convertGameAction _ = []
 
 onPlayEffects :: [CardEffect] -> [Action]
@@ -29,9 +29,14 @@ onPlayEffects l = [a | OnPlay a <- l]
 parseActions = convertGameAction . parseGameAction
 
 playGame ::  [Action] -> GameState -> GameState
-playGame [] g = endRound g
+playGame [] g = g
 playGame (x:xs) g = playGame xs g'
                         where g' = resolve x g
+
+resolve :: Action -> GameState -> GameState
+resolve (AddToField c) g = over (activePlayer.field) (c:) g
+resolve EndTurn g = endRound g
+resolve _ g = g
 
 displayCards :: [Card] -> IO ()
 displayCards cards = displayCardsH cards 0

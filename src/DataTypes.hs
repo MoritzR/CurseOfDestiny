@@ -7,6 +7,7 @@ import Control.Lens
 data CardEffect = OnPlay Action
 
 data Action = AddToField Card
+    | EndTurn
 
 type Players = (Player, Player)
 
