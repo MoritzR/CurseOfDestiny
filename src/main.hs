@@ -20,7 +20,7 @@ pass :: GameState -> GameState
 pass g = g
 
 parseGameAction :: String -> GameAction
-parseGameAction "playDragon" = Play dragon
+parseGameAction "play dragon" = Play dragon
 parseGameAction "pass" = Pass
 parseGameAction "end" = EndRound
 parseGameAction _ = Pass
