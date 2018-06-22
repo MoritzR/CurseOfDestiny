@@ -1,4 +1,5 @@
 import DataTypes
+import Data.Tuple
 import Control.Monad.State
 import Control.Lens
 import Actions
@@ -7,7 +8,7 @@ dragonEgg = Card "Dragon Egg" []
 dragon = Card "Dragon" [OnPlay $ AddToField dragonEgg]
 
 endRound :: GameState -> GameState
-endRound g = GameState (g^.players._2, g^.players._1)
+endRound g = over players swap g
 
 pass :: GameState -> GameState
 pass g = g
