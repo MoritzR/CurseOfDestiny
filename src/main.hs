@@ -19,7 +19,7 @@ parseGameAction "end" = EndRound
 parseGameAction _ = Pass
 
 convertGameAction :: GameAction -> [Action]
-convertGameAction (Play c) = (onPlayEffects . view effects) c ++ [AddToField c]
+convertGameAction (Play c) = AddToField c : (onPlayEffects . view effects) c
 convertGameAction _ = []
 
 onPlayEffects :: [CardEffect] -> [Action]
