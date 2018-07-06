@@ -5,6 +5,9 @@ import Control.Lens
 
 dragonEgg = Card "Dragon Egg" [OnTurnEnd $ AddToField dragon]
 dragon = Card "Dragon" [OnPlay $ AddToField dragonEgg]
+dog = Card "Dog" []
+cat = Card "Cat" []
+catOrDog = Card "Cat or Dog?" [OnPlay $ Choose [AddToField dog, AddToField cat]]
 
 createPlayer :: String -> Player
 createPlayer name = Player {_name = name, _deck = [], _hand = [dragon], _field = []}
@@ -25,6 +28,7 @@ pass g = g
 
 parseGameAction :: String -> GameAction
 parseGameAction "play dragon" = Play dragon
+parseGameAction "play catdog" = Play catOrDog
 parseGameAction "pass" = Pass
 parseGameAction "end" = EndRound
 parseGameAction _ = Pass
@@ -50,8 +54,31 @@ playGame (x:xs) g = do
 
 resolve :: Action -> GameState -> IO GameState
 resolve (AddToField c) = return . over (activePlayer.field) (c:)
+resolve (Choose l) = resolveChoose l
 resolve EndTurn = endRound
 resolve _ = return . id
+
+resolveChoose :: [Action] -> GameState -> IO GameState
+resolveChoose l gs = do
+    maybeChoice <- getChoiceFromIO l
+    print maybeChoice
+    case maybeChoice of
+        Just choice -> resolve choice gs
+        Nothing -> return gs
+
+getChoiceFromIO :: Show a => [a] -> IO (Maybe a)
+getChoiceFromIO l = do
+    displayEnumeratedItems l
+    putStr "Choose one: "
+    choice <- readLn
+    if choice < 1 || choice > length l
+        then return Nothing
+        else return $ Just (l !! (choice -1))
+
+
+displayEnumeratedItems :: Show a => [a] -> IO ()
+displayEnumeratedItems = mapM_ displayTuple . zip [1..]
+    where displayTuple (i, v) = putStrLn $ show i ++ ": " ++ (show v)
 
 displayCards :: [Card] -> IO ()
 displayCards cards = displayCardsH cards 0
