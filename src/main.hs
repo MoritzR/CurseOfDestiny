@@ -75,18 +75,9 @@ getChoiceFromIO l = do
         then return Nothing
         else return $ Just (l !! (choice -1))
 
-
 displayEnumeratedItems :: Show a => [a] -> IO ()
 displayEnumeratedItems = mapM_ displayTuple . zip [1..]
     where displayTuple (i, v) = putStrLn $ show i ++ ": " ++ (show v)
-
-displayCards :: [Card] -> IO ()
-displayCards cards = displayCardsH cards 0
-displayCardsH :: [Card] -> Int -> IO ()
-displayCardsH (c:cs) i = do 
-    putStr $ (show i) ++ ": " ++ (show c) ++ "\n"
-    displayCardsH cs (i + 1)
-displayCardsH [] _ = putStr "\n"
 
 gameOver :: IO ()
 gameOver = putStrLn "k bye"
@@ -95,7 +86,7 @@ gameLoop :: GameState -> IO ()
 gameLoop gs = do
     putStrLn $ "Current state: " ++ show gs
     putStrLn "Player Hand:"
-    displayCards $ gs^.activePlayer.hand
+    displayEnumeratedItems $ gs^.activePlayer.hand
     putStr "Select action (pass/end): "
     inp <- getLine
     if inp=="exit" || inp=="q"
