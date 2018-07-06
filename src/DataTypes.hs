@@ -26,6 +26,7 @@ data Player = Player {
 } deriving (Show)
 
 data GameAction = Play Card
+    | PlayFromHand Int
     | Pass
     | EndRound
 

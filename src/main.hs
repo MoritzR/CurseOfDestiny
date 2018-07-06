@@ -1,5 +1,7 @@
 import DataTypes
 import Data.Tuple
+import Data.List
+import Text.Read
 import Control.Monad.State
 import Control.Lens
 
@@ -31,12 +33,19 @@ parseGameAction "play dragon" = Play dragon
 parseGameAction "play catdog" = Play catOrDog
 parseGameAction "pass" = Pass
 parseGameAction "end" = EndRound
-parseGameAction _ = Pass
+parseGameAction s
+    | "play " `isPrefixOf` s = let result = stripPrefix "play " s >>= readMaybe in
+        case result of
+            Just i -> PlayFromHand (i-1)
+            Nothing -> Pass
+    | otherwise = Pass
 
-convertGameAction :: GameAction -> [Action]
-convertGameAction (Play c) = AddToField c : (onPlayEffects . view effects) c
-convertGameAction EndRound = return EndTurn
-convertGameAction _ = []
+convertGameAction :: GameAction -> GameState -> [Action]
+convertGameAction (Play c) _ = AddToField c : (onPlayEffects . view effects) c
+convertGameAction (PlayFromHand i) gs = AddToField c : (onPlayEffects . view effects) c
+            where c = (gs^.activePlayer.hand) !! i -- crashes program when i is out of range
+convertGameAction EndRound _ = return EndTurn
+convertGameAction _ _ = []
 
 onPlayEffects :: [CardEffect] -> [Action]
 onPlayEffects l = [a | OnPlay a <- l]
@@ -92,7 +101,7 @@ gameLoop gs = do
     if inp=="exit" || inp=="q"
         then gameOver
         else do
-            playGame (parseActions inp) gs
+            playGame (parseActions inp gs) gs
                 >>= gameLoop
 
 main :: IO ()
