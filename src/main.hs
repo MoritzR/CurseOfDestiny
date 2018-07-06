@@ -1,18 +1,19 @@
 import DataTypes
+import Cards
 import Data.Tuple
 import Data.List
 import Text.Read
 import Control.Monad.State
 import Control.Lens
 
-dragonEgg = Card "Dragon Egg" [OnTurnEnd $ AddToField dragon]
-dragon = Card "Dragon" [OnPlay $ AddToField dragonEgg]
-dog = Card "Dog" []
-cat = Card "Cat" []
-catOrDog = Card "Cat or Dog?" [OnPlay $ Choose [AddToField dog, AddToField cat]]
+dragonEgg = creature "Dragon Egg" [OnTurnEnd $ AddToField dragon]
+dragon = creature "Dragon" [OnPlay $ AddToField dragonEgg]
+dog = creature "Dog" []
+cat = creature "Cat" []
+catOrDog = spell "Cat or Dog?" [OnPlay $ Choose [AddToField dog, AddToField cat]]
 
 createPlayer :: String -> Player
-createPlayer name = Player {_name = name, _deck = [], _hand = [dragon, catOrDog], _field = []}
+createPlayer name = Player {_name = name, _deck = [], _hand = [dragon, catOrDog, dog], _field = []}
 
 endRound :: GameState -> IO GameState
 endRound g = applyTurnEnds g
@@ -41,8 +42,8 @@ parseGameAction s
     | otherwise = Pass
 
 convertGameAction :: GameAction -> GameState -> [Action]
-convertGameAction (Play c) _ = AddToField c : (onPlayEffects . view effects) c
-convertGameAction (PlayFromHand i) gs = AddToField c : (onPlayEffects . view effects) c
+convertGameAction (Play c) _ = (onPlayEffects . view effects) c
+convertGameAction (PlayFromHand i) gs = (onPlayEffects . view effects) c
             where c = (gs^.activePlayer.hand) !! i -- crashes program when i is out of range
 convertGameAction EndRound _ = return EndTurn
 convertGameAction _ _ = []
