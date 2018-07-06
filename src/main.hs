@@ -12,7 +12,7 @@ cat = Card "Cat" []
 catOrDog = Card "Cat or Dog?" [OnPlay $ Choose [AddToField dog, AddToField cat]]
 
 createPlayer :: String -> Player
-createPlayer name = Player {_name = name, _deck = [], _hand = [dragon], _field = []}
+createPlayer name = Player {_name = name, _deck = [], _hand = [dragon, catOrDog], _field = []}
 
 endRound :: GameState -> IO GameState
 endRound g = applyTurnEnds g
