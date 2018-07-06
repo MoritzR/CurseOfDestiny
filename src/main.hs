@@ -9,13 +9,14 @@ dragon = Card "Dragon" [OnPlay $ AddToField dragonEgg]
 createPlayer :: String -> Player
 createPlayer name = Player {_name = name, _deck = [], _hand = [dragon], _field = []}
 
-endRound :: GameState -> GameState
-endRound = changeCurrentPlayer . applyTurnEnds
+endRound :: GameState -> IO GameState
+endRound g = applyTurnEnds g
+                >>= return . changeCurrentPlayer
 
 changeCurrentPlayer :: GameState -> GameState
 changeCurrentPlayer = over players swap
 
-applyTurnEnds :: GameState -> GameState
+applyTurnEnds :: GameState -> IO GameState
 applyTurnEnds g = playGame actions g
     where actions = concat $ fmap onTurnEndEffects $ g^..activePlayer.field.traverse.effects
 
@@ -41,15 +42,16 @@ onTurnEndEffects l = [a | OnTurnEnd a <- l]
 
 parseActions = convertGameAction . parseGameAction
 
-playGame ::  [Action] -> GameState -> GameState
-playGame [] g = g
-playGame (x:xs) g = playGame xs g'
-                        where g' = resolve x g
+playGame ::  [Action] -> GameState -> IO GameState
+playGame [] g = return g
+playGame (x:xs) g = do
+    putStrLn $ "resolved action: " ++ show x
+    resolve x g >>= playGame xs
 
-resolve :: Action -> GameState -> GameState
-resolve (AddToField c) = over (activePlayer.field) (c:)
+resolve :: Action -> GameState -> IO GameState
+resolve (AddToField c) = return . over (activePlayer.field) (c:)
 resolve EndTurn = endRound
-resolve _ = id
+resolve _ = return . id
 
 displayCards :: [Card] -> IO ()
 displayCards cards = displayCardsH cards 0
@@ -63,18 +65,17 @@ gameOver :: IO ()
 gameOver = putStrLn "k bye"
 
 gameLoop :: GameState -> IO ()
-gameLoop game = do
-    let gs = game
+gameLoop gs = do
+    putStrLn $ "Current state: " ++ show gs
     putStrLn "Player Hand:"
     displayCards $ gs^.activePlayer.hand
     putStr "Select action (pass/end): "
     inp <- getLine
     if inp=="exit" || inp=="q"
         then gameOver
-        else do 
-            let gs' = playGame (parseActions inp) gs
-            putStrLn $ show $ gs'
-            gameLoop gs'
+        else do
+            playGame (parseActions inp) gs
+                >>= gameLoop
 
 main :: IO ()
 main =  do

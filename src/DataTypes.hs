@@ -9,6 +9,7 @@ data CardEffect = OnPlay Action
 
 data Action = AddToField Card
     | EndTurn
+    deriving Show
 
 type Players = (Player, Player)
 
