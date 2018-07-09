@@ -30,11 +30,13 @@ parseGameAction "play catdog" = Play Cards.catOrDog
 parseGameAction "pass" = Pass
 parseGameAction "end" = EndRound
 parseGameAction s
-    | "play " `isPrefixOf` s = let result = stripPrefix "play " s >>= readMaybe in
-        case result of
-            Just i -> PlayFromHand (i-1)
-            Nothing -> Pass
+    | length split == 2 && head split == "p" =
+        let result = readMaybe $ split !! 1 in
+            case result of
+                Just i -> PlayFromHand (i-1)
+                Nothing -> Pass
     | otherwise = Pass
+        where split = words s
 
 convertGameAction :: GameAction -> GameState -> [Action]
 convertGameAction (Play c) _ = (onPlayEffects . view effects) c
