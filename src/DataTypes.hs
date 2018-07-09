@@ -32,10 +32,17 @@ data GameAction = Play Card
 
 data Card = Card {
     _cardName :: String,
+    _features :: [Feature],
     _effects :: [CardEffect]
 }
 instance Show Card where
-  show c = _cardName c
+  show c = _cardName c ++  " (" ++ (show $ _features c) ++ ")"
+
+data Feature = Spell
+    | Creature Int Int
+instance Show Feature where
+    show Spell = "S,"
+    show (Creature atk dfn) = "C[" ++ (show atk) ++ "/" ++ (show dfn) ++ "],"
 
 makeLenses ''GameState
 makeLenses ''Player
