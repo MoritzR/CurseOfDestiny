@@ -39,10 +39,10 @@ instance Show Card where
   show c = _cardName c ++  " (" ++ (show $ _features c) ++ ")"
 
 data Feature = Spell
-    | Creature Int Int
+    | Creature Int
 instance Show Feature where
     show Spell = "S,"
-    show (Creature atk dfn) = "C[" ++ (show atk) ++ "/" ++ (show dfn) ++ "],"
+    show (Creature power) = "C[" ++ (show power) ++ "],"
 
 makeLenses ''GameState
 makeLenses ''Player
