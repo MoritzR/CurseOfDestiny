@@ -1,19 +1,14 @@
 import DataTypes
-import Cards
+import qualified Cards
 import Data.Tuple
 import Data.List
 import Text.Read
 import Control.Monad.State
 import Control.Lens
 
-dragonEgg = creature "Dragon Egg" [OnTurnEnd $ AddToField dragon]
-dragon = creature "Dragon" [OnPlay $ AddToField dragonEgg]
-dog = creature "Dog" []
-cat = creature "Cat" []
-catOrDog = spell "Cat or Dog?" [OnPlay $ Choose [AddToField dog, AddToField cat]]
 
 createPlayer :: String -> Player
-createPlayer name = Player {_name = name, _deck = [], _hand = [dragon, catOrDog, dog], _field = []}
+createPlayer name = Player {_name = name, _deck = [], _hand = [Cards.dragon, Cards.catOrDog, Cards.dog], _field = []}
 
 endRound :: GameState -> IO GameState
 endRound g = applyTurnEnds g
@@ -30,8 +25,8 @@ pass :: GameState -> GameState
 pass g = g
 
 parseGameAction :: String -> GameAction
-parseGameAction "play dragon" = Play dragon
-parseGameAction "play catdog" = Play catOrDog
+parseGameAction "play dragon" = Play Cards.dragon
+parseGameAction "play catdog" = Play Cards.catOrDog
 parseGameAction "pass" = Pass
 parseGameAction "end" = EndRound
 parseGameAction s
