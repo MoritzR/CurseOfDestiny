@@ -98,8 +98,7 @@ gameLoop gs = do
     inp <- getLine
     if inp=="exit" || inp=="q"
         then gameOver
-        else do
-            playGame (parseActions inp gs) gs
+        else playGame (parseActions inp gs) gs
                 >>= gameLoop
 
 main :: IO ()
