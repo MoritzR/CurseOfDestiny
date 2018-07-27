@@ -6,19 +6,20 @@ import Data.List
 import Text.Read
 import Control.Monad.State
 import Control.Lens
+import GameIO as Gio
 
 
 createPlayer :: String -> Player
 createPlayer name = Player {_name = name, _deck = [], _hand = [Cards.dragon, Cards.catOrDog, Cards.dog], _field = []}
 
-endRound :: GameState -> IO GameState
+endRound :: Gio.GameIO m => GameState -> m GameState
 endRound g = applyTurnEnds g
                 >>= return . changeCurrentPlayer
 
 changeCurrentPlayer :: GameState -> GameState
 changeCurrentPlayer = over players swap
 
-applyTurnEnds :: GameState -> IO GameState
+applyTurnEnds :: Gio.GameIO m => GameState -> m GameState
 applyTurnEnds g = playGame actions g
     where actions = concat $ fmap onTurnEndEffects $ g^..activePlayer.field.traverse.effects
 
@@ -54,58 +55,48 @@ onTurnEndEffects l = [a | OnTurnEnd a <- l]
 
 parseActions = convertGameAction . parseGameAction
 
-playGame ::  [Action] -> GameState -> IO GameState
+playGame ::  Gio.GameIO m => [Action] -> GameState -> m GameState
 playGame [] g = return g
 playGame (x:xs) g = do
-    putStrLn $ "resolved action: " ++ show x
+    Gio.logLn $ "resolved action: " ++ show x
     resolve x g >>= playGame xs
 
-resolve :: Action -> GameState -> IO GameState
+resolve :: Gio.GameIO m => Action -> GameState -> m GameState
 resolve (AddToField c) = return . over (activePlayer.field) (c:)
 resolve (Choose l) = resolveChoose l
 resolve EndTurn = endRound
 resolve _ = return . id
 
-resolveChoose :: [Action] -> GameState -> IO GameState
+resolveChoose :: Gio.GameIO m => [Action] -> GameState -> m GameState
 resolveChoose l gs = do
     maybeChoice <- getChoiceFromIO l
-    print maybeChoice
+    logLn . show $ maybeChoice
     case maybeChoice of
         Just choice -> resolve choice gs
         Nothing -> return gs
 
-getChoiceFromIO :: Show a => [a] -> IO (Maybe a)
-getChoiceFromIO l = do
-    displayEnumeratedItems l
-    putStr "Choose one: "
-    choice <- readLn
-    if choice < 1 || choice > length l
-        then return Nothing
-        else return $ Just (l !! (choice -1))
+getChoiceFromIO :: (Gio.GameIO m, Show a) => [a] -> m (Maybe a)
+getChoiceFromIO = chooseOne
 
-displayEnumeratedItems :: Show a => [a] -> IO ()
-displayEnumeratedItems = mapM_ displayTuple . zip [1..]
-    where displayTuple (i, v) = putStrLn $ show i ++ ": " ++ (show v)
+gameOver :: Gio.GameIO m => m ()
+gameOver = Gio.logLn "k bye"
 
-gameOver :: IO ()
-gameOver = putStrLn "k bye"
-
-gameLoop :: GameState -> IO ()
+gameLoop :: Gio.GameIO m => GameState -> m ()
 gameLoop gs = do
-    putStrLn $ "Current state: " ++ show gs
-    putStrLn "Player Hand:"
+    Gio.logLn $ "Current state: " ++ show gs
+    Gio.logLn "Player Hand:"
     displayEnumeratedItems $ gs^.activePlayer.hand
-    putStr "Select action (pass/end): "
-    inp <- getLine
+    Gio.log "Select action (pass/end): "
+    inp <- Gio.getLine
     if inp=="exit" || inp=="q"
         then gameOver
         else playGame (parseActions inp gs) gs
                 >>= gameLoop
 
-startGame :: IO ()
+startGame :: Gio.GameIO m => m ()
 startGame =  do
     let player1 = createPlayer "player1"
     let player2 = createPlayer "player2"
     let game = GameState (player1,player2)
     _ <- gameLoop game
-    putStrLn "Game end"
+    Gio.logLn "Game end"
