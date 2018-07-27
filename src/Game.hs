@@ -1,3 +1,4 @@
+module Game where
 import DataTypes
 import qualified Cards
 import Data.Tuple
@@ -101,8 +102,8 @@ gameLoop gs = do
         else playGame (parseActions inp gs) gs
                 >>= gameLoop
 
-main :: IO ()
-main =  do
+startGame :: IO ()
+startGame =  do
     let player1 = createPlayer "player1"
     let player2 = createPlayer "player2"
     let game = GameState (player1,player2)
