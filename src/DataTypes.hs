@@ -11,6 +11,8 @@ data CardEffect = OnPlay Action
 data Action = AddToField Card
     | EndTurn
     | Choose [Action]
+    | Destroy Card
+    | Attack Card Card -- Attack Target Source
     deriving (Show, Eq)
 
 type Players = (Player, Player)
@@ -28,6 +30,7 @@ data Player = Player {
 
 data GameAction = Play Card
     | PlayFromHand Int
+    | AnnounceAttack Int Int -- Attack Target Source
     | Pass
     | EndRound
     deriving Eq
@@ -53,3 +56,5 @@ makeLenses ''Card
 
 activePlayer :: Lens' GameState Player
 activePlayer = players._1
+enemyPlayer :: Lens' GameState Player
+enemyPlayer = players._2

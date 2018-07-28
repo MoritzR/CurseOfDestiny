@@ -37,6 +37,13 @@ parseGameAction s
             case result of
                 Just i -> PlayFromHand (i-1)
                 Nothing -> Pass
+    | length split == 3 && head split == "a" =
+        let 
+            maybeTarget = readMaybe $ split !! 1
+            maybeSource = readMaybe $ split !! 2
+            in case (maybeTarget, maybeSource) of
+                (Just target, Just source) -> AnnounceAttack (target-1) (source-1)
+                _ -> Pass
     | otherwise = Pass
         where split = words s
 
@@ -44,14 +51,20 @@ convertGameAction :: GameAction -> GameState -> [Action]
 convertGameAction (Play c) _ = (onPlayEffects . view effects) c
 convertGameAction (PlayFromHand i) gs = (onPlayEffects . view effects) c
             where c = (gs^.activePlayer.hand) !! i -- crashes program when i is out of range
+convertGameAction (AnnounceAttack target source) gs = [Attack targetCard sourceCard]
+            where
+                targetCard = (gs^.enemyPlayer.field) !! target -- crashes program when target is out of range
+                sourceCard = (gs^.activePlayer.field) !! source -- crashes program when source is out of range
 convertGameAction EndRound _ = return EndTurn
 convertGameAction _ _ = []
 
 onPlayEffects :: [CardEffect] -> [Action]
 onPlayEffects l = [a | OnPlay a <- l]
-
 onTurnEndEffects :: [CardEffect] -> [Action]
 onTurnEndEffects l = [a | OnTurnEnd a <- l]
+
+creaturePower :: Card -> Int
+creaturePower c = head [power | Creature power <- c^.features]
 
 parseActions = convertGameAction . parseGameAction
 
@@ -61,9 +74,17 @@ playGame (x:xs) g = do
     Gio.logLn $ "resolved action: " ++ show x
     resolve x g >>= playGame xs
 
+doAttack :: Card -> Card -> [Action]
+doAttack target source = case compare targetPower sourcePower of
+    LT -> [Destroy target]
+    GT -> [Destroy source]
+    EQ -> [Destroy target, Destroy source]
+    where (targetPower, sourcePower) = (creaturePower target, creaturePower source)
+
 resolve :: Gio.GameIO m => Action -> GameState -> m GameState
 resolve (AddToField c) = return . over (activePlayer.field) (c:)
 resolve (Choose l) = resolveChoose l
+resolve (Attack target source) = playGame $ doAttack target source
 resolve EndTurn = endRound
 resolve _ = return . id
 
