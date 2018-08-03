@@ -49,7 +49,7 @@ parseGameAction s
 
 convertGameAction :: GameAction -> GameState -> [Action]
 convertGameAction (Play c) _ = (onPlayEffects . view effects) c
-convertGameAction (PlayFromHand i) gs = (onPlayEffects . view effects) c
+convertGameAction (PlayFromHand i) gs = (DiscardFromHand c) : (onPlayEffects . view effects) c
             where c = (gs^.activePlayer.hand) !! i -- crashes program when i is out of range
 convertGameAction (AnnounceAttack target source) gs = [Attack targetCard sourceCard]
             where
@@ -71,7 +71,8 @@ parseActions = convertGameAction . parseGameAction
 playGame ::  Gio.GameIO m => [Action] -> GameState -> m GameState
 playGame [] g = return g
 playGame (x:xs) g = do
-    Gio.logLn $ "resolved action: " ++ show x
+    Gio.logLn $ "resolving action: " ++ show x
+    Gio.logLn $ "on current state: " ++ show g
     resolve x g >>= playGame xs
 
 doAttack :: Card -> Card -> [Action]
@@ -85,8 +86,15 @@ resolve :: Gio.GameIO m => Action -> GameState -> m GameState
 resolve (AddToField c) = return . over (activePlayer.field) (c:)
 resolve (Choose l) = resolveChoose l
 resolve (Attack target source) = playGame $ doAttack target source
+resolve (DiscardFromHand c) = return . over (activePlayer.hand) (deleteFirst c)
 resolve EndTurn = endRound
 resolve _ = return . id
+
+deleteFirst :: Eq a => a -> [a] -> [a]
+deleteFirst _ [] = []
+deleteFirst a (b:bc)
+    | a == b    = bc 
+    | otherwise = b : deleteFirst a bc
 
 resolveChoose :: Gio.GameIO m => [Action] -> GameState -> m GameState
 resolveChoose l gs = do

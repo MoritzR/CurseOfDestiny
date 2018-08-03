@@ -9,6 +9,7 @@ data CardEffect = OnPlay Action
     deriving Eq
 
 data Action = AddToField Card
+    | DiscardFromHand Card
     | EndTurn
     | Choose [Action]
     | Destroy Card
