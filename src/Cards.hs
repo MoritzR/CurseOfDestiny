@@ -1,13 +1,13 @@
 module Cards where
 import DataTypes
 
-creature name power effects = Card name [Creature power] $ (OnPlay $ AddToField thisCard): effects
-    where thisCard = creature name power effects
+creature id name power effects = Card id name [Creature power] $ (OnPlay $ AddToField thisCard): effects
+    where thisCard = creature id name power effects
 
-spell name effects = Card name [Spell] effects
+spell id name effects = Card id name [Spell] effects
 
-dragonEgg = creature "Dragon Egg" 0 [OnTurnEnd $ AddToField dragon]
-dragon = creature "Dragon" 2500 [OnPlay $ AddToField dragonEgg]
-dog = creature "Dog" 1500 []
-cat = creature "Cat" 500 []
-catOrDog = spell "Cat or Dog?" [OnPlay $ Choose [AddToField dog, AddToField cat]]
+dog = creature "1" "Dog" 1500 []
+cat = creature "2" "Cat" 500 []
+catOrDog = spell "3" "Cat or Dog?" [OnPlay $ Choose [AddToField dog, AddToField cat]]
+dragon = creature "4" "Dragon" 2500 [OnPlay $ AddToField dragonEgg]
+dragonEgg = creature "5" "Dragon Egg" 0 [OnTurnEnd $ AddToField dragon]

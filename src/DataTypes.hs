@@ -2,7 +2,7 @@
 
 module DataTypes where
 import Control.Monad.State
-import Control.Lens
+import Control.Lens (makeLenses, Lens', _1, _2)
 
 data CardEffect = OnPlay Action
     | OnTurnEnd Action
@@ -37,12 +37,18 @@ data GameAction = Play Card
     deriving Eq
 
 data Card = Card {
+    _cardId :: String,
     _cardName :: String,
     _features :: [Feature],
     _effects :: [CardEffect]
-}   deriving Eq
+}
 instance Show Card where
   show c = _cardName c ++  " (" ++ (show $ _features c) ++ ")"
+instance Eq Card where
+    (==) = mapEq _cardId (==)
+
+mapEq :: (Eq a, Eq b) => (b -> a) -> (a -> a -> Bool) -> (b ->b -> Bool)
+mapEq f eq = \e1 e2 -> (f e1) == (f e2)
 
 data Feature = Spell
     | Creature Int
