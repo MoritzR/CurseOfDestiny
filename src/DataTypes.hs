@@ -13,7 +13,8 @@ data Action = AddToField Card
     | DiscardFromHand Card
     | EndTurn
     | Choose [Action]
-    | Destroy Card
+    | DestroyOwn Card
+    | DestroyEnemy Card
     | Attack Card Card -- Attack Target Source
     deriving (Show, Eq)
 

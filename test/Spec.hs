@@ -67,4 +67,36 @@ main = hspec $ do
                     let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
     
                     (head newGame)^.activePlayer.field `shouldSatisfy` elem Cards.cat
-                
+
+        describe "attacking" $ do
+            let catPlayer = Player {_name = "catPlayer", _deck = [], _hand = [], _field = [Cards.cat]}
+            let dogPlayer = Player {_name = "dogPlayer", _deck = [], _hand = [], _field = [Cards.dog]}
+
+            context "a cat as a dog" $ do
+                let game = GameState (catPlayer, dogPlayer)
+
+                it "should destroy the cat" $ do
+                    let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game :: [GameState]
+    
+                    (head newGame)^.activePlayer.field `shouldBe` []
+                    (head newGame)^.enemyPlayer.field `shouldBe` [Cards.dog]
+
+            context "a dog as a cat" $ do
+                let game = GameState (dogPlayer, catPlayer)
+
+                it "should destroy the cat" $ do
+
+                    let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game :: [GameState]
+    
+                    (head newGame)^.activePlayer.field `shouldBe` [Cards.dog]
+                    (head newGame)^.enemyPlayer.field `shouldBe` []
+            context "a cat as a cat" $ do
+                let game = GameState (catPlayer, catPlayer)
+
+                it "should destroy the both cats" $ do
+
+                    let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game :: [GameState]
+    
+                    (head newGame)^.activePlayer.field `shouldBe` []
+                    (head newGame)^.enemyPlayer.field `shouldBe` []
+        
