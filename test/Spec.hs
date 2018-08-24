@@ -33,6 +33,8 @@ main = hspec $ do
     describe "cards equality" $ do
         it "should return true when comparing two dog cards" $
             Cards.dog == Cards.dog `shouldBe` True
+        it "should return false when comparing a cat card and a dog card" $
+            Cards.cat == Cards.dog `shouldBe` False
     
     describe "game state interactions" $ do
         let player1 = Player {_name = "player", _deck = [], _hand = [Cards.dog], _field = []}
