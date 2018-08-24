@@ -57,4 +57,14 @@ main = hspec $ do
                 let newGame = resolve (DiscardFromHand Cards.dog) game :: [GameState]
 
                 (head newGame)^.activePlayer.hand `shouldBe` []
-            
+
+        describe "activating" $ do
+            describe "catFactory" $ do
+                it "should add a cat to the active player's hand" $ do
+                    let player1 = Player {_name = "player", _deck = [], _hand = [], _field = [Cards.catFactory]}
+                    let game = GameState (player1, player1)
+
+                    let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
+    
+                    (head newGame)^.activePlayer.field `shouldSatisfy` elem Cards.cat
+                

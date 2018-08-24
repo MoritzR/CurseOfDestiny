@@ -10,7 +10,7 @@ import GameIO as Gio
 
 
 createPlayer :: String -> Player
-createPlayer name = Player {_name = name, _deck = [], _hand = [Cards.dragon, Cards.catOrDog, Cards.dog], _field = []}
+createPlayer name = Player {_name = name, _deck = [], _hand = [Cards.dragon, Cards.catOrDog, Cards.dog, Cards.catFactory], _field = []}
 
 endRound :: Gio.GameIO m => GameState -> m GameState
 endRound g = applyTurnEnds g
@@ -37,6 +37,11 @@ parseGameAction s
             case result of
                 Just i -> PlayFromHand (i-1)
                 Nothing -> Pass
+    | length split == 2 && head split == "c" =
+        let result = readMaybe $ split !! 1 in
+            case result of
+                Just i -> ActivateFromField (i-1)
+                Nothing -> Pass
     | length split == 3 && head split == "a" =
         let 
             maybeTarget = readMaybe $ split !! 1
@@ -51,6 +56,8 @@ convertGameAction :: GameAction -> GameState -> [Action]
 convertGameAction (Play c) _ = (onPlayEffects . view effects) c
 convertGameAction (PlayFromHand i) gs = (DiscardFromHand c) : (onPlayEffects . view effects) c
             where c = (gs^.activePlayer.hand) !! i -- crashes program when i is out of range
+convertGameAction (ActivateFromField i) gs = (onActivateEffects . view effects) c
+            where c = (gs^.activePlayer.field) !! i -- crashes program when i is out of range
 convertGameAction (AnnounceAttack target source) gs = [Attack targetCard sourceCard]
             where
                 targetCard = (gs^.enemyPlayer.field) !! target -- crashes program when target is out of range
@@ -62,6 +69,8 @@ onPlayEffects :: [CardEffect] -> [Action]
 onPlayEffects l = [a | OnPlay a <- l]
 onTurnEndEffects :: [CardEffect] -> [Action]
 onTurnEndEffects l = [a | OnTurnEnd a <- l]
+onActivateEffects :: [CardEffect] -> [Action]
+onActivateEffects l = [a | OnActivate a <- l]
 
 creaturePower :: Card -> Int
 creaturePower c = head [power | Creature power <- c^.features]
@@ -93,7 +102,7 @@ resolve _ = return . id
 deleteFirst :: Eq a => a -> [a] -> [a]
 deleteFirst _ [] = []
 deleteFirst a (b:bc)
-    | a == b    = bc 
+    | a == b    = bc
     | otherwise = b : deleteFirst a bc
 
 resolveChoose :: Gio.GameIO m => [Action] -> GameState -> m GameState
@@ -112,6 +121,7 @@ gameOver = Gio.logLn "k bye"
 
 gameLoop :: Gio.GameIO m => GameState -> m ()
 gameLoop gs = do
+    Gio.logLn ""
     Gio.logLn $ "Current state: " ++ show gs
     Gio.logLn "Player Hand:"
     displayEnumeratedItems $ gs^.activePlayer.hand

@@ -6,6 +6,7 @@ import Control.Lens (makeLenses, Lens', _1, _2)
 
 data CardEffect = OnPlay Action
     | OnTurnEnd Action
+    | OnActivate Action
     deriving Eq
 
 data Action = AddToField Card
@@ -32,6 +33,7 @@ data Player = Player {
 data GameAction = Play Card
     | PlayFromHand Int
     | AnnounceAttack Int Int -- Attack Target Source
+    | ActivateFromField Int
     | Pass
     | EndRound
     deriving Eq
