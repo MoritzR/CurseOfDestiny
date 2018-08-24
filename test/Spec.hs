@@ -51,7 +51,21 @@ main = hspec $ do
                 let newGame = playGame (convertGameAction (PlayFromHand 0) game) game :: [GameState]
 
                 (head newGame)^.activePlayer.hand `shouldBe` []
-        
+
+        describe "activating the 'Master of Greed'" $ do
+            it "should destroy itself when its the only card on the active player's the field" $ do
+                let player1 = Player {_name = "player", _deck = [], _hand = [], _field = [Cards.masterOfGreed]}
+                let game = GameState (player1, player1)
+                let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
+
+                (head newGame)^.activePlayer.field `shouldBe` []
+            it "should destroy another card on the field when the other card is chosen to be destroyed" $ do
+                let player1 = Player {_name = "player", _deck = [], _hand = [], _field = [Cards.dog, Cards.masterOfGreed]}
+                let game = GameState (player1, player1)
+                let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
+
+                (head newGame)^.activePlayer.field `shouldBe` [Cards.masterOfGreed]
+
         describe "resolving DiscardFromHand" $ do
             it "should remove that card from the active player's hand" $ do
                 let newGame = resolve (DiscardFromHand Cards.dog) game :: [GameState]

@@ -10,7 +10,7 @@ import GameIO as Gio
 
 
 createPlayer :: String -> Player
-createPlayer name = Player {_name = name, _deck = [], _hand = [Cards.dragon, Cards.catOrDog, Cards.dog, Cards.catFactory], _field = []}
+createPlayer name = Player {_name = name, _deck = [], _hand = [Cards.dragon, Cards.catOrDog, Cards.dog, Cards.catFactory, Cards.masterOfGreed], _field = []}
 
 endRound :: Gio.GameIO m => GameState -> m GameState
 endRound g = applyTurnEnds g
@@ -96,10 +96,14 @@ resolve (AddToField c) = return . over (activePlayer.field) (c:)
 resolve (Choose l) = resolveChoose l
 resolve (DestroyOwn c) = return . over (activePlayer.field) (deleteFirst c)
 resolve (DestroyEnemy c) = return . over (enemyPlayer.field) (deleteFirst c)
+resolve (DestroyOneOwn) = \gs -> playGame (doDestroyOwn gs) gs
 resolve (Attack target source) = playGame $ doAttack target source
 resolve (DiscardFromHand c) = return . over (activePlayer.hand) (deleteFirst c)
 resolve EndTurn = endRound
 resolve _ = return . id
+
+doDestroyOwn :: GameState -> [Action]
+doDestroyOwn = return . Choose . fmap DestroyOwn . (^.activePlayer.field)
 
 deleteFirst :: Eq a => a -> [a] -> [a]
 deleteFirst _ [] = []

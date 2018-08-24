@@ -15,6 +15,7 @@ data Action = AddToField Card
     | Choose [Action]
     | DestroyOwn Card
     | DestroyEnemy Card
+    | DestroyOneOwn
     | Attack Card Card -- Attack Target Source
     deriving (Show, Eq)
 
