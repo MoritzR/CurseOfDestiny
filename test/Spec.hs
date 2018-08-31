@@ -6,9 +6,9 @@ import Control.Lens
 import qualified Cards
 
 instance GameIO [] where
-    getLine = ["some line"]
-    log = \_ -> [()]
-    logLn = \_ -> [()]
+    getLine = return "some line"
+    log = \_ -> return ()
+    logLn = \_ -> return ()
     chooseOne = return . Just . head
 
 main :: IO ()
