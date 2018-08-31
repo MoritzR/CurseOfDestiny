@@ -86,16 +86,15 @@ playGame (x:xs) g = do
 
 doAttack :: Card -> Card -> [Action]
 doAttack target source = case compare targetPower sourcePower of
-    LT -> [DestroyEnemy target]
-    GT -> [DestroyOwn source]
-    EQ -> [DestroyEnemy target, DestroyOwn source]
+    LT -> [Destroy (enemyPlayer.field) target]
+    GT -> [Destroy (activePlayer.field) source]
+    EQ -> [Destroy (enemyPlayer.field) target, Destroy (activePlayer.field) source]
     where (targetPower, sourcePower) = (creaturePower target, creaturePower source)
 
 resolve :: Gio.GameIO m => Action -> GameState -> m GameState
 resolve (AddToField c) = return . over (activePlayer.field) (c:)
 resolve (Choose l) = resolveChoose l
-resolve (DestroyOwn c) = return . over (activePlayer.field) (deleteFirst c)
-resolve (DestroyEnemy c) = return . over (enemyPlayer.field) (deleteFirst c)
+resolve (Destroy cardLens c) = return . over cardLens (deleteFirst c)
 resolve (Attack target source) = playGame $ doAttack target source
 resolve (DiscardFromHand c) = return . over (activePlayer.hand) (deleteFirst c)
 resolve (DestroyOne cardGetter) = \gs -> playGame (doDestroy cardGetter gs) gs
@@ -103,7 +102,7 @@ resolve EndTurn = endRound
 resolve _ = return . id
 
 doDestroy :: CardGetter -> GameState -> [Action]
-doDestroy cardGetter = return . Choose . fmap DestroyOwn . cardGetter
+doDestroy cardGetter = return . Choose . fmap (Destroy (activePlayer.field)) . cardGetter
 
 deleteFirst :: Eq a => a -> [a] -> [a]
 deleteFirst _ [] = []
