@@ -12,7 +12,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Game, DataTypes, Cards, GameIO
+  exposed-modules:     Game, DataTypes, Cards, GameIO, Decks
   ghc-options:         -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , mtl

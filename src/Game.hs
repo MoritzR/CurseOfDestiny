@@ -2,7 +2,7 @@
 
 module Game where
 import DataTypes
-import qualified Cards
+import qualified Decks
 import Data.Tuple
 import Data.List
 import Text.Read
@@ -12,7 +12,7 @@ import GameIO as Gio
 
 
 createPlayer :: String -> Player
-createPlayer name = Player {_name = name, _deck = [], _hand = [Cards.dragon, Cards.catOrDog, Cards.dog, Cards.catFactory, Cards.masterOfGreed], _field = []}
+createPlayer name = Player {_name = name, _deck = Decks.mixed, _hand = Decks.mixed, _field = []}
 
 endRound :: Gio.GameIO m => GameState -> m GameState
 endRound g = applyTurnEnds g
@@ -29,8 +29,6 @@ pass :: GameState -> GameState
 pass g = g
 
 parseGameAction :: String -> GameAction
-parseGameAction "play dragon" = Play Cards.dragon
-parseGameAction "play catdog" = Play Cards.catOrDog
 parseGameAction "pass" = Pass
 parseGameAction "end" = EndRound
 parseGameAction s
