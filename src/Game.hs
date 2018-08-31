@@ -1,3 +1,5 @@
+{-# LANGUAGE Rank2Types #-}
+
 module Game where
 import DataTypes
 import qualified Cards
@@ -97,12 +99,12 @@ resolve (Choose l) = resolveChoose l
 resolve (Destroy cardLens c) = return . over cardLens (deleteFirst c)
 resolve (Attack target source) = playGame $ doAttack target source
 resolve (DiscardFromHand c) = return . over (activePlayer.hand) (deleteFirst c)
-resolve (DestroyOne cardGetter) = \gs -> playGame (doDestroy cardGetter gs) gs
+resolve (DestroyOne cardLens) = \gs -> playGame (doDestroy cardLens gs) gs
 resolve EndTurn = endRound
 resolve _ = return . id
 
-doDestroy :: CardGetter -> GameState -> [Action]
-doDestroy cardGetter = return . Choose . fmap (Destroy (activePlayer.field)) . cardGetter
+doDestroy :: CardLens -> GameState -> [Action]
+doDestroy cardLens = return . Choose . fmap (Destroy cardLens) . (^.cardLens)
 
 deleteFirst :: Eq a => a -> [a] -> [a]
 deleteFirst _ [] = []

@@ -17,7 +17,7 @@ data Action = AddToField Card
     | EndTurn
     | Choose [Action]
     | Destroy CardLens Card
-    | DestroyOne CardGetter
+    | DestroyOne CardLens
     | Attack Card Card -- Attack Target Source
 
 instance Show Action where
@@ -33,7 +33,6 @@ instance Eq Action where
     _ == _ = True
 
 type CardLens = Lens' GameState [Card]
-type CardGetter = GameState -> [Card]
 
 type Players = (Player, Player)
 
