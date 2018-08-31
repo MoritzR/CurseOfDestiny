@@ -1,4 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module DataTypes where
 import Control.Monad.State
@@ -15,11 +17,18 @@ data Action = AddToField Card
     | Choose [Action]
     | DestroyOwn Card
     | DestroyEnemy Card
-    | DestroyOneOwn
+    | DestroyOne CardGetter
     | Attack Card Card -- Attack Target Source
     deriving (Show, Eq)
 
 type Players = (Player, Player)
+
+type CardGetter = GameState -> [Card]
+instance Show CardGetter where
+    show = const ""
+instance Eq CardGetter where
+    -- At the moment, there is no need to differentiate CardGetters
+    (==) = \_ _ -> True
 
 data GameState = GameState {
     _players :: Players

@@ -96,14 +96,14 @@ resolve (AddToField c) = return . over (activePlayer.field) (c:)
 resolve (Choose l) = resolveChoose l
 resolve (DestroyOwn c) = return . over (activePlayer.field) (deleteFirst c)
 resolve (DestroyEnemy c) = return . over (enemyPlayer.field) (deleteFirst c)
-resolve (DestroyOneOwn) = \gs -> playGame (doDestroyOwn gs) gs
 resolve (Attack target source) = playGame $ doAttack target source
 resolve (DiscardFromHand c) = return . over (activePlayer.hand) (deleteFirst c)
+resolve (DestroyOne cardGetter) = \gs -> playGame (doDestroy cardGetter gs) gs
 resolve EndTurn = endRound
 resolve _ = return . id
 
-doDestroyOwn :: GameState -> [Action]
-doDestroyOwn = return . Choose . fmap DestroyOwn . (^.activePlayer.field)
+doDestroy :: CardGetter -> GameState -> [Action]
+doDestroy cardGetter = return . Choose . fmap DestroyOwn . cardGetter
 
 deleteFirst :: Eq a => a -> [a] -> [a]
 deleteFirst _ [] = []
