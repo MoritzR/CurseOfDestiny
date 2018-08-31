@@ -72,6 +72,13 @@ main = hspec $ do
                     let newGame = playGame (convertGameAction (ActivateFromField 1) game) game :: [GameState]
     
                     (head newGame)^.activePlayer.field `shouldBe` [Cards.masterOfGreed]
+                it "should draw a card for the active player" $ do
+                    let player1 = Player {_name = "player", _deck = [Cards.dog], _hand = [], _field = [Cards.masterOfGreed]}
+                    let game = GameState (player1, player1)
+                    let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
+    
+                    (head newGame)^.activePlayer.hand `shouldBe` [Cards.dog]
+                    (head newGame)^.activePlayer.deck `shouldBe` []
 
             describe "catFactory" $ do
                 it "should add a cat to the active player's hand" $ do

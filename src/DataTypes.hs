@@ -18,6 +18,7 @@ data Action = AddToField Card
     | Choose [Action]
     | Destroy CardLens Card
     | DestroyOne CardLens
+    | Draw PlayerLens
     | Attack Card Card -- Attack Target Source
 
 instance Show Action where
@@ -27,12 +28,14 @@ instance Show Action where
     show (Choose actions) = "Choose " ++ show actions
     show (Destroy _ c) = "Destroy " ++ show c
     show (DestroyOne _) = "DestroyOne"
+    show (Draw _) = "Draw"
     show (Attack c1 c2) = "Attack " ++ show c1 ++ " " ++ show c2
 instance Eq Action where
     -- At the moment, there is no need to differentiate Actions
     _ == _ = True
 
 type CardLens = Lens' GameState [Card]
+type PlayerLens = Lens' GameState Player
 
 type Players = (Player, Player)
 
