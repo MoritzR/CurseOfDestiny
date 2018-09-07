@@ -126,7 +126,6 @@ main = hspec $ do
                 let game = GameState (dogPlayer, catPlayer)
 
                 it "should destroy the cat" $ do
-
                     let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game :: [GameState]
     
                     (head newGame)^.activePlayer.field `shouldBe` [Cards.dog]
@@ -136,9 +135,18 @@ main = hspec $ do
                 let game = GameState (catPlayer, catPlayer)
 
                 it "should destroy the both cats" $ do
-
                     let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game :: [GameState]
     
                     (head newGame)^.activePlayer.field `shouldBe` []
                     (head newGame)^.enemyPlayer.field `shouldBe` []
-        
+            
+            context "a player directly" $ do
+                let game = GameState (catPlayer, catPlayer)
+
+                it "should reduce the attacked players hp by 1" $ do
+                    let oldHp = game^.enemyPlayer.playerHp
+
+                    let newGame = playGame (convertGameAction (AnnounceDirectAttack 0) game) game :: [GameState]
+
+                    (head newGame)^.enemyPlayer.playerHp `shouldBe` (oldHp - 1)
+                    

@@ -19,6 +19,7 @@ data Action = AddToField Card
     | Destroy CardLens Card
     | DestroyOne CardLens
     | Draw PlayerLens
+    | DirectAttack Card PlayerLens
     | Attack Card Card -- Attack Target Source
 
 instance Show Action where
@@ -30,6 +31,7 @@ instance Show Action where
     show (DestroyOne _) = "DestroyOne"
     show (Draw _) = "Draw"
     show (Attack c1 c2) = "Attack " ++ show c1 ++ " " ++ show c2
+    show (DirectAttack c _) = "DirectAttack from  " ++ show c
 instance Eq Action where
     -- At the moment, there is no need to differentiate Actions
     _ == _ = True
@@ -63,6 +65,7 @@ instance Eq PlayerCreature where
 data GameAction = Play Card
     | PlayFromHand Int
     | AnnounceAttack Int Int -- Attack Target Source
+    | AnnounceDirectAttack Int -- Attack Source
     | ActivateFromField Int
     | Pass
     | EndRound
@@ -92,8 +95,11 @@ instance Show Feature where
 makeLenses ''GameState
 makeLenses ''Player
 makeLenses ''Card
+makeLenses ''PlayerCreature
 
 activePlayer :: Lens' GameState Player
 activePlayer = players._1
 enemyPlayer :: Lens' GameState Player
 enemyPlayer = players._2
+playerHp :: Lens' Player Int
+playerHp = playerCreature.hp

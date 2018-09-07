@@ -43,6 +43,18 @@ parseGameAction s
             case result of
                 Just i -> ActivateFromField (i-1)
                 Nothing -> Pass
+    | length split == 2 && head split == "d" =
+        let result = readMaybe $ split !! 1 in
+            case result of
+                Just i -> AnnounceDirectAttack (i-1)
+                Nothing -> Pass
+    | length split == 3 && head split == "a" =
+        let 
+            maybeTarget = readMaybe $ split !! 1
+            maybeSource = readMaybe $ split !! 2
+            in case (maybeTarget, maybeSource) of
+                (Just target, Just source) -> AnnounceAttack (target-1) (source-1)
+                _ -> Pass
     | length split == 3 && head split == "a" =
         let 
             maybeTarget = readMaybe $ split !! 1
@@ -63,6 +75,8 @@ convertGameAction (AnnounceAttack target source) gs = [Attack targetCard sourceC
             where
                 targetCard = (gs^.enemyPlayer.field) !! target -- crashes program when target is out of range
                 sourceCard = (gs^.activePlayer.field) !! source -- crashes program when source is out of range
+convertGameAction (AnnounceDirectAttack i) gs = return $ DirectAttack c (enemyPlayer)
+            where c = (gs^.activePlayer.field) !! i -- crashes program when i is out of range
 convertGameAction EndRound _ = return EndTurn
 convertGameAction _ _ = []
 
@@ -97,6 +111,7 @@ resolve (AddToField c) = return . over (activePlayer.field) (c:)
 resolve (Choose l) = resolveChoose l
 resolve (Destroy cardLens c) = return . over cardLens (deleteFirst c)
 resolve (Attack target source) = playGame $ doAttack target source
+resolve (DirectAttack _source targetPlayerLens) = return . (targetPlayerLens.playerHp -~ 1)
 resolve (DiscardFromHand c) = return . over (activePlayer.hand) (deleteFirst c)
 resolve (DestroyOne cardLens) = \gs -> playGame (doDestroy cardLens gs) gs
 resolve (Draw playerLens) = \gs -> return . over (playerLens.deck) tail . over (playerLens.hand) ((:) $ topOfDeck playerLens gs) $ gs
