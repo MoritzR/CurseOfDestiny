@@ -58,6 +58,24 @@ main = hspec $ do
 
                 (head newGame)^.activePlayer.hand `shouldBe` []
 
+        describe "ending the turn" $ do
+            it "should switch the current active player" $ do
+                game^.activePlayer.name `shouldBe` "player"
+
+                let newGame = resolve EndTurn game :: [GameState]
+
+                (head newGame)^.activePlayer.name `shouldBe` "other player"
+
+            it "should evolve the dragonEgg to a dragon" $ do
+                let endTurnPlayer1 = Player {_name = "player", _deck = [], _hand = [Cards.dog], _field = [Cards.dragonEgg]}
+                let endTurnPlayer2 = Player {_name = "other player", _deck = [], _hand = [Cards.dog], _field = []}
+                let endTurnGame = GameState (endTurnPlayer1,endTurnPlayer2)
+                endTurnGame^.activePlayer.name `shouldBe` "player"
+
+                let newGame = resolve EndTurn endTurnGame :: [GameState]
+
+                (head newGame)^.enemyPlayer.field `shouldBe` [Cards.dragon]
+
         describe "activating" $ do
             describe "Master of Greed" $ do
                 it "should destroy itself when its the only card on the active player's the field" $ do
