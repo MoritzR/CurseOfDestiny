@@ -3,6 +3,7 @@
 module Game where
 import DataTypes
 import qualified Decks
+import qualified Cards
 import Data.Tuple
 import Data.List
 import Text.Read
@@ -12,7 +13,7 @@ import GameIO as Gio
 
 
 createPlayer :: String -> Player
-createPlayer name = Player {_name = name, _deck = Decks.mixed, _hand = Decks.mixed, _field = []}
+createPlayer name = Player {_name = name, _deck = Decks.mixed, _hand = Decks.mixed, _field = [], _playerCreature = Cards.defaultPlayerCreature}
 
 endRound :: Gio.GameIO m => GameState -> m GameState
 endRound g = applyTurnEnds g

@@ -47,8 +47,18 @@ data Player = Player {
     _name :: String,
     _deck :: [Card],
     _hand :: [Card],
-    _field :: [Card]
-} deriving (Show, Eq)
+    _field :: [Card],
+    _playerCreature :: PlayerCreature
+} deriving (Show)
+instance Eq Player where
+    (==) = mapEq _name (==)
+
+data PlayerCreature = PlayerCreature {
+    _playerCreatureId :: String,
+    _hp :: Int
+} deriving Show
+instance Eq PlayerCreature where
+    (==) = mapEq _playerCreatureId (==)
 
 data GameAction = Play Card
     | PlayFromHand Int

@@ -11,6 +11,8 @@ instance GameIO [] where
     logLn = \_ -> return ()
     chooseOne = return . Just . head
 
+defaultPlayer = Player {_name = "some player", _deck = [], _hand = [], _field = [], _playerCreature = Cards.defaultPlayerCreature}
+
 main :: IO ()
 main = hspec $ do
     describe "card effects filters" $ do
@@ -37,8 +39,8 @@ main = hspec $ do
             Cards.cat == Cards.dog `shouldBe` False
     
     describe "game state interactions" $ do
-        let player1 = Player {_name = "player", _deck = [], _hand = [Cards.dog], _field = []}
-        let player2 = Player {_name = "other player", _deck = [], _hand = [Cards.dog], _field = []}
+        let player1 = defaultPlayer {_name = "player", _hand = [Cards.dog]}
+        let player2 = defaultPlayer {_name = "other player", _hand = [Cards.dog]}
         let game = GameState (player1,player2)
 
         describe "playing a creature" $ do
@@ -67,9 +69,9 @@ main = hspec $ do
                 (head newGame)^.activePlayer.name `shouldBe` "other player"
 
             it "should evolve the dragonEgg to a dragon" $ do
-                let endTurnPlayer1 = Player {_name = "player", _deck = [], _hand = [Cards.dog], _field = [Cards.dragonEgg]}
-                let endTurnPlayer2 = Player {_name = "other player", _deck = [], _hand = [Cards.dog], _field = []}
-                let endTurnGame = GameState (endTurnPlayer1,endTurnPlayer2)
+                let endTurnPlayer1 = defaultPlayer {_name = "player", _hand = [Cards.dog], _field = [Cards.dragonEgg]}
+                let endTurnPlayer2 = defaultPlayer {_name = "other player", _hand = [Cards.dog]}
+                let endTurnGame = GameState (endTurnPlayer1, endTurnPlayer2)
                 endTurnGame^.activePlayer.name `shouldBe` "player"
 
                 let newGame = resolve EndTurn endTurnGame :: [GameState]
@@ -79,19 +81,19 @@ main = hspec $ do
         describe "activating" $ do
             describe "Master of Greed" $ do
                 it "should destroy itself when its the only card on the active player's the field" $ do
-                    let player1 = Player {_name = "player", _deck = [], _hand = [], _field = [Cards.masterOfGreed]}
+                    let player1 = defaultPlayer {_field = [Cards.masterOfGreed]}
                     let game = GameState (player1, player1)
                     let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
     
                     (head newGame)^.activePlayer.field `shouldBe` []
                 it "should destroy another card on the field when the other card is chosen to be destroyed" $ do
-                    let player1 = Player {_name = "player", _deck = [], _hand = [], _field = [Cards.dog, Cards.masterOfGreed]}
+                    let player1 = defaultPlayer { _field = [Cards.dog, Cards.masterOfGreed]}
                     let game = GameState (player1, player1)
                     let newGame = playGame (convertGameAction (ActivateFromField 1) game) game :: [GameState]
     
                     (head newGame)^.activePlayer.field `shouldBe` [Cards.masterOfGreed]
                 it "should draw a card for the active player" $ do
-                    let player1 = Player {_name = "player", _deck = [Cards.dog], _hand = [], _field = [Cards.masterOfGreed]}
+                    let player1 = defaultPlayer { _deck = [Cards.dog], _field = [Cards.masterOfGreed]}
                     let game = GameState (player1, player1)
                     let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
     
@@ -100,7 +102,7 @@ main = hspec $ do
 
             describe "catFactory" $ do
                 it "should add a cat to the active player's hand" $ do
-                    let player1 = Player {_name = "player", _deck = [], _hand = [], _field = [Cards.catFactory]}
+                    let player1 = defaultPlayer {_field = [Cards.catFactory]}
                     let game = GameState (player1, player1)
 
                     let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
@@ -108,8 +110,8 @@ main = hspec $ do
                     (head newGame)^.activePlayer.field `shouldSatisfy` elem Cards.cat
 
         describe "attacking" $ do
-            let catPlayer = Player {_name = "catPlayer", _deck = [], _hand = [], _field = [Cards.cat]}
-            let dogPlayer = Player {_name = "dogPlayer", _deck = [], _hand = [], _field = [Cards.dog]}
+            let catPlayer = defaultPlayer {_name = "catPlayer", _field = [Cards.cat]}
+            let dogPlayer = defaultPlayer {_name = "dogPlayer", _field = [Cards.dog]}
 
             context "a cat as a dog" $ do
                 let game = GameState (catPlayer, dogPlayer)
