@@ -27,7 +27,7 @@ applyTurnEnds g = playGame actions g
     where actions = concat $ fmap onTurnEndEffects $ g^..activePlayer.field.traverse.effects
 
 pass :: GameState -> GameState
-pass g = g
+pass = id
 
 parseGameAction :: String -> GameAction
 parseGameAction "pass" = Pass
