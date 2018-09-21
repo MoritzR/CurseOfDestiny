@@ -6,6 +6,7 @@ import qualified Decks
 import qualified Cards
 import Data.Tuple
 import Data.List
+import Data.Maybe (fromMaybe)
 import Text.Read
 import Control.Monad.State
 import Control.Lens
@@ -34,20 +35,11 @@ parseGameAction "pass" = Pass
 parseGameAction "end" = EndRound
 parseGameAction s
     | length split == 2 && head split == "p" =
-        let result = readMaybe $ split !! 1 in
-            case result of
-                Just i -> PlayFromHand (i-1)
-                Nothing -> Pass
+        orElsePass $ fmap (PlayFromHand . (1-)) (readFirstNumber split)
     | length split == 2 && head split == "c" =
-        let result = readMaybe $ split !! 1 in
-            case result of
-                Just i -> ActivateFromField (i-1)
-                Nothing -> Pass
+        orElsePass $ fmap (ActivateFromField . (1-)) (readFirstNumber split)
     | length split == 2 && head split == "d" =
-        let result = readMaybe $ split !! 1 in
-            case result of
-                Just i -> AnnounceDirectAttack (i-1)
-                Nothing -> Pass
+        orElsePass $ fmap (AnnounceDirectAttack . (1-)) (readFirstNumber split)
     | length split == 3 && head split == "a" =
         let 
             maybeTarget = readMaybe $ split !! 1
@@ -64,6 +56,12 @@ parseGameAction s
                 _ -> Pass
     | otherwise = Pass
         where split = words s
+
+readFirstNumber :: [String] -> Maybe Int
+readFirstNumber l = readMaybe . (!!1) $ l
+
+orElsePass :: Maybe GameAction -> GameAction
+orElsePass = fromMaybe Pass
 
 convertGameAction :: GameAction -> GameState -> [Action]
 convertGameAction (Play c) _ = (onPlayEffects . view effects) c
