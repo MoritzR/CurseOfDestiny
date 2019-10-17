@@ -13,6 +13,7 @@ catOrDog = spell "3" "Cat or Dog?" [OnPlay $ Choose [AddToField dog, AddToField 
 dragon = creature "4" "Dragon" 2500 [OnPlay $ AddToField dragonEgg]
 dragonEgg = creature "5" "Dragon Egg" 0 [OnTurnEnd $ AddToField dragon, OnTurnEnd $ Destroy (activePlayer.field) dragonEgg]
 catFactory = creature "6" "Cat Factory" 500 [OnActivate $ AddToField cat]
-masterOfGreed = creature "7" "Master of Greed" 500 [OnActivate $ DestroyOne $ activePlayer.field, OnActivate $ Draw $ activePlayer]
+masterOfGreed = creature "7" "Master of Greed" 500 [OnActivate $ DestroyOne $ activePlayer.field, OnActivate $ Draw activePlayer]
+mrBuff = creature "8" "Mr. Buff" 200 [WhileOnField $ IncreaseAttack 5]
 
 defaultPlayerCreature = PlayerCreature "1" 7

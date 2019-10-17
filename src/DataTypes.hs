@@ -10,6 +10,10 @@ import Control.Lens (makeLenses, Lens', _1, _2)
 data CardEffect = OnPlay Action
     | OnTurnEnd Action
     | OnActivate Action
+    | WhileOnField LastingEffect
+    deriving Eq
+
+data LastingEffect = IncreaseAttack Int
     deriving Eq
 
 data Action = AddToField Card

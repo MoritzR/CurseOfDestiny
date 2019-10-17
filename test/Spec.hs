@@ -77,6 +77,19 @@ main = hspec $ do
                 let newGame = resolve EndTurn endTurnGame :: [GameState]
 
                 (head newGame)^.enemyPlayer.field `shouldBe` [Cards.dragon]
+        
+        describe "playing" $ do
+            describe "Mr. Buff" $ do
+                let player1 = defaultPlayer {_field = [Cards.cat], _hand = [Cards.mrBuff]}
+                let game = GameState (player1, player1)
+
+                it "should increase the attack of the other cards on the field by 5" $ do
+                    let oldPower = creaturePower $ head $ game^.activePlayer.field
+
+                    let newGame = playGame (convertGameAction (PlayFromHand 0) game) game :: [GameState]
+
+                    let activePlayerField = ((head newGame)^.activePlayer.field)
+                    creaturePower (activePlayerField !! 1) `shouldBe` oldPower + 5
 
         describe "activating" $ do
             describe "Master of Greed" $ do
