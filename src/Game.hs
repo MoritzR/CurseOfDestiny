@@ -11,6 +11,7 @@ import Text.Read
 import Control.Monad.State
 import Control.Lens
 import GameIO as Gio
+import GameActionParser (parseGameAction)
 
 
 createPlayer :: String -> Player
@@ -29,33 +30,6 @@ applyTurnEnds g = playGame actions g
 
 pass :: GameState -> GameState
 pass = id
-
-parseGameAction :: String -> GameAction
-parseGameAction "pass" = Pass
-parseGameAction "end" = EndRound
-parseGameAction s
-    | length split == 2 && head split == "p" =
-        orElsePass $ fmap (PlayFromHand . (1-)) (readFirstNumber split)
-    | length split == 2 && head split == "c" =
-        orElsePass $ fmap (ActivateFromField . (1-)) (readFirstNumber split)
-    | length split == 2 && head split == "d" =
-        orElsePass $ fmap (AnnounceDirectAttack . (1-)) (readFirstNumber split)
-    | length split == 3 && head split == "a" =
-        let 
-            maybeTarget = readMaybe $ split !! 1
-            maybeSource = readMaybe $ split !! 2
-            in case (maybeTarget, maybeSource) of
-                (Just target, Just source) -> AnnounceAttack (target-1) (source-1)
-                _ -> Pass
-    | length split == 3 && head split == "a" =
-        let 
-            maybeTarget = readMaybe $ split !! 1
-            maybeSource = readMaybe $ split !! 2
-            in case (maybeTarget, maybeSource) of
-                (Just target, Just source) -> AnnounceAttack (target-1) (source-1)
-                _ -> Pass
-    | otherwise = Pass
-        where split = words s
 
 readFirstNumber :: [String] -> Maybe Int
 readFirstNumber l = readMaybe . (!!1) $ l
@@ -88,7 +62,8 @@ onActivateEffects l = [a | OnActivate a <- l]
 creaturePower :: Card -> Int
 creaturePower c = head [power | Creature power <- c^.features]
 
-parseActions = convertGameAction . parseGameAction
+parseActions :: String -> GameState -> [Action]
+parseActions = convertGameAction . orElsePass . parseGameAction
 
 playGame ::  Gio.GameIO m => [Action] -> GameState -> m GameState
 playGame [] g = return g
