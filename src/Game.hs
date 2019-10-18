@@ -89,7 +89,6 @@ resolve (DiscardFromHand c) = return . over (activePlayer.hand) (deleteFirst c)
 resolve (DestroyOne cardLens) = \gs -> playGame (doDestroy cardLens gs) gs
 resolve (Draw playerLens) = \gs -> return . over (playerLens.deck) tail . over (playerLens.hand) ((:) $ topOfDeck playerLens gs) $ gs
 resolve EndTurn = endRound
-resolve _ = return . id
 
 topOfDeck :: PlayerLens -> GameState -> Card
 topOfDeck playerLens = head . (^.playerLens.deck)
