@@ -69,7 +69,7 @@ playGame ::  Gio.GameIO m => [Action] -> GameState -> m GameState
 playGame [] g = return g
 playGame (x:xs) g = do
     Gio.logLn $ "resolving action: " ++ show x
-    Gio.logLn $ "on current state: " ++ show g
+    -- Gio.logLn $ "on current state: " ++ show g
     resolve x g >>= playGame xs
 
 doAttack :: Card -> Card -> [Action]
@@ -119,10 +119,14 @@ gameOver = Gio.logLn "k bye"
 gameLoop :: Gio.GameIO m => GameState -> m ()
 gameLoop gs = do
     Gio.logLn ""
-    Gio.logLn $ "Current state: " ++ show gs
+    -- Gio.logLn $ "Current state: " ++ show gs
+    Gio.logLn "Enemy field:"
+    displayEnumeratedItems $ gs^.enemyPlayer.field
+    Gio.logLn "Your field:"
+    displayEnumeratedItems $ gs^.activePlayer.field
     Gio.logLn "Player Hand:"
     displayEnumeratedItems $ gs^.activePlayer.hand
-    Gio.log "Select action (pass/end): "
+    Gio.log "Select action (pass/end/p/c/a/d): "
     inp <- Gio.getLine
     if inp=="exit" || inp=="q"
         then gameOver
