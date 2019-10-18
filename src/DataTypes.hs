@@ -69,7 +69,7 @@ data GameAction = Play Card
     | ActivateFromField Int
     | Pass
     | EndRound
-    deriving Eq
+    deriving (Eq, Show)
 
 data Card = Card {
     _cardId :: String,
