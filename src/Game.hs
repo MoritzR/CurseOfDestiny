@@ -59,8 +59,13 @@ onTurnEndEffects l = [a | OnTurnEnd a <- l]
 onActivateEffects :: [CardEffect] -> [Action]
 onActivateEffects l = [a | OnActivate a <- l]
 
-creaturePower :: Card -> Int
-creaturePower c = head [power | Creature power <- c^.features]
+creaturePower :: Card -> GameState -> Int
+creaturePower c gs = sum $ originalPower : modifiers
+    where 
+        originalPower = head [power | Creature power <- c^.features]
+        modifiers = [x | WhileOnField (IncreaseAttack x) <- tupleToList (gs^.players) >>= (^.field) >>= (^.effects)]
+
+tupleToList (x,y) = [x,y]
 
 parseActions :: String -> GameState -> [Action]
 parseActions = convertGameAction . orElsePass . parseGameAction
@@ -72,18 +77,18 @@ playGame (x:xs) g = do
     -- Gio.logLn $ "on current state: " ++ show g
     resolve x g >>= playGame xs
 
-doAttack :: Card -> Card -> [Action]
-doAttack target source = case compare targetPower sourcePower of
+doAttack :: Card -> Card -> GameState -> [Action]
+doAttack target source gs = case compare targetPower sourcePower of
     LT -> [Destroy (enemyPlayer.field) target]
     GT -> [Destroy (activePlayer.field) source]
     EQ -> [Destroy (enemyPlayer.field) target, Destroy (activePlayer.field) source]
-    where (targetPower, sourcePower) = (creaturePower target, creaturePower source)
+    where (targetPower, sourcePower) = (creaturePower target gs, creaturePower source gs)
 
 resolve :: Gio.GameIO m => Action -> GameState -> m GameState
 resolve (AddToField c) = return . over (activePlayer.field) (c:)
 resolve (Choose l) = resolveChoose l
 resolve (Destroy cardLens c) = return . over cardLens (deleteFirst c)
-resolve (Attack target source) = playGame $ doAttack target source
+resolve (Attack target source)= \gs -> playGame (doAttack target source gs) gs
 resolve (DirectAttack _source targetPlayerLens) = return . (targetPlayerLens.playerHp -~ 1)
 resolve (DiscardFromHand c) = return . over (activePlayer.hand) (deleteFirst c)
 resolve (DestroyOne cardLens) = \gs -> playGame (doDestroy cardLens gs) gs

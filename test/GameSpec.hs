@@ -75,9 +75,9 @@ spec = do
                 let endTurnGame = GameState (endTurnPlayer1, endTurnPlayer2)
                 endTurnGame^.activePlayer.name `shouldBe` "player"
 
-                let newGame = resolve EndTurn endTurnGame :: [GameState]
+                let newGame = head $ resolve EndTurn endTurnGame
 
-                (head newGame)^.enemyPlayer.field `shouldBe` [Cards.dragon]
+                newGame^.enemyPlayer.field `shouldBe` [Cards.dragon]
 
         describe "playing" $ do
             describe "Mr. Buff" $ do
@@ -85,13 +85,13 @@ spec = do
                 let game = GameState (player1, player1)
 
                 it "should increase the attack of the other cards on the field by 5" $ do
-                    let oldPower = creaturePower $ head $ game^.activePlayer.field
+                    let oldPower = creaturePower (head (game^.activePlayer.field)) game
 
-                    let newGame = playGame (convertGameAction (PlayFromHand 0) game) game :: [GameState]
+                    let newGame = head $ playGame (convertGameAction (PlayFromHand 0) game) game
 
-                    let activePlayerField = ((head newGame)^.activePlayer.field)
-                    creaturePower (activePlayerField !! 1) `shouldBe` oldPower + 5
-                    
+                    let activePlayerField = newGame^.activePlayer.field
+                    creaturePower (activePlayerField !! 1) newGame `shouldBe` oldPower + 5
+
         describe "activating" $ do
             describe "Master of Greed" $ do
                 it "should destroy itself when its the only card on the active player's the field" $ do
