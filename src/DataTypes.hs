@@ -57,14 +57,14 @@ data Player = Player {
     _playerCreature :: PlayerCreature
 } deriving (Show)
 instance Eq Player where
-    (==) = mapEq _name (==)
+    (==) = mapf _name (==)
 
 data PlayerCreature = PlayerCreature {
     _playerCreatureId :: String,
     _hp :: Int
 } deriving Show
 instance Eq PlayerCreature where
-    (==) = mapEq _playerCreatureId (==)
+    (==) = mapf _playerCreatureId (==)
 
 data GameAction = Play Card
     | PlayFromHand Int
@@ -84,10 +84,10 @@ data Card = Card {
 instance Show Card where
   show c = _cardName c ++  " (" ++ (show $ _features c) ++ ")"
 instance Eq Card where
-    (==) = mapEq _cardId (==)
+    (==) = mapf _cardId (==)
 
-mapEq :: (Eq a, Eq b) => (b -> a) -> (a -> a -> Bool) -> (b ->b -> Bool)
-mapEq f eq = \e1 e2 -> (f e1) == (f e2)
+mapf :: (b -> a) -> (a -> a -> c) -> (b -> b -> c)
+mapf f g = \e1 e2 -> g (f e1) (f e2)
 
 data Feature = Spell
     | Creature Int
