@@ -90,7 +90,8 @@ spec = do
                     let newGame = head $ playGame (convertGameAction (PlayFromHand 0) game) game
 
                     let activePlayerField = newGame^.activePlayer.field
-                    creaturePower (activePlayerField !! 1) newGame `shouldBe` oldPower + 5
+                    let ownCat = head [card | card <- activePlayerField, card^.cardId == Cards.cat^.cardId]
+                    creaturePower ownCat newGame `shouldBe` oldPower + 5
 
         describe "activating" $ do
             describe "Master of Greed" $ do
