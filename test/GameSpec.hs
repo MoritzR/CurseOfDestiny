@@ -81,17 +81,16 @@ spec = do
 
         describe "playing" $ do
             describe "Mr. Buff" $ do
-                let player1 = defaultPlayer {_field = [Cards.cat], _hand = [Cards.mrBuff]}
+                let player1 = defaultPlayer {_field = [], _hand = [Cards.mrBuff]}
                 let game = GameState (player1, player1)
 
-                it "should increase the attack of the other cards on the field by 5" $ do
-                    let oldPower = creaturePower (head (game^.activePlayer.field)) game
-
+                describe "increasing attack of cards on the field by 5" $ do
                     let newGame = head $ playGame (convertGameAction (PlayFromHand 0) game) game
+                    let oldCreaturePower = \c -> creaturePower c game
+                    let newCreaturePower = \c -> creaturePower c newGame
 
-                    let activePlayerField = newGame^.activePlayer.field
-                    let ownCat = head [card | card <- activePlayerField, card^.cardId == Cards.cat^.cardId]
-                    creaturePower ownCat newGame `shouldBe` oldPower + 5
+                    it "should buff other cat on own players field" $ do
+                        newCreaturePower Cards.cat `shouldBe` oldCreaturePower Cards.cat + 5
 
         describe "activating" $ do
             describe "Master of Greed" $ do
