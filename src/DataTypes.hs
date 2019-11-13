@@ -11,10 +11,8 @@ data CardEffect = OnPlay Action
     | OnTurnEnd Action
     | OnActivate Action
     | WhileOnField LastingEffect
-    deriving Eq
 
-data LastingEffect = IncreaseAttack Int
-    deriving Eq
+data LastingEffect = IncreaseAttack (GameState -> [Card]) Int
 
 data Action = AddToField Card
     | DiscardFromHand Card

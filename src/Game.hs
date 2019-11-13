@@ -63,7 +63,7 @@ creaturePower :: Card -> GameState -> Int
 creaturePower c gs = sum $ originalPower : modifiers
     where 
         originalPower = head [power | Creature power <- c^.features]
-        modifiers = [x | WhileOnField (IncreaseAttack x) <- tupleToList (gs^.players) >>= (^.field) >>= (^.effects)]
+        modifiers = [x | WhileOnField (IncreaseAttack cardGetter x) <- tupleToList (gs^.players) >>= (^.field) >>= (^.effects), c `elem` cardGetter gs]
 
 tupleToList (x,y) = [x,y]
 

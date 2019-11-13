@@ -81,7 +81,7 @@ spec = do
 
         describe "playing" $ do
             describe "Mr. Buff" $ do
-                let player1 = defaultPlayer {_field = [], _hand = [Cards.mrBuff]}
+                let player1 = defaultPlayer {_field = [Cards.cat], _hand = [Cards.mrBuff]}
                 let game = GameState (player1, player1)
 
                 describe "increasing attack of cards on the field by 5" $ do
@@ -91,6 +91,8 @@ spec = do
 
                     it "should buff other cat on own players field" $ do
                         newCreaturePower Cards.cat `shouldBe` oldCreaturePower Cards.cat + 5
+                    it "should not buff itself" $ do
+                        newCreaturePower Cards.mrBuff `shouldBe` oldCreaturePower Cards.mrBuff
 
         describe "activating" $ do
             describe "Master of Greed" $ do

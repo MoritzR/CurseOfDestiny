@@ -14,6 +14,12 @@ dragon = creature "4" "Dragon" 2500 [OnPlay $ AddToField dragonEgg]
 dragonEgg = creature "5" "Dragon Egg" 0 [OnTurnEnd $ AddToField dragon, OnTurnEnd $ Destroy (activePlayer.field) dragonEgg]
 catFactory = creature "6" "Cat Factory" 500 [OnActivate $ AddToField cat]
 masterOfGreed = creature "7" "Master of Greed" 500 [OnActivate $ DestroyOne $ activePlayer.field, OnActivate $ Draw activePlayer]
-mrBuff = creature "8" "Mr. Buff" 200 [WhileOnField $ IncreaseAttack 5]
+mrBuff = creature "8" "Mr. Buff" 200 [WhileOnField $ IncreaseAttack ((excludingName "Mr. Buff").activePlayerField) 5]
 
 defaultPlayerCreature = PlayerCreature "1" 7
+
+activePlayerField :: GameState -> [Card]
+activePlayerField gs = gs^.activePlayer.field
+
+excludingName :: String -> [Card] -> [Card]
+excludingName name = filter (\c -> c^.cardName /= name)
