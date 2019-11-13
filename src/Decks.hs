@@ -6,7 +6,8 @@ mixed = [
     catOrDog,
     dragon,
     catFactory,
-    masterOfGreed
+    masterOfGreed,
+    mrBuff
     ]
 
 pets = [
