@@ -118,6 +118,14 @@ resolveChoose l gs = do
 getChoiceFromIO :: (Gio.GameIO m, Show a) => [a] -> m (Maybe a)
 getChoiceFromIO = chooseOne
 
+displayCard :: GameState -> Card -> String
+displayCard gs card
+    | isCreature card = card^.cardName ++ " (" ++ show (creaturePower card gs) ++ ")"
+    | otherwise = card^.cardName
+
+isCreature :: Card -> Bool
+isCreature card = not.null $ [f | f@(Creature p) <- card^.features]
+
 gameOver :: Gio.GameIO m => m ()
 gameOver = Gio.logLn "k bye"
 
@@ -126,9 +134,9 @@ gameLoop gs = do
     Gio.logLn ""
     -- Gio.logLn $ "Current state: " ++ show gs
     Gio.logLn "Enemy field:"
-    displayEnumeratedItems $ gs^.enemyPlayer.field
+    displayEnumeratedItems $ map (displayCard gs) (gs^.enemyPlayer.field)
     Gio.logLn "Your field:"
-    displayEnumeratedItems $ gs^.activePlayer.field
+    displayEnumeratedItems $ map (displayCard gs) (gs^.activePlayer.field)
     Gio.logLn "Player Hand:"
     displayEnumeratedItems $ gs^.activePlayer.hand
     Gio.log "Select action (pass/end/p/c/a/d): "
