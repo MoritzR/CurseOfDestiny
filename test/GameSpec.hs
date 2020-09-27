@@ -79,6 +79,15 @@ spec = do
 
                 (head newGame)^.enemyPlayer.field `shouldBe` [Cards.dragon]
 
+        -- describe "playing" $ do
+        --     describe "Buff" $ do
+        --         it "should increase the power of dog from 1500 to 2500" $ do
+        --             let player1 = defaultPlayer {_field = [Cards.dog], hand = [Cards.buff]}
+        --             let game = GameState (player1, player1)
+        --             let newGame = playGame (convertGameAction (PlayFromHand 0) game) game :: [GameState]
+
+        --             (head newGame)^.activePlayer.field `shouldBe` [Cards.dog^.power.~2500]
+
         describe "activating" $ do
             describe "Master of Greed" $ do
                 it "should destroy itself when its the only card on the active player's the field" $ do
