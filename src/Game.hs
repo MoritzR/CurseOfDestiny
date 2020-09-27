@@ -8,7 +8,6 @@ import Data.Tuple
 import Data.List
 import Data.Maybe (fromMaybe)
 import Text.Read
-import Control.Monad.State
 import Control.Lens
 import GameIO as Gio
 import GameActionParser (parseGameAction)

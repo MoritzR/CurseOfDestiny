@@ -1,45 +1,72 @@
-name:                cod
-version:             0.1.0.0
--- synopsis:
--- description:
-homepage:            https://github.com/MoritzR/CurseOfDestiny#readme
-license:             GNU
-license-file:        LICENSE
-category:            Web
-build-type:          Simple
-extra-source-files:  README.md
-cabal-version:       >=1.10
+cabal-version: 1.12
 
-library
-  hs-source-dirs:      src
-  exposed-modules:     Game, DataTypes, Cards, GameIO, Decks, GameActionParser
-  ghc-options:         -rtsopts -with-rtsopts=-N
-  build-depends:       base
-                     , mtl
-                     , lens
-  default-language:    Haskell2010
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 1aa9e8e18515dbf4080bb1626804eef491e85d9726ae5b8be35c63feedc54a2b
 
-executable cod-exe
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  build-depends:       base
-                     , cod
-  default-language:    Haskell2010
-
-test-suite cod-test
-  type:                 exitcode-stdio-1.0
-  hs-source-dirs:       test
-  main-is:              Spec.hs
-  build-depends:       base
-                     , cod
-                     , lens
-                     , hspec
-  other-modules:       GameSpec
-                     , GameActionParserSpec
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  default-language:    Haskell2010
+name:           cod
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/MoritzR/CurseOfDestiny#readme>
+homepage:       https://github.com/https://github.com/MoritzR/CurseOfDestiny#readme
+bug-reports:    https://github.com/https://github.com/MoritzR/CurseOfDestiny/issues
+author:         Moritz Rumpf
+maintainer:     Moritz Rumpf
+copyright:      2020 Moritz Rumpf
+license:        GNU
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
 
 source-repository head
-  type:     git
-  location: https://github.com/MoritzR/CurseOfDestiny
+  type: git
+  location: https://github.com/https://github.com/MoritzR/CurseOfDestiny
+
+library
+  exposed-modules:
+      Cards
+      DataTypes
+      Decks
+      Game
+      GameActionParser
+      GameIO
+  other-modules:
+      Paths_cod
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , lens
+  default-language: Haskell2010
+
+executable cod-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_cod
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , cod
+    , lens
+  default-language: Haskell2010
+
+test-suite cod-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      GameActionParserSpec
+      GameSpec
+      Paths_cod
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , cod
+    , hspec
+    , lens
+  default-language: Haskell2010

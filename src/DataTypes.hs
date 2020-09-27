@@ -4,7 +4,6 @@
 {-# LANGUAGE Rank2Types #-}
 
 module DataTypes where
-import Control.Monad.State
 import Control.Lens (makeLenses, Lens', _1, _2)
 
 data CardEffect = OnPlay Action
