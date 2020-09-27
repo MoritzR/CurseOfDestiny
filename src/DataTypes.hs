@@ -74,21 +74,21 @@ data GameAction = Play Card
 data Card = Card {
     _cardId :: String,
     _cardName :: String,
-    _features :: [Feature],
+    _cardType :: CardType,
     _effects :: [CardEffect]
 }
 instance Show Card where
-  show c = _cardName c ++  " (" ++ (show $ _features c) ++ ")"
+  show c = _cardName c ++  " (" ++ (show $ _cardType c) ++ ")"
 instance Eq Card where
     (==) = mapEq _cardId
 
 mapEq :: (Eq a, Eq b) => (b -> a) -> (b ->b -> Bool)
 mapEq f = \e1 e2 -> (f e1) == (f e2)
 
-data Feature = Spell
+data CardType = Spell
     | Creature Int
     deriving Eq
-instance Show Feature where
+instance Show CardType where
     show Spell = "S,"
     show (Creature power) = "C[" ++ (show power) ++ "],"
 

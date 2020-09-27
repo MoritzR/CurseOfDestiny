@@ -2,10 +2,10 @@ module Cards where
 import DataTypes
 import Control.Lens ((^.))
 
-creature id name power effects = Card id name [Creature power] $ (OnPlay $ AddToField thisCard): effects
+creature id name power effects = Card id name (Creature power) $ (OnPlay $ AddToField thisCard): effects
     where thisCard = creature id name power effects
 
-spell id name effects = Card id name [Spell] effects
+spell id name effects = Card id name Spell effects
 
 dog = creature "1" "Dog" 1500 []
 cat = creature "2" "Cat" 500 []

@@ -60,7 +60,9 @@ onActivateEffects :: [CardEffect] -> [Action]
 onActivateEffects l = [a | OnActivate a <- l]
 
 creaturePower :: Card -> Int
-creaturePower c = head [power | Creature power <- c^.features]
+creaturePower card = case card^.cardType of
+    Creature power  -> power
+    Spell           -> 0 -- is a default a good idea here, or should this fail instead?
 
 parseActions :: String -> GameState -> [Action]
 parseActions = convertGameAction . orElsePass . parseGameAction
