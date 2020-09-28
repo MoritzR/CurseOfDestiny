@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1aa9e8e18515dbf4080bb1626804eef491e85d9726ae5b8be35c63feedc54a2b
+-- hash: d4e64a400a0eeb8aa5c795f3c3d1cfb1aad9542cf4983d50c904c414a0db1442
 
 name:           cod
 version:        0.1.0.0
@@ -32,13 +32,18 @@ library
       Game
       GameActionParser
       GameIO
+      PolysemyTest
   other-modules:
       Paths_cod
   hs-source-dirs:
       src
+  default-extensions: DataKinds FlexibleContexts GADTs LambdaCase PolyKinds RankNTypes ScopedTypeVariables TypeApplications TypeOperators TypeFamilies
+  ghc-options: -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively
   build-depends:
       base >=4.7 && <5
     , lens
+    , polysemy >=1.3.0.0
+    , polysemy-plugin >=0.2.5.1
   default-language: Haskell2010
 
 executable cod-exe
@@ -47,11 +52,14 @@ executable cod-exe
       Paths_cod
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-extensions: DataKinds FlexibleContexts GADTs LambdaCase PolyKinds RankNTypes ScopedTypeVariables TypeApplications TypeOperators TypeFamilies
+  ghc-options: -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , cod
     , lens
+    , polysemy >=1.3.0.0
+    , polysemy-plugin >=0.2.5.1
   default-language: Haskell2010
 
 test-suite cod-test
@@ -63,10 +71,13 @@ test-suite cod-test
       Paths_cod
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-extensions: DataKinds FlexibleContexts GADTs LambdaCase PolyKinds RankNTypes ScopedTypeVariables TypeApplications TypeOperators TypeFamilies
+  ghc-options: -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , cod
     , hspec
     , lens
+    , polysemy >=1.3.0.0
+    , polysemy-plugin >=0.2.5.1
   default-language: Haskell2010
