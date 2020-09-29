@@ -1,26 +1,23 @@
 module GameIO where
 
-class Monad m => GameIO m where
-    getLine :: m String
-    log :: String -> m ()
-    logLn :: String -> m ()
-    chooseOne :: Show a => [a] -> m (Maybe a)
+import Polysemy (Members, Member, Sem)
+import Polysemy.Trace (trace, Trace)
+import Polysemy.Input (input, Input)
 
-instance GameIO IO where
-    getLine = Prelude.getLine
-    log = putStr
-    logLn = putStrLn
-    chooseOne = chooseOneIO
-
-chooseOneIO :: Show a => [a] -> IO (Maybe a)
-chooseOneIO l = do
+chooseOne :: (Members [Trace, Input Int] r, Show a) => [a] -> Sem r (Maybe a)
+chooseOne l = do
     displayEnumeratedItems l
-    putStr "Choose one: "
-    choice <- readLn
+    log' "Choose one: "
+    choice <- input
     if choice < 1 || choice > length l
         then return Nothing
         else return $ Just (l !! (choice -1))
 
-displayEnumeratedItems :: (GameIO m, Show a) => [a] -> m ()
+displayEnumeratedItems :: (Member Trace r, Show a) => [a] -> Sem r ()
 displayEnumeratedItems = mapM_ displayTuple . zip [1..]
-    where displayTuple (i, v) = logLn $ show i ++ ": " ++ (show v)
+    where displayTuple (i, v) = log' $ show i ++ ": " ++ (show v)
+
+log' :: Member Trace r => String -> Sem r ()
+log' = trace
+logLn' :: Member Trace r => String -> Sem r ()
+logLn' s = trace $ "\n" ++ s

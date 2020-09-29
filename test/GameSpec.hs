@@ -1,16 +1,24 @@
 module GameSpec where
 import Test.Hspec
-import Game
+import Game (convertGameAction, onPlayEffects, onTurnEndEffects, deleteFirst)
+import qualified Game
 import GameIO
 import DataTypes
 import Control.Lens
 import qualified Cards
+import Polysemy (run)
+import Polysemy.Trace (ignoreTrace)
+import Polysemy.Input (runInputConst)
+import Polysemy.State (execState)
+import Data.Function ((&))
 
-instance GameIO [] where
-    getLine = return "some line"
-    log = \_ -> return ()
-    logLn = \_ -> return ()
-    chooseOne = return . Just . head
+runForTests gs = run . ignoreTrace . runInputConst 1 . execState gs -- resolves "Sem [Trace, Input Int, State GameState] ()"
+
+playGame :: [Action] -> GameState -> GameState
+playGame actions gs = Game.playGame actions & runForTests gs
+
+resolve :: Action -> GameState -> GameState
+resolve action gs = Game.resolve action & runForTests gs
 
 defaultPlayer = Player {_name = "some player", _deck = [], _hand = [], _field = [], _playerCreature = Cards.defaultPlayerCreature}
 
@@ -46,28 +54,28 @@ spec = do
 
         describe "playing a creature" $ do
             it "should add that creature to the field of the active player" $ do
-                let newGame = playGame (convertGameAction (PlayFromHand 0) game) game :: [GameState]
+                let newGame = playGame (convertGameAction (PlayFromHand 0) game) game
 
-                (head newGame)^.activePlayer.field `shouldBe` [Cards.dog]
+                newGame^.activePlayer.field `shouldBe` [Cards.dog]
 
             it "should remove that creatue from the active player's hand" $ do
-                let newGame = playGame (convertGameAction (PlayFromHand 0) game) game :: [GameState]
+                let newGame = playGame (convertGameAction (PlayFromHand 0) game) game
 
-                (head newGame)^.activePlayer.hand `shouldBe` []
+                newGame^.activePlayer.hand `shouldBe` []
 
         describe "resolving DiscardFromHand" $ do
             it "should remove that card from the active player's hand" $ do
-                let newGame = resolve (DiscardFromHand Cards.dog) game :: [GameState]
+                let newGame = resolve (DiscardFromHand Cards.dog) game
 
-                (head newGame)^.activePlayer.hand `shouldBe` []
+                newGame^.activePlayer.hand `shouldBe` []
 
         describe "ending the turn" $ do
             it "should switch the current active player" $ do
                 game^.activePlayer.name `shouldBe` "player"
 
-                let newGame = resolve EndTurn game :: [GameState]
+                let newGame = resolve EndTurn game
 
-                (head newGame)^.activePlayer.name `shouldBe` "other player"
+                newGame^.activePlayer.name `shouldBe` "other player"
 
             it "should evolve the dragonEgg to a dragon" $ do
                 let endTurnPlayer1 = defaultPlayer {_name = "player", _hand = [Cards.dog], _field = [Cards.dragonEgg]}
@@ -75,49 +83,49 @@ spec = do
                 let endTurnGame = GameState (endTurnPlayer1, endTurnPlayer2)
                 endTurnGame^.activePlayer.name `shouldBe` "player"
 
-                let newGame = resolve EndTurn endTurnGame :: [GameState]
+                let newGame = resolve EndTurn endTurnGame
 
-                (head newGame)^.enemyPlayer.field `shouldBe` [Cards.dragon]
+                newGame^.enemyPlayer.field `shouldBe` [Cards.dragon]
 
         -- describe "playing" $ do
         --     describe "Buff" $ do
         --         it "should increase the power of dog from 1500 to 2500" $ do
         --             let player1 = defaultPlayer {_field = [Cards.dog], hand = [Cards.buff]}
         --             let game = GameState (player1, player1)
-        --             let newGame = playGame (convertGameAction (PlayFromHand 0) game) game :: [GameState]
+        --             let newGame = playGame (convertGameAction (PlayFromHand 0) game) game
 
-        --             (head newGame)^.activePlayer.field `shouldBe` [Cards.dog^.power.~2500]
+        --             newGame^.activePlayer.field `shouldBe` [Cards.dog^.power.~2500]
 
         describe "activating" $ do
             describe "Master of Greed" $ do
                 it "should destroy itself when its the only card on the active player's the field" $ do
                     let player1 = defaultPlayer {_field = [Cards.masterOfGreed]}
                     let game = GameState (player1, player1)
-                    let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
+                    let newGame = playGame (convertGameAction (ActivateFromField 0) game) game
     
-                    (head newGame)^.activePlayer.field `shouldBe` []
+                    newGame^.activePlayer.field `shouldBe` []
                 it "should destroy another card on the field when the other card is chosen to be destroyed" $ do
                     let player1 = defaultPlayer { _field = [Cards.dog, Cards.masterOfGreed]}
                     let game = GameState (player1, player1)
-                    let newGame = playGame (convertGameAction (ActivateFromField 1) game) game :: [GameState]
+                    let newGame = playGame (convertGameAction (ActivateFromField 1) game) game
     
-                    (head newGame)^.activePlayer.field `shouldBe` [Cards.masterOfGreed]
+                    newGame^.activePlayer.field `shouldBe` [Cards.masterOfGreed]
                 it "should draw a card for the active player" $ do
                     let player1 = defaultPlayer { _deck = [Cards.dog], _field = [Cards.masterOfGreed]}
                     let game = GameState (player1, player1)
-                    let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
+                    let newGame = playGame (convertGameAction (ActivateFromField 0) game) game
     
-                    (head newGame)^.activePlayer.hand `shouldBe` [Cards.dog]
-                    (head newGame)^.activePlayer.deck `shouldBe` []
+                    newGame^.activePlayer.hand `shouldBe` [Cards.dog]
+                    newGame^.activePlayer.deck `shouldBe` []
 
             describe "catFactory" $ do
                 it "should add a cat to the active player's hand" $ do
                     let player1 = defaultPlayer {_field = [Cards.catFactory]}
                     let game = GameState (player1, player1)
 
-                    let newGame = playGame (convertGameAction (ActivateFromField 0) game) game :: [GameState]
+                    let newGame = playGame (convertGameAction (ActivateFromField 0) game) game
     
-                    (head newGame)^.activePlayer.field `shouldSatisfy` elem Cards.cat
+                    newGame^.activePlayer.field `shouldSatisfy` elem Cards.cat
 
         describe "attacking" $ do
             let catPlayer = defaultPlayer {_name = "catPlayer", _field = [Cards.cat]}
@@ -127,28 +135,28 @@ spec = do
                 let game = GameState (catPlayer, dogPlayer)
 
                 it "should destroy the cat" $ do
-                    let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game :: [GameState]
+                    let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game
     
-                    (head newGame)^.activePlayer.field `shouldBe` []
-                    (head newGame)^.enemyPlayer.field `shouldBe` [Cards.dog]
+                    newGame^.activePlayer.field `shouldBe` []
+                    newGame^.enemyPlayer.field `shouldBe` [Cards.dog]
 
             context "a dog as a cat" $ do
                 let game = GameState (dogPlayer, catPlayer)
 
                 it "should destroy the cat" $ do
-                    let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game :: [GameState]
+                    let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game
     
-                    (head newGame)^.activePlayer.field `shouldBe` [Cards.dog]
-                    (head newGame)^.enemyPlayer.field `shouldBe` []
+                    newGame^.activePlayer.field `shouldBe` [Cards.dog]
+                    newGame^.enemyPlayer.field `shouldBe` []
                     
             context "a cat as a cat" $ do
                 let game = GameState (catPlayer, catPlayer)
 
                 it "should destroy the both cats" $ do
-                    let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game :: [GameState]
+                    let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game
     
-                    (head newGame)^.activePlayer.field `shouldBe` []
-                    (head newGame)^.enemyPlayer.field `shouldBe` []
+                    newGame^.activePlayer.field `shouldBe` []
+                    newGame^.enemyPlayer.field `shouldBe` []
             
             context "a player directly" $ do
                 let game = GameState (catPlayer, catPlayer)
@@ -156,7 +164,7 @@ spec = do
                 it "should reduce the attacked players hp by 1" $ do
                     let oldHp = game^.enemyPlayer.playerHp
 
-                    let newGame = playGame (convertGameAction (AnnounceDirectAttack 0) game) game :: [GameState]
+                    let newGame = playGame (convertGameAction (AnnounceDirectAttack 0) game) game
 
-                    (head newGame)^.enemyPlayer.playerHp `shouldBe` (oldHp - 1)
+                    newGame^.enemyPlayer.playerHp `shouldBe` (oldHp - 1)
                     

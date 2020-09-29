@@ -1,6 +1,5 @@
-{-# LANGUAGE Rank2Types #-}
-
 module Game where
+import Prelude hiding (log)
 import DataTypes
 import qualified Decks
 import qualified Cards
@@ -11,21 +10,31 @@ import Text.Read
 import Control.Lens
 import GameIO as Gio
 import GameActionParser (parseGameAction)
+import Polysemy (Member, Members, Sem)
+import Polysemy.State (State)
+import qualified Polysemy.State as S
+import Polysemy.Input (Input, input)
+import Polysemy.Output (Output)
+import Polysemy.Trace (Trace, trace)
 
 
 createPlayer :: String -> Player
 createPlayer name = Player {_name = name, _deck = Decks.mixed, _hand = Decks.mixed, _field = [], _playerCreature = Cards.defaultPlayerCreature}
 
-endRound :: Gio.GameIO m => GameState -> m GameState
-endRound g = applyTurnEnds g
-                >>= return . changeCurrentPlayer
+endRound :: Members [Input Int, Trace, State GameState] r => Sem r ()
+endRound = do
+    applyTurnEnds
+    gs <- S.get
+    S.put $ changeCurrentPlayer gs
 
 changeCurrentPlayer :: GameState -> GameState
 changeCurrentPlayer = over players swap
 
-applyTurnEnds :: Gio.GameIO m => GameState -> m GameState
-applyTurnEnds g = playGame actions g
-    where actions = concat $ fmap onTurnEndEffects $ g^..activePlayer.field.traverse.effects
+applyTurnEnds :: Members [State GameState, Trace, Input Int] r => Sem r ()
+applyTurnEnds = do
+    gs <- S.get
+    let actions = concat $ fmap onTurnEndEffects $ gs^..activePlayer.field.traverse.effects
+    playGame actions
 
 pass :: GameState -> GameState
 pass = id
@@ -66,12 +75,13 @@ creaturePower card = case card^.cardType of
 parseActions :: String -> GameState -> [Action]
 parseActions = convertGameAction . orElsePass . parseGameAction
 
-playGame ::  Gio.GameIO m => [Action] -> GameState -> m GameState
-playGame [] g = return g
-playGame (x:xs) g = do
-    Gio.logLn $ "resolving action: " ++ show x
+playGame ::  Members [Trace, Input Int, State GameState] r => [Action] -> Sem r ()
+playGame [] = return ()
+playGame (x:xs) = do
+    logLn' $ "resolving action: " ++ show x
     -- Gio.logLn $ "on current state: " ++ show g
-    resolve x g >>= playGame xs
+    resolve x
+    playGame xs
 
 doAttack :: Card -> Card -> [Action]
 doAttack target source = case compare targetPower sourcePower of
@@ -80,15 +90,27 @@ doAttack target source = case compare targetPower sourcePower of
     EQ -> [Destroy (enemyPlayer.field) target, Destroy (activePlayer.field) source]
     where (targetPower, sourcePower) = (creaturePower target, creaturePower source)
 
-resolve :: Gio.GameIO m => Action -> GameState -> m GameState
-resolve (AddToField c) = return . over (activePlayer.field) (c:)
+resolve :: Members [State GameState, Input Int, Trace] r => Action -> Sem r ()
+resolve (AddToField c) = do
+    gs <- S.get
+    S.put $ over (activePlayer.field) (c:) gs
 resolve (Choose l) = resolveChoose l
-resolve (Destroy cardLens c) = return . over cardLens (deleteFirst c)
+resolve (Destroy cardLens c) = do
+    gs <- S.get
+    S.put $ over cardLens (deleteFirst c) gs
 resolve (Attack target source) = playGame $ doAttack target source
-resolve (DirectAttack _source targetPlayerLens) = return . (targetPlayerLens.playerHp -~ 1)
-resolve (DiscardFromHand c) = return . over (activePlayer.hand) (deleteFirst c)
-resolve (DestroyOne cardLens) = \gs -> playGame (doDestroy cardLens gs) gs
-resolve (Draw playerLens) = \gs -> return . over (playerLens.deck) tail . over (playerLens.hand) ((:) $ topOfDeck playerLens gs) $ gs
+resolve (DirectAttack _source targetPlayerLens) = do
+    gs <- S.get
+    S.put $ over (targetPlayerLens.playerHp) (+ (-1)) gs
+resolve (DiscardFromHand c) = do
+    gs <- S.get
+    S.put $ over (activePlayer.hand) (deleteFirst c) gs
+resolve (DestroyOne cardLens) = do
+    gs <- S.get
+    playGame (doDestroy cardLens gs)
+resolve (Draw playerLens) = do
+    gs <- S.get 
+    S.put $ over (playerLens.deck) tail . over (playerLens.hand) ((:) $ topOfDeck playerLens gs) $ gs
 resolve EndTurn = endRound
 
 topOfDeck :: PlayerLens -> GameState -> Card
@@ -103,41 +125,41 @@ deleteFirst a (b:bc)
     | a == b    = bc
     | otherwise = b : deleteFirst a bc
 
-resolveChoose :: Gio.GameIO m => [Action] -> GameState -> m GameState
-resolveChoose l gs = do
-    maybeChoice <- getChoiceFromIO l
-    logLn . show $ maybeChoice
+resolveChoose :: Members [State GameState, Input Int, Trace] r => [Action] -> Sem r ()
+resolveChoose l = do
+    maybeChoice <- chooseOne l
+    logLn' . show $ maybeChoice
     case maybeChoice of
-        Just choice -> resolve choice gs
-        Nothing -> return gs
+        Just choice -> resolve choice
+        Nothing -> return ()
 
-getChoiceFromIO :: (Gio.GameIO m, Show a) => [a] -> m (Maybe a)
-getChoiceFromIO = chooseOne
+gameOver :: Member Trace r => Sem r ()
+gameOver = logLn' "k bye"
 
-gameOver :: Gio.GameIO m => m ()
-gameOver = Gio.logLn "k bye"
-
-gameLoop :: Gio.GameIO m => GameState -> m ()
-gameLoop gs = do
-    Gio.logLn ""
+gameLoop :: Members [State GameState, Input String, Input Int, Trace] r => Sem r ()
+gameLoop = do
+    gs <- S.get
+    logLn' ""
     -- Gio.logLn $ "Current state: " ++ show gs
-    Gio.logLn "Enemy field:"
+    logLn' "Enemy field:"
     displayEnumeratedItems $ gs^.enemyPlayer.field
-    Gio.logLn "Your field:"
+    logLn' "Your field:"
     displayEnumeratedItems $ gs^.activePlayer.field
-    Gio.logLn "Player Hand:"
+    logLn' "Player Hand:"
     displayEnumeratedItems $ gs^.activePlayer.hand
-    Gio.log "Select action (pass/end/p/c/a/d): "
-    inp <- Gio.getLine
+    log' "Select action (pass/end/p/c/a/d): "
+    inp <- input
     if inp=="exit" || inp=="q"
         then gameOver
-        else playGame (parseActions inp gs) gs
-                >>= gameLoop
+        else do 
+            playGame (parseActions inp gs)
+            gameLoop
 
-startGame :: Gio.GameIO m => m ()
+
+startGame :: Members [State GameState, Trace, Input String, Input Int] r => Sem r ()
 startGame =  do
     let player1 = createPlayer "player1"
     let player2 = createPlayer "player2"
-    let game = GameState (player1,player2)
-    _ <- gameLoop game
-    Gio.logLn "Game end"
+    S.put $ GameState (player1,player2)
+    gameLoop
+    logLn' "Game end"
