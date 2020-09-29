@@ -12,8 +12,7 @@ main = do
     let player1 = createPlayer "player1"
     let player2 = createPlayer "player2"
     let gs = GameState (player1,player2)
-    startGame -- Sem [State GameState, Trace, Input String, Input Int]
-        & evalState gs
+    startGame -- Sem [Trace, Input String, Input Int]
         & traceToIO
         & runInputSem (embed getLine)
         & runInputSem (embed (fmap toInt getLine))

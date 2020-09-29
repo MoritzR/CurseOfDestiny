@@ -11,7 +11,7 @@ import Control.Lens
 import GameIO as Gio
 import GameActionParser (parseGameAction)
 import Polysemy (Member, Members, Sem)
-import Polysemy.State (State)
+import Polysemy.State (evalState, State)
 import qualified Polysemy.State as S
 import Polysemy.Input (Input, input)
 import Polysemy.Output (Output)
@@ -156,10 +156,10 @@ gameLoop = do
             gameLoop
 
 
-startGame :: Members [State GameState, Trace, Input String, Input Int] r => Sem r ()
+startGame :: Members [Trace, Input String, Input Int] r => Sem r ()
 startGame =  do
     let player1 = createPlayer "player1"
     let player2 = createPlayer "player2"
-    S.put $ GameState (player1,player2)
     gameLoop
+        & evalState (GameState (player1,player2))
     logLn' "Game end"
