@@ -6,13 +6,18 @@ import GameIO
 import DataTypes
 import Control.Lens
 import qualified Cards
-import Polysemy (run)
-import Polysemy.Trace (ignoreTrace)
-import Polysemy.Input (runInputConst)
-import Polysemy.State (execState)
+import Polysemy (run, Sem)
+import Polysemy.Trace (Trace, ignoreTrace)
+import Polysemy.Input (Input, runInputConst)
+import Polysemy.State (State, execState)
 import Data.Function ((&))
 
-runForTests gs = run . ignoreTrace . runInputConst 1 . execState gs -- resolves "Sem [Trace, Input Int, State GameState] ()"
+runForTests ::  GameState -> Sem '[State GameState, Input Int, Trace] a -> GameState
+runForTests gs sem = sem
+    & execState gs
+    & runInputConst 1
+    & ignoreTrace
+    & run
 
 playGame :: [Action] -> GameState -> GameState
 playGame actions gs = Game.playGame actions & runForTests gs
