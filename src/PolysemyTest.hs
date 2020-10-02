@@ -21,6 +21,6 @@ countdown = do
 runCountdownIO :: Int -> IO ()
 runCountdownIO x = do
     countdown                   -- Sem [CountdownState, Output String] ()
-        & (evalState x)         -- Sem [Output String] ()
+        & evalState x           -- Sem [Output String] ()
         & traceToIO             -- Sem [] ()
         & runM                  -- IO ()
