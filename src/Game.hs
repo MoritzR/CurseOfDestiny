@@ -15,11 +15,13 @@ import qualified Polysemy.State as S
 import Polysemy.Input (Input, input)
 import Polysemy.Trace (Trace)
 
+type HasStateIO r = Members [State GameState, Input Int, Trace] r
+type Game r a = HasStateIO r => Sem r a
 
 createPlayer :: String -> Player
 createPlayer name = Player {_name = name, _deck = Decks.mixed, _hand = Decks.mixed, _field = [], _playerCreature = Cards.defaultPlayerCreature}
 
-endRound :: Members [Input Int, Trace, State GameState] r => Sem r ()
+endRound :: Game r ()
 endRound = do
     applyTurnEnds
     gs <- S.get
@@ -28,7 +30,7 @@ endRound = do
 changeCurrentPlayer :: GameState -> GameState
 changeCurrentPlayer = over players swap
 
-applyTurnEnds :: Members [State GameState, Trace, Input Int] r => Sem r ()
+applyTurnEnds :: Game r ()
 applyTurnEnds = do
     gs <- S.get
     let actions = concat $ fmap onTurnEndEffects $ gs^..activePlayer.field.traverse.effects
@@ -73,7 +75,7 @@ creaturePower card = case card^.cardType of
 parseActions :: String -> GameState -> [Action]
 parseActions = convertGameAction . orElsePass . parseGameAction
 
-playGame ::  Members [Trace, Input Int, State GameState] r => [Action] -> Sem r ()
+playGame :: [Action] -> Game r ()
 playGame [] = return ()
 playGame (x:xs) = do
     logLn' $ "resolving action: " ++ show x
@@ -88,7 +90,7 @@ doAttack target source = case compare targetPower sourcePower of
     EQ -> [Destroy (enemyPlayer.field) target, Destroy (activePlayer.field) source]
     where (targetPower, sourcePower) = (creaturePower target, creaturePower source)
 
-resolve :: Members [State GameState, Input Int, Trace] r => Action -> Sem r ()
+resolve :: Action -> Game r ()
 resolve (AddToField c) = do
     gs <- S.get
     S.put $ over (activePlayer.field) (c:) gs
@@ -123,7 +125,7 @@ deleteFirst a (b:bc)
     | a == b    = bc
     | otherwise = b : deleteFirst a bc
 
-resolveChoose :: Members [State GameState, Input Int, Trace] r => [Action] -> Sem r ()
+resolveChoose :: [Action] -> Game r ()
 resolveChoose l = do
     maybeChoice <- chooseOne l
     logLn' . show $ maybeChoice
@@ -134,7 +136,7 @@ resolveChoose l = do
 gameOver :: Member Trace r => Sem r ()
 gameOver = logLn' "k bye"
 
-gameLoop :: Members [State GameState, Input String, Input Int, Trace] r => Sem r ()
+gameLoop :: Member (Input String) r => Game r ()
 gameLoop = do
     gs <- S.get
     logLn' ""
@@ -154,7 +156,7 @@ gameLoop = do
             gameLoop
 
 
-startGame :: Members [Trace, Input String, Input Int] r => Sem r ()
+startGame :: Members [Input String, Input Int, Trace] r => Sem r ()
 startGame =  do
     let player1 = createPlayer "player1"
     let player2 = createPlayer "player2"

@@ -32,6 +32,7 @@ ghc-options:
 
 default-extensions:
   - DataKinds
+  - ConstraintKinds 
   - FlexibleContexts
   - GADTs
   - LambdaCase
