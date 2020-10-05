@@ -1,6 +1,5 @@
 module Cards where
 import DataTypes
-import Control.Lens ((^.))
 
 creature id name power effects = Card id name (Creature power) $ (OnPlay $ AddToField thisCard): effects
     where thisCard = creature id name power effects

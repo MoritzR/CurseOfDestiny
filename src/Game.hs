@@ -4,7 +4,6 @@ import DataTypes
 import qualified Decks
 import qualified Cards
 import Data.Tuple
-import Data.List
 import Data.Maybe (fromMaybe)
 import Text.Read
 import Control.Lens
@@ -14,8 +13,7 @@ import Polysemy (Member, Members, Sem)
 import Polysemy.State (evalState, State)
 import qualified Polysemy.State as S
 import Polysemy.Input (Input, input)
-import Polysemy.Output (Output)
-import Polysemy.Trace (Trace, trace)
+import Polysemy.Trace (Trace)
 
 
 createPlayer :: String -> Player
