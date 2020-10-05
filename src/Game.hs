@@ -19,7 +19,7 @@ type HasStateIO r = Members [State GameState, Input Int, Trace] r
 type Game r a = HasStateIO r => Sem r a
 
 createPlayer :: String -> Player
-createPlayer name = Player {_name = name, _deck = Decks.mixed, _hand = Decks.mixed, _field = [], _playerCreature = Cards.defaultPlayerCreature}
+createPlayer name = Player {name = name, deck = Decks.mixed, hand = Decks.mixed, field = [], playerCreature = Cards.defaultPlayerCreature}
 
 endRound :: Game r ()
 endRound = do
@@ -28,12 +28,12 @@ endRound = do
     S.put $ changeCurrentPlayer gs
 
 changeCurrentPlayer :: GameState -> GameState
-changeCurrentPlayer = over players swap
+changeCurrentPlayer = over #players swap
 
 applyTurnEnds :: Game r ()
 applyTurnEnds = do
     gs <- S.get
-    let actions = concat $ fmap onTurnEndEffects $ gs^..activePlayer.field.traverse.effects
+    let actions = concat $ fmap onTurnEndEffects $ gs^..activePlayer . #field . traverse . #effects
     playGame actions
 
 pass :: GameState -> GameState
@@ -46,17 +46,17 @@ orElsePass :: Maybe GameAction -> GameAction
 orElsePass = fromMaybe Pass
 
 convertGameAction :: GameAction -> GameState -> [Action]
-convertGameAction (Play c) _ = (onPlayEffects . view effects) c
-convertGameAction (PlayFromHand i) gs = (DiscardFromHand c) : (onPlayEffects . view effects) c
-            where c = (gs^.activePlayer.hand) !! i -- crashes program when i is out of range
-convertGameAction (ActivateFromField i) gs = (onActivateEffects . view effects) c
-            where c = (gs^.activePlayer.field) !! i -- crashes program when i is out of range
+convertGameAction (Play c) _ = (onPlayEffects . view #effects) c
+convertGameAction (PlayFromHand i) gs = (DiscardFromHand c) : (onPlayEffects . view #effects) c
+            where c = (gs^.activePlayer. #hand) !! i -- crashes program when i is out of range
+convertGameAction (ActivateFromField i) gs = (onActivateEffects . view #effects) c
+            where c = (gs^.activePlayer. #field) !! i -- crashes program when i is out of range
 convertGameAction (AnnounceAttack target source) gs = [Attack targetCard sourceCard]
             where
-                targetCard = (gs^.enemyPlayer.field) !! target -- crashes program when target is out of range
-                sourceCard = (gs^.activePlayer.field) !! source -- crashes program when source is out of range
+                targetCard = (gs^.enemyPlayer. #field) !! target -- crashes program when target is out of range
+                sourceCard = (gs^.activePlayer. #field) !! source -- crashes program when source is out of range
 convertGameAction (AnnounceDirectAttack i) gs = return $ DirectAttack c (enemyPlayer)
-            where c = (gs^.activePlayer.field) !! i -- crashes program when i is out of range
+            where c = (gs^.activePlayer. #field) !! i -- crashes program when i is out of range
 convertGameAction EndRound _ = return EndTurn
 convertGameAction _ _ = []
 
@@ -68,7 +68,7 @@ onActivateEffects :: [CardEffect] -> [Action]
 onActivateEffects l = [a | OnActivate a <- l]
 
 creaturePower :: Card -> Int
-creaturePower card = case card^.cardType of
+creaturePower card = case card^. #cardType of
     Creature power  -> power
     Spell           -> 0 -- is a default a good idea here, or should this fail instead?
 
@@ -85,15 +85,15 @@ playGame (x:xs) = do
 
 doAttack :: Card -> Card -> [Action]
 doAttack target source = case compare targetPower sourcePower of
-    LT -> [Destroy (enemyPlayer.field) target]
-    GT -> [Destroy (activePlayer.field) source]
-    EQ -> [Destroy (enemyPlayer.field) target, Destroy (activePlayer.field) source]
+    LT -> [Destroy (enemyPlayer. #field) target]
+    GT -> [Destroy (activePlayer. #field) source]
+    EQ -> [Destroy (enemyPlayer. #field) target, Destroy (activePlayer. #field) source]
     where (targetPower, sourcePower) = (creaturePower target, creaturePower source)
 
 resolve :: Action -> Game r ()
 resolve (AddToField c) = do
     gs <- S.get
-    S.put $ over (activePlayer.field) (c:) gs
+    S.put $ over (activePlayer. #field) (c:) gs
 resolve (Choose l) = resolveChoose l
 resolve (Destroy cardLens c) = do
     gs <- S.get
@@ -104,17 +104,17 @@ resolve (DirectAttack _source targetPlayerLens) = do
     S.put $ over (targetPlayerLens.playerHp) (+ (-1)) gs
 resolve (DiscardFromHand c) = do
     gs <- S.get
-    S.put $ over (activePlayer.hand) (deleteFirst c) gs
+    S.put $ over (activePlayer. #hand) (deleteFirst c) gs
 resolve (DestroyOne cardLens) = do
     gs <- S.get
     playGame (doDestroy cardLens gs)
 resolve (Draw playerLens) = do
     gs <- S.get 
-    S.put $ over (playerLens.deck) tail . over (playerLens.hand) ((:) $ topOfDeck playerLens gs) $ gs
+    S.put $ over (playerLens. #deck) tail . over (playerLens. #hand) ((:) $ topOfDeck playerLens gs) $ gs
 resolve EndTurn = endRound
 
 topOfDeck :: PlayerLens -> GameState -> Card
-topOfDeck playerLens = head . (^.playerLens.deck)
+topOfDeck playerLens = head . (^.playerLens. #deck)
 
 doDestroy :: CardLens -> GameState -> [Action]
 doDestroy cardLens = return . Choose . fmap (Destroy cardLens) . (^.cardLens)
@@ -142,11 +142,11 @@ gameLoop = do
     logLn' ""
     -- Gio.logLn $ "Current state: " ++ show gs
     logLn' "Enemy field:"
-    displayEnumeratedItems $ gs^.enemyPlayer.field
+    displayEnumeratedItems $ gs^.enemyPlayer. #field
     logLn' "Your field:"
-    displayEnumeratedItems $ gs^.activePlayer.field
+    displayEnumeratedItems $ gs^.activePlayer. #field
     logLn' "Player Hand:"
-    displayEnumeratedItems $ gs^.activePlayer.hand
+    displayEnumeratedItems $ gs^.activePlayer. #hand
     log' "Select action (pass/end/p/c/a/d): "
     inp <- input
     if inp=="exit" || inp=="q"

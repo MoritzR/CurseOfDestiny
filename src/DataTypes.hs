@@ -1,10 +1,7 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE Rank2Types #-}
-
 module DataTypes where
-import Control.Lens (makeLenses, Lens', _1, _2)
+import Control.Lens (Lens', _1, _2, (^.))
+import GHC.Generics (Generic)
+import Data.Generics.Labels ()
 
 data CardEffect = OnPlay Action
     | OnTurnEnd Action
@@ -41,25 +38,25 @@ type PlayerLens = Lens' GameState Player
 type Players = (Player, Player)
 
 data GameState = GameState {
-    _players :: Players
-} deriving (Show, Eq)
+    players :: Players
+} deriving (Show, Eq, Generic)
 
 data Player = Player {
-    _name :: String,
-    _deck :: [Card],
-    _hand :: [Card],
-    _field :: [Card],
-    _playerCreature :: PlayerCreature
-} deriving (Show)
+    name :: String,
+    deck :: [Card],
+    hand :: [Card],
+    field :: [Card],
+    playerCreature :: PlayerCreature
+} deriving (Show, Generic)
 instance Eq Player where
-    (==) = mapEq _name
+    (==) = mapEq name
 
 data PlayerCreature = PlayerCreature {
-    _playerCreatureId :: String,
-    _hp :: Int
-} deriving Show
+    playerCreatureId :: String,
+    hp :: Int
+} deriving (Show, Generic)
 instance Eq PlayerCreature where
-    (==) = mapEq _playerCreatureId
+    (==) = mapEq playerCreatureId
 
 data GameAction = Play Card
     | PlayFromHand Int
@@ -71,15 +68,15 @@ data GameAction = Play Card
     deriving (Eq, Show)
 
 data Card = Card {
-    _cardId :: String,
-    _cardName :: String,
-    _cardType :: CardType,
-    _effects :: [CardEffect]
-}
+    cardId :: String,
+    cardName :: String,
+    cardType :: CardType,
+    effects :: [CardEffect]
+} deriving Generic
 instance Show Card where
-  show c = _cardName c ++  " (" ++ (show $ _cardType c) ++ ")"
+  show c = cardName c ++  " (" ++ (show $ cardType c) ++ ")"
 instance Eq Card where
-    (==) = mapEq _cardId
+    (==) = mapEq cardId
 
 mapEq :: (Eq a, Eq b) => (b -> a) -> (b ->b -> Bool)
 mapEq f = \e1 e2 -> (f e1) == (f e2)
@@ -91,14 +88,9 @@ instance Show CardType where
     show Spell = "S,"
     show (Creature power) = "C[" ++ (show power) ++ "],"
 
-makeLenses ''GameState
-makeLenses ''Player
-makeLenses ''Card
-makeLenses ''PlayerCreature
-
 activePlayer :: Lens' GameState Player
-activePlayer = players._1
+activePlayer = #players._1
 enemyPlayer :: Lens' GameState Player
-enemyPlayer = players._2
+enemyPlayer = #players._2
 playerHp :: Lens' Player Int
-playerHp = playerCreature.hp
+playerHp = #playerCreature . #hp
