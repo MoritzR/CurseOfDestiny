@@ -115,7 +115,9 @@ discardFromHand card = do
 destroyOne :: CardLens -> Game r ()
 destroyOne cardLens = do
     gs <- S.get
-    playGame [doDestroy cardLens gs]
+    gs^.cardLens
+        & map (Destroy cardLens)
+        & resolveChoose
 
 draw :: PlayerLens -> Game r ()
 draw playerLens = do
@@ -135,9 +137,6 @@ resolve EndTurn = endRound
 
 topOfDeck :: PlayerLens -> GameState -> Card
 topOfDeck playerLens = head . (^.playerLens. #deck)
-
-doDestroy :: CardLens -> GameState -> Action
-doDestroy cardLens = Choose . fmap (Destroy cardLens) . (^.cardLens)
 
 deleteFirst :: Eq a => a -> [a] -> [a]
 deleteFirst _ [] = []
