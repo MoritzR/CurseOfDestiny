@@ -8,15 +8,16 @@ import qualified Polysemy.State as S
 import qualified GameIO as Gio
 
 resolve :: Action -> Game r ()
-resolve (AddToField c) = addToField c
-resolve (Choose l) = resolveChoose l
-resolve (Destroy cardLens c) = destroy cardLens c
-resolve (Attack target source) = attack target source
-resolve (DirectAttack _source targetPlayerLens) = directAttack _source targetPlayerLens
-resolve (DiscardFromHand c) = discardFromHand c
-resolve (DestroyOne cardLens) = destroyOne cardLens
-resolve (Draw playerLens) = draw playerLens
-resolve EndTurn = endRound
+resolve action = case action of
+  AddToField c -> addToField c
+  Choose l -> resolveChoose l
+  Destroy cardLens c -> destroy cardLens c
+  Attack target source -> attack target source
+  DirectAttack _source targetPlayerLens -> directAttack _source targetPlayerLens
+  DiscardFromHand c -> discardFromHand c
+  DestroyOne cardLens -> destroyOne cardLens
+  Draw playerLens -> draw playerLens
+  EndTurn -> endRound
 
 endRound :: Game r ()
 endRound = do
