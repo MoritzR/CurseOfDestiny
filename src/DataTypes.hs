@@ -2,6 +2,13 @@ module DataTypes where
 import Control.Lens (Lens', _1, _2, (^.))
 import GHC.Generics (Generic)
 import Data.Generics.Labels ()
+import Polysemy (Members, Sem)
+import Polysemy.State (State)
+import Polysemy.Input (Input)
+import Polysemy.Trace (Trace)
+
+type HasStateIO r = Members [State GameState, Input Int, Trace] r
+type Game r a = HasStateIO r => Sem r a
 
 data CardEffect = OnPlay Action
     | OnTurnEnd Action

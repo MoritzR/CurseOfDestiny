@@ -1,7 +1,9 @@
 module GameSpec where
 import Test.Hspec
-import Game (convertGameAction, onPlayEffects, onTurnEndEffects, deleteFirst)
+import Game (convertGameAction)
 import qualified Game
+import Actions (deleteFirst)
+import qualified Actions
 import GameIO
 import DataTypes
 import Control.Lens
@@ -23,19 +25,12 @@ playGame :: [Action] -> GameState -> GameState
 playGame actions gs = Game.playGame actions & runForTests gs
 
 resolve :: Action -> GameState -> GameState
-resolve action gs = Game.resolve action & runForTests gs
+resolve action gs = Actions.resolve action & runForTests gs
 
 defaultPlayer = Player {name = "some player", deck = [], hand = [], field = [], playerCreature = Cards.defaultPlayerCreature}
 
 spec :: Spec
 spec = do
-    describe "card effects filters" $ do
-        it "filter on play effects" $
-            onPlayEffects [OnPlay $ Choose [EndTurn], OnTurnEnd EndTurn] `shouldBe` [Choose [EndTurn]]
-
-        it "filter on turn end effects" $
-            onTurnEndEffects [OnPlay $ Choose [EndTurn], OnTurnEnd EndTurn] `shouldBe` [EndTurn]
-        
     describe "deleteFirst" $ do
         it "should not do anything for an empty list" $
             deleteFirst 1 [] `shouldBe` []

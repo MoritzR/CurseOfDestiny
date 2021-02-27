@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 871c6b2e39e28e9fdd2b336b74f06529c20c1d528a8625f1bd5b60dae9dd311a
+-- hash: 85727968c78b24a763fce87b53a0de74f7caab65f503a256103b335c6df8426e
 
 name:           cod
 version:        0.1.0.0
@@ -26,6 +26,7 @@ source-repository head
 
 library
   exposed-modules:
+      Actions
       Cards
       DataTypes
       Decks
