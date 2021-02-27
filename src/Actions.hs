@@ -3,6 +3,7 @@ module Actions (resolve, deleteFirst) where
 import DataTypes
 import Data.Tuple (swap)
 import Control.Lens ((^.), (^..), over)
+import PolysemyLens ((-=))
 import Data.Function ((&))
 import qualified Polysemy.State as S
 import qualified GameIO as Gio
@@ -65,9 +66,8 @@ destroy cardLens card = do
     S.put $ over cardLens (deleteFirst card) gs
 
 directAttack :: Card -> PlayerLens -> Game r ()
-directAttack _source targetPlayerLens = do
-    gs <- S.get
-    S.put $ over (targetPlayerLens.playerHp) (+ (-1)) gs
+directAttack _source targetPlayer = do
+    targetPlayer.playerHp -= 1
 
 discardFromHand :: Card -> Game r ()
 discardFromHand card = do
