@@ -83,11 +83,13 @@ playGame (x:xs) = do
     resolve x
     playGame xs
 
-doAttack :: Card -> Card -> [Action]
-doAttack target source = case compare targetPower sourcePower of
-    LT -> [Destroy (enemyPlayer. #field) target]
-    GT -> [Destroy (activePlayer. #field) source]
-    EQ -> [Destroy (enemyPlayer. #field) target, Destroy (activePlayer. #field) source]
+attack :: Card -> Card -> Game r ()
+attack target source = case compare targetPower sourcePower of
+    LT -> destroy (enemyPlayer. #field) target
+    GT -> destroy (activePlayer. #field) source
+    EQ -> do
+        destroy (enemyPlayer. #field) target
+        destroy (activePlayer. #field) source
     where (targetPower, sourcePower) = (creaturePower target, creaturePower source)
 
 addToField :: Card -> Game r ()
@@ -124,7 +126,7 @@ resolve :: Action -> Game r ()
 resolve (AddToField c) = addToField c
 resolve (Choose l) = resolveChoose l
 resolve (Destroy cardLens c) = destroy cardLens c
-resolve (Attack target source) = playGame $ doAttack target source
+resolve (Attack target source) = attack target source
 resolve (DirectAttack _source targetPlayerLens) = directAttack _source targetPlayerLens
 resolve (DiscardFromHand c) = discardFromHand c
 resolve (DestroyOne cardLens) = destroyOne cardLens
