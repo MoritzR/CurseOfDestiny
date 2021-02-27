@@ -90,27 +90,45 @@ doAttack target source = case compare targetPower sourcePower of
     EQ -> [Destroy (enemyPlayer. #field) target, Destroy (activePlayer. #field) source]
     where (targetPower, sourcePower) = (creaturePower target, creaturePower source)
 
-resolve :: Action -> Game r ()
-resolve (AddToField c) = do
+addToField :: Card -> Game r ()
+addToField card = do
     gs <- S.get
-    S.put $ over (activePlayer. #field) (c:) gs
-resolve (Choose l) = resolveChoose l
-resolve (Destroy cardLens c) = do
+    S.put $ over (activePlayer. #field) (card:) gs
+
+destroy :: CardLens -> Card -> Game r ()
+destroy cardLens card = do
     gs <- S.get
-    S.put $ over cardLens (deleteFirst c) gs
-resolve (Attack target source) = playGame $ doAttack target source
-resolve (DirectAttack _source targetPlayerLens) = do
+    S.put $ over cardLens (deleteFirst card) gs
+
+directAttack :: Card -> PlayerLens -> Game r ()
+directAttack _source targetPlayerLens = do
     gs <- S.get
     S.put $ over (targetPlayerLens.playerHp) (+ (-1)) gs
-resolve (DiscardFromHand c) = do
+
+discardFromHand :: Card -> Game r ()
+discardFromHand card = do
     gs <- S.get
-    S.put $ over (activePlayer. #hand) (deleteFirst c) gs
-resolve (DestroyOne cardLens) = do
+    S.put $ over (activePlayer. #hand) (deleteFirst card) gs
+
+destroyOne :: CardLens -> Game r ()
+destroyOne cardLens = do
     gs <- S.get
     playGame (doDestroy cardLens gs)
-resolve (Draw playerLens) = do
+
+draw :: PlayerLens -> Game r ()
+draw playerLens = do
     gs <- S.get 
     S.put $ over (playerLens. #deck) tail . over (playerLens. #hand) ((:) $ topOfDeck playerLens gs) $ gs
+
+resolve :: Action -> Game r ()
+resolve (AddToField c) = addToField c
+resolve (Choose l) = resolveChoose l
+resolve (Destroy cardLens c) = destroy cardLens c
+resolve (Attack target source) = playGame $ doAttack target source
+resolve (DirectAttack _source targetPlayerLens) = directAttack _source targetPlayerLens
+resolve (DiscardFromHand c) = discardFromHand c
+resolve (DestroyOne cardLens) = destroyOne cardLens
+resolve (Draw playerLens) = draw playerLens
 resolve EndTurn = endRound
 
 topOfDeck :: PlayerLens -> GameState -> Card
