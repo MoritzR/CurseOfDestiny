@@ -1,16 +1,16 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f11e46e73cbd706339eee9d9c55ab745438f6f8a85b1efa023b5d902a1304513
+-- hash: d9c2e6da7a79137ae8234d0738a7b12c1312d42e8fab0c6b785b8eb741949909
 
 name:           cod
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/MoritzR/CurseOfDestiny#readme>
-homepage:       https://github.com/https://github.com/MoritzR/CurseOfDestiny#readme
-bug-reports:    https://github.com/https://github.com/MoritzR/CurseOfDestiny/issues
+homepage:       https://github.com/MoritzR/CurseOfDestiny#readme
+bug-reports:    https://github.com/MoritzR/CurseOfDestiny/issues
 author:         Moritz Rumpf
 maintainer:     Moritz Rumpf
 copyright:      2020 Moritz Rumpf
@@ -22,7 +22,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/https://github.com/MoritzR/CurseOfDestiny
+  location: https://github.com/MoritzR/CurseOfDestiny
 
 library
   exposed-modules:
@@ -39,7 +39,22 @@ library
       Paths_cod
   hs-source-dirs:
       src
-  default-extensions: DataKinds ConstraintKinds DeriveGeneric DuplicateRecordFields FlexibleContexts GADTs LambdaCase NoMonomorphismRestriction OverloadedLabels PolyKinds RankNTypes ScopedTypeVariables TypeApplications TypeOperators TypeFamilies
+  default-extensions:
+      DataKinds
+      ConstraintKinds
+      DeriveGeneric
+      DuplicateRecordFields
+      FlexibleContexts
+      GADTs
+      LambdaCase
+      NoMonomorphismRestriction
+      OverloadedLabels
+      PolyKinds
+      RankNTypes
+      ScopedTypeVariables
+      TypeApplications
+      TypeOperators
+      TypeFamilies
   ghc-options: -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively
   build-depends:
       base >=4.7 && <5
@@ -55,7 +70,22 @@ executable cod-exe
       Paths_cod
   hs-source-dirs:
       app
-  default-extensions: DataKinds ConstraintKinds DeriveGeneric DuplicateRecordFields FlexibleContexts GADTs LambdaCase NoMonomorphismRestriction OverloadedLabels PolyKinds RankNTypes ScopedTypeVariables TypeApplications TypeOperators TypeFamilies
+  default-extensions:
+      DataKinds
+      ConstraintKinds
+      DeriveGeneric
+      DuplicateRecordFields
+      FlexibleContexts
+      GADTs
+      LambdaCase
+      NoMonomorphismRestriction
+      OverloadedLabels
+      PolyKinds
+      RankNTypes
+      ScopedTypeVariables
+      TypeApplications
+      TypeOperators
+      TypeFamilies
   ghc-options: -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
@@ -75,7 +105,22 @@ test-suite cod-test
       Paths_cod
   hs-source-dirs:
       test
-  default-extensions: DataKinds ConstraintKinds DeriveGeneric DuplicateRecordFields FlexibleContexts GADTs LambdaCase NoMonomorphismRestriction OverloadedLabels PolyKinds RankNTypes ScopedTypeVariables TypeApplications TypeOperators TypeFamilies
+  default-extensions:
+      DataKinds
+      ConstraintKinds
+      DeriveGeneric
+      DuplicateRecordFields
+      FlexibleContexts
+      GADTs
+      LambdaCase
+      NoMonomorphismRestriction
+      OverloadedLabels
+      PolyKinds
+      RankNTypes
+      ScopedTypeVariables
+      TypeApplications
+      TypeOperators
+      TypeFamilies
   ghc-options: -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
