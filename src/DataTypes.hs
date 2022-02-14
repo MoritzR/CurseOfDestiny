@@ -28,7 +28,7 @@ data Action = AddToField Card
 instance Show Action where
     show (AddToField c) = "AddToField " ++ show c
     show (DiscardFromHand c) = "DiscardFromHand " ++ show c
-    show (EndTurn) = "EndTurn"
+    show EndTurn = "EndTurn"
     show (Choose actions) = "Choose " ++ show actions
     show (Destroy _ c) = "Destroy " ++ show c
     show (DestroyOne _) = "DestroyOne"
@@ -44,7 +44,7 @@ type PlayerLens = Lens' GameState Player
 
 type Players = (Player, Player)
 
-data GameState = GameState {
+newtype GameState = GameState {
     players :: Players
 } deriving (Show, Eq, Generic)
 
@@ -81,19 +81,19 @@ data Card = Card {
     effects :: [CardEffect]
 } deriving Generic
 instance Show Card where
-  show c = cardName c ++  " (" ++ (show $ cardType c) ++ ")"
+  show c = cardName c ++  " (" ++ show (cardType c) ++ ")"
 instance Eq Card where
     (==) = mapEq cardId
 
 mapEq :: (Eq a, Eq b) => (b -> a) -> (b ->b -> Bool)
-mapEq f = \e1 e2 -> (f e1) == (f e2)
+mapEq f e1 e2 = f e1 == f e2
 
 data CardType = Spell
     | Creature Int
     deriving Eq
 instance Show CardType where
     show Spell = "S,"
-    show (Creature power) = "C[" ++ (show power) ++ "],"
+    show (Creature power) = "C[" ++ show power ++ "],"
 
 activePlayer :: Lens' GameState Player
 activePlayer = #players._1

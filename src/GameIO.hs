@@ -15,7 +15,7 @@ chooseOne l = do
 
 displayEnumeratedItems :: (Member Trace r, Show a) => [a] -> Sem r ()
 displayEnumeratedItems = mapM_ displayTuple . zip [1..]
-    where displayTuple (i, v) = log' $ show i ++ ": " ++ (show v)
+    where displayTuple (i, v) = log' $ show i ++ ": " ++ show v
 
 log' :: Member Trace r => String -> Sem r ()
 log' = trace
