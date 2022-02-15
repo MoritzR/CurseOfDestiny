@@ -32,7 +32,7 @@ changeCurrentPlayer = over #players swap
 applyTurnEnds :: Game r ()
 applyTurnEnds = do
   gs <- S.get
-  let actions = concat $ gs ^.. activePlayer . #field . traverse . #effects . #getOnTurnEnd
+  let actions = concat $ gs ^.. activePlayer . #field . traverse . #effects . #onTurnEnd
   mapM_ resolve actions
 
 pass :: GameState -> GameState

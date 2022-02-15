@@ -116,14 +116,14 @@ playerHp :: Lens' Player Int
 playerHp = #playerCreature . #hp
 
 data CardEffects = CardEffects
-  { getOnPlay :: [Action],
-    getOnTurnEnd :: [Action],
-    getOnActivate :: [Action]
+  { onPlay :: [Action],
+    onTurnEnd :: [Action],
+    onActivate :: [Action]
   }
   deriving (Generic)
 
 instance Semigroup CardEffects where
-  a <> b = a {getOnPlay = getOnPlay a ++ getOnPlay b, getOnTurnEnd = getOnTurnEnd a ++ getOnTurnEnd b, getOnActivate = getOnActivate a ++ getOnActivate b}
+  a <> b = a {onPlay = onPlay a ++ onPlay b, onTurnEnd = onTurnEnd a ++ onTurnEnd b, onActivate = onActivate a ++ onActivate b}
 
 instance Monoid CardEffects where
-  mempty = CardEffects {getOnPlay = [], getOnTurnEnd = [], getOnActivate = []}
+  mempty = CardEffects {onPlay = [], onTurnEnd = [], onActivate = []}

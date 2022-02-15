@@ -21,10 +21,10 @@ orElsePass :: Maybe GameAction -> GameAction
 orElsePass = fromMaybe Pass
 
 convertGameAction :: GameAction -> GameState -> [Action]
-convertGameAction (Play c) _ = c ^. #effects . #getOnPlay
-convertGameAction (PlayFromHand i) gs = DiscardFromHand c : c ^. #effects . #getOnPlay
+convertGameAction (Play c) _ = c ^. #effects . #onPlay
+convertGameAction (PlayFromHand i) gs = DiscardFromHand c : c ^. #effects . #onPlay
             where c = (gs^.activePlayer. #hand) !! i -- crashes program when i is out of range
-convertGameAction (ActivateFromField i) gs = c ^. #effects . #getOnActivate
+convertGameAction (ActivateFromField i) gs = c ^. #effects . #onActivate
             where c = (gs^.activePlayer. #field) !! i -- crashes program when i is out of range
 convertGameAction (AnnounceAttack target source) gs = [Attack targetCard sourceCard]
             where

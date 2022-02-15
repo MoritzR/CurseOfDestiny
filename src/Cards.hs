@@ -3,22 +3,23 @@ module Cards where
 import DataTypes
   ( Action (AddToField, Choose, Destroy, DestroyOne, Draw),
     Card (Card),
-    CardEffects (getOnPlay, getOnTurnEnd, getOnActivate),
+    CardEffects,
     CardType (Creature, Spell),
     PlayerCreature (PlayerCreature),
     activePlayer,
   )
+import qualified DataTypes as T
 
 onPlay :: Action -> CardEffects
-onPlay actions = mempty {getOnPlay = [actions]}
+onPlay actions = mempty {T.onPlay = [actions]}
 
 onTurnEnd :: Action -> CardEffects
-onTurnEnd actions = mempty {getOnTurnEnd = [actions]}
+onTurnEnd actions = mempty {T.onTurnEnd = [actions]}
 
 onActivate :: Action -> CardEffects
-onActivate actions = mempty {getOnActivate = [actions]}
+onActivate actions = mempty {T.onActivate = [actions]}
 
-noEffects :: CardEffects 
+noEffects :: CardEffects
 noEffects = mempty
 
 creature id name power effects = Card id name (Creature power) $ onPlay (AddToField thisCard) <> effects
