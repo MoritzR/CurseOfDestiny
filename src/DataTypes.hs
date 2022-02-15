@@ -81,9 +81,9 @@ data GameAction
   deriving (Eq, Show)
 
 data Card = Card
-  { cardId :: String,
+  { cardType :: CardType,
+    cardId :: String,
     cardName :: String,
-    cardType :: CardType,
     effects :: CardEffects
   }
   deriving (Generic)

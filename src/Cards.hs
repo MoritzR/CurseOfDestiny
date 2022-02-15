@@ -22,11 +22,11 @@ onActivate actions = mempty {T.onActivate = [actions]}
 noEffects :: CardEffects
 noEffects = mempty
 
-creature id name power effects = Card id name (Creature power) $ onPlay (AddToField thisCard) <> effects
+creature id name power effects = Card (Creature power) id name $ onPlay (AddToField thisCard) <> effects
   where
     thisCard = creature id name power effects
 
-spell id name effects = Card id name Spell effects
+spell = Card Spell
 
 dog = creature "1" "Dog" 1500 noEffects
 
