@@ -1,16 +1,17 @@
 module Decks where
+
 import Cards
 
-mixed = [
-    dog,
+mixed =
+  [ dog,
     catOrDog,
     dragon,
     catFactory,
     masterOfGreed
-    ]
+  ]
 
-pets = [
-    dog,
+pets =
+  [ dog,
     dog,
     dog,
     cat,
@@ -19,4 +20,4 @@ pets = [
     dragon,
     dragon,
     dragon
-    ]
+  ]
