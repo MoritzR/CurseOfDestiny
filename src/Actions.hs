@@ -6,7 +6,7 @@ import Data.Tuple (swap)
 import DataTypes
 import qualified GameIO as Gio
 import qualified Polysemy.State as S
-import PolysemyLens ( (%=), (-=), (<>=) )
+import PolysemyLens ((%=), (-=), (<>=))
 
 resolve :: Action -> Game r ()
 resolve action = case action of
@@ -23,8 +23,7 @@ resolve action = case action of
 endRound :: Game r ()
 endRound = do
   applyTurnEnds
-  gs <- S.get
-  S.put $ changeCurrentPlayer gs
+  S.modify changeCurrentPlayer
 
 changeCurrentPlayer :: GameState -> GameState
 changeCurrentPlayer = over #players swap
@@ -55,13 +54,11 @@ attack target source = case compare targetPower sourcePower of
 
 addToField :: Card -> Game r ()
 addToField card = do
-  gs <- S.get
-  S.put $ over (activePlayer . #field) (card :) gs
+  activePlayer . #field <>= [card]
 
 destroy :: CardLens -> Card -> Game r ()
 destroy cardLens card = do
-  gs <- S.get
-  S.put $ over cardLens (deleteFirst card) gs
+  cardLens %= deleteFirst card
 
 directAttack :: Card -> PlayerLens -> Game r ()
 directAttack _source targetPlayer = do
@@ -69,8 +66,7 @@ directAttack _source targetPlayer = do
 
 discardFromHand :: Card -> Game r ()
 discardFromHand card = do
-  gs <- S.get
-  S.put $ over (activePlayer . #hand) (deleteFirst card) gs
+  activePlayer . #hand %= deleteFirst card
 
 destroyOne :: CardLens -> Game r ()
 destroyOne cardLens = do
