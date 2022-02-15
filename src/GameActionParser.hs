@@ -58,7 +58,7 @@ digit :: ReadP Char
 digit = satisfy isDigit
 
 index :: ReadP Int
-index = fmap (minus1 . read) (many1 digit)
+index = minus1 . read <$> many1 digit
 
 minus1 :: Int -> Int
 minus1 x = x - 1
