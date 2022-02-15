@@ -10,17 +10,17 @@ import DataTypes
   )
 import qualified DataTypes as T
 
-onPlay :: Action -> CardEffects
-onPlay actions = mempty {T.onPlay = [actions]}
-
-onTurnEnd :: Action -> CardEffects
-onTurnEnd actions = mempty {T.onTurnEnd = [actions]}
-
-onActivate :: Action -> CardEffects
-onActivate actions = mempty {T.onActivate = [actions]}
-
 noEffects :: CardEffects
 noEffects = mempty
+
+onPlay :: Action -> CardEffects
+onPlay actions = noEffects {T.onPlay = [actions]}
+
+onTurnEnd :: Action -> CardEffects
+onTurnEnd actions = noEffects {T.onTurnEnd = [actions]}
+
+onActivate :: Action -> CardEffects
+onActivate actions = noEffects {T.onActivate = [actions]}
 
 creature id name power effects = Card (Creature power) id name $ onPlay (AddToField thisCard) <> effects
   where
