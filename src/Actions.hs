@@ -32,7 +32,7 @@ changeCurrentPlayer = over #players swap
 applyTurnEnds :: Game r ()
 applyTurnEnds = do
     gs <- S.get
-    let actions = concat $ fmap onTurnEndEffects $ gs^..activePlayer . #field . traverse . #effects
+    let actions = concat $ gs^..activePlayer . #field . traverse . #effects . #getOnTurnEnd
     actions
       & map resolve
       & sequence
@@ -83,7 +83,7 @@ destroyOne cardLens = do
 
 draw :: PlayerLens -> Game r ()
 draw playerLens = do
-    gs <- S.get 
+    gs <- S.get
     S.put $ over (playerLens. #deck) tail . over (playerLens. #hand) ((:) $ topOfDeck playerLens gs) $ gs
 
 
@@ -103,6 +103,3 @@ resolveChoose l = do
     case maybeChoice of
         Just choice -> resolve choice
         Nothing -> return ()
-
-onTurnEndEffects :: [CardEffect] -> [Action]
-onTurnEndEffects l = [a | OnTurnEnd a <- l]

@@ -21,24 +21,19 @@ orElsePass :: Maybe GameAction -> GameAction
 orElsePass = fromMaybe Pass
 
 convertGameAction :: GameAction -> GameState -> [Action]
-convertGameAction (Play c) _ = (onPlayEffects . view #effects) c
-convertGameAction (PlayFromHand i) gs = (DiscardFromHand c) : (onPlayEffects . view #effects) c
+convertGameAction (Play c) _ = c ^. #effects . #getOnPlay
+convertGameAction (PlayFromHand i) gs = DiscardFromHand c : c ^. #effects . #getOnPlay
             where c = (gs^.activePlayer. #hand) !! i -- crashes program when i is out of range
-convertGameAction (ActivateFromField i) gs = (onActivateEffects . view #effects) c
+convertGameAction (ActivateFromField i) gs = c ^. #effects . #getOnActivate
             where c = (gs^.activePlayer. #field) !! i -- crashes program when i is out of range
 convertGameAction (AnnounceAttack target source) gs = [Attack targetCard sourceCard]
             where
                 targetCard = (gs^.enemyPlayer. #field) !! target -- crashes program when target is out of range
                 sourceCard = (gs^.activePlayer. #field) !! source -- crashes program when source is out of range
-convertGameAction (AnnounceDirectAttack i) gs = return $ DirectAttack c (enemyPlayer)
+convertGameAction (AnnounceDirectAttack i) gs = return $ DirectAttack c enemyPlayer
             where c = (gs^.activePlayer. #field) !! i -- crashes program when i is out of range
 convertGameAction EndRound _ = return EndTurn
 convertGameAction _ _ = []
-
-onPlayEffects :: [CardEffect] -> [Action]
-onPlayEffects l = [a | OnPlay a <- l]
-onActivateEffects :: [CardEffect] -> [Action]
-onActivateEffects l = [a | OnActivate a <- l]
 
 parseActions :: String -> GameState -> [Action]
 parseActions = convertGameAction . orElsePass . parseGameAction
@@ -68,7 +63,7 @@ gameLoop = do
     inp <- input
     if inp=="exit" || inp=="q"
         then gameOver
-        else do 
+        else do
             playGame (parseActions inp gs)
             gameLoop
 
