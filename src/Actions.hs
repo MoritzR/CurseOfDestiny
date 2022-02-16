@@ -1,7 +1,12 @@
-module Actions (resolve, deleteFirst) where
+{-# LANGUAGE LambdaCase #-}
+
+module Actions (resolve, deleteFirst, creaturePower, modifiedField) where
 
 import Control.Lens (over, (^.), (^..))
+import Control.Lens.Setter (set)
 import Data.Function ((&))
+import Data.Generics.Sum.Constructors (_Ctor')
+import Data.Generics.Sum.Subtype (_Sub)
 import Data.Tuple (swap)
 import DataTypes
 import qualified GameIO as Gio
@@ -31,7 +36,7 @@ changeCurrentPlayer = over #players swap
 applyTurnEnds :: Game r ()
 applyTurnEnds = do
   gs <- S.get
-  let actions = concat $ gs ^.. activePlayer . #field . traverse . #effects . #onTurnEnd
+  let actions = gs ^. activePlayer . #field . traverse . #effects . #onTurnEnd
   mapM_ resolve actions
 
 pass :: GameState -> GameState
@@ -43,14 +48,15 @@ creaturePower card = case card ^. #cardType of
   Spell -> 0 -- is a default a good idea here, or should this fail instead?
 
 attack :: Card -> Card -> Game r ()
-attack target source = case compare targetPower sourcePower of
-  LT -> destroy (enemyPlayer . #field) target
-  GT -> destroy (activePlayer . #field) source
-  EQ -> do
-    destroy (enemyPlayer . #field) target
-    destroy (activePlayer . #field) source
-  where
-    (targetPower, sourcePower) = (creaturePower target, creaturePower source)
+attack target source = do
+  let (targetPower, sourcePower) = (creaturePower target, creaturePower source)
+
+  case compare targetPower sourcePower of
+    LT -> destroy (enemyPlayer . #field) target
+    GT -> destroy (activePlayer . #field) source
+    EQ -> do
+      destroy (enemyPlayer . #field) target
+      destroy (activePlayer . #field) source
 
 addToField :: Card -> Game r ()
 addToField card = do
@@ -91,7 +97,30 @@ deleteFirst a (b : bc)
   | otherwise = b : deleteFirst a bc
 
 resolveChoose :: [Action] -> Game r ()
-resolveChoose l = do
-  maybeChoice <- Gio.chooseOne l
+resolveChoose actions = do
+  maybeChoice <- Gio.chooseOne actions
   Gio.logLn' . show $ maybeChoice
   mapM_ resolve maybeChoice
+
+modifiedField :: PlayerLens -> GameState -> [Card]
+modifiedField playerLens gs =
+  map (modified playerLens gs) field
+  where
+    field = gs ^. playerLens . #field
+
+modified :: PlayerLens -> GameState -> Card -> Card
+modified playerLens gs card =
+  foldr applyAura card onFieldEffects
+  where
+    onFieldEffects = gs ^. playerLens . #field . traverse . #effects . #whileOnField
+
+applyAura :: Aura -> Card -> Card
+applyAura aura card = case aura of
+  IncreaseAttack amount ->
+    over
+      #cardType
+      ( \case
+          Creature power -> Creature (power + amount)
+          other -> other
+      )
+      card

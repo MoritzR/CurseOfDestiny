@@ -2,7 +2,7 @@ module GameSpec where
 import Test.Hspec
 import Game (convertGameAction)
 import qualified Game
-import Actions (deleteFirst)
+import Actions (deleteFirst, creaturePower)
 import qualified Actions
 import GameIO
 import DataTypes
@@ -13,6 +13,7 @@ import Polysemy.Trace (Trace, ignoreTrace)
 import Polysemy.Input (Input, runInputConst)
 import Polysemy.State (State, execState)
 import Data.Function ((&))
+import DataTypes (GameAction(AnnounceAttack))
 
 runForTests ::  GameState -> Sem '[State GameState, Input Int, Trace] a -> GameState
 runForTests gs sem = sem
@@ -87,14 +88,17 @@ spec = do
 
                 newGame^.enemyPlayer. #field `shouldBe` [Cards.dragon]
 
-        -- describe "playing" $ do
-        --     describe "Buff" $ do
-        --         it "should increase the power of dog from 1500 to 2500" $ do
-        --             let player1 = defaultPlayer {field = [Cards.dog], hand = [Cards.buff]}
-        --             let game = GameState (player1, player1)
-        --             let newGame = playGame (convertGameAction (PlayFromHand 0) game) game
+        describe "Buff" $ do
+            it "should increase the power of a dog so it can defeate another dog" $ do
+                let player1 = defaultPlayer {field = [Cards.dog ,Cards.buff]}
+                let player2 = defaultPlayer {field = [Cards.dog]}
+                let game = GameState (player1, player2)
+                let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game
 
-        --             newGame^.activePlayer. #field `shouldBe` [Cards.dog^.power.~2500]
+                newGame^.activePlayer. #field `shouldBe` [Cards.dog, Cards.buff]
+                -- the buffed dog destroys the enemy dog
+                game^.enemyPlayer. #field `shouldBe` [Cards.dog]
+                newGame^.enemyPlayer. #field `shouldBe` []
 
         describe "activating" $ do
             describe "Master of Greed" $ do

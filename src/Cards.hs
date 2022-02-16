@@ -2,6 +2,7 @@ module Cards where
 
 import DataTypes
   ( Action (AddToField, Choose, Destroy, DestroyOne, Draw),
+    Aura (IncreaseAttack),
     Card (Card),
     CardEffects,
     CardType (Creature, Spell),
@@ -14,13 +15,16 @@ noEffects :: CardEffects
 noEffects = mempty
 
 onPlay :: Action -> CardEffects
-onPlay actions = noEffects {T.onPlay = [actions]}
+onPlay action = noEffects {T.onPlay = [action]}
 
 onTurnEnd :: Action -> CardEffects
-onTurnEnd actions = noEffects {T.onTurnEnd = [actions]}
+onTurnEnd action = noEffects {T.onTurnEnd = [action]}
 
 onActivate :: Action -> CardEffects
-onActivate actions = noEffects {T.onActivate = [actions]}
+onActivate action = noEffects {T.onActivate = [action]}
+
+whileOnField :: Aura -> CardEffects
+whileOnField aura = noEffects {T.whileOnField = [aura]}
 
 creature id name power effects = Card (Creature power) id name $ onPlay (AddToField thisCard) <> effects
   where
@@ -41,5 +45,7 @@ dragonEgg = creature "5" "Dragon Egg" 0 (onTurnEnd (AddToField dragon) <> onTurn
 catFactory = creature "6" "Cat Factory" 500 (onActivate $ AddToField cat)
 
 masterOfGreed = creature "7" "Master of Greed" 500 (onActivate (DestroyOne $ activePlayer . #field) <> onActivate (Draw activePlayer))
+
+buff = creature "8" "Mr. Buff" 0 (whileOnField (IncreaseAttack 500))
 
 defaultPlayerCreature = PlayerCreature "1" 7

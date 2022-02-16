@@ -115,15 +115,25 @@ enemyPlayer = #players . _2
 playerHp :: Lens' Player Int
 playerHp = #playerCreature . #hp
 
+newtype Aura = IncreaseAttack Int
+  deriving (Show)
+
 data CardEffects = CardEffects
   { onPlay :: [Action],
     onTurnEnd :: [Action],
-    onActivate :: [Action]
+    onActivate :: [Action],
+    whileOnField :: [Aura]
   }
   deriving (Generic)
 
 instance Semigroup CardEffects where
-  a <> b = a {onPlay = onPlay a ++ onPlay b, onTurnEnd = onTurnEnd a ++ onTurnEnd b, onActivate = onActivate a ++ onActivate b}
+  a <> b =
+    CardEffects
+      { onPlay = onPlay a <> onPlay b,
+        onTurnEnd = onTurnEnd a <> onTurnEnd b,
+        onActivate = onActivate a <> onActivate b,
+        whileOnField = whileOnField a <> whileOnField b
+      }
 
 instance Monoid CardEffects where
-  mempty = CardEffects {onPlay = [], onTurnEnd = [], onActivate = []}
+  mempty = CardEffects {onPlay = [], onTurnEnd = [], onActivate = [], whileOnField = []}

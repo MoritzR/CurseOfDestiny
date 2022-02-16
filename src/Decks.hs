@@ -7,7 +7,8 @@ mixed =
     catOrDog,
     dragon,
     catFactory,
-    masterOfGreed
+    masterOfGreed,
+    buff
   ]
 
 pets =

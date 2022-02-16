@@ -1,6 +1,6 @@
 module Game where
 
-import Actions (resolve)
+import Actions (modifiedField, resolve)
 import qualified Cards
 import Control.Lens (view, (^.))
 import Data.Maybe (fromMaybe)
@@ -28,11 +28,11 @@ convertGameAction (PlayFromHand i) gs = DiscardFromHand c : c ^. #effects . #onP
     c = (gs ^. activePlayer . #hand) !! i -- crashes program when i is out of range
 convertGameAction (ActivateFromField i) gs = c ^. #effects . #onActivate
   where
-    c = (gs ^. activePlayer . #field) !! i -- crashes program when i is out of range
+    c = modifiedField activePlayer gs !! i -- crashes program when i is out of range
 convertGameAction (AnnounceAttack target source) gs = [Attack targetCard sourceCard]
   where
-    targetCard = (gs ^. enemyPlayer . #field) !! target -- crashes program when target is out of range
-    sourceCard = (gs ^. activePlayer . #field) !! source -- crashes program when source is out of range
+    targetCard = modifiedField enemyPlayer gs !! target -- crashes program when target is out of range
+    sourceCard = modifiedField activePlayer gs !! source -- crashes program when source is out of range
 convertGameAction (AnnounceDirectAttack i) gs = return $ DirectAttack c enemyPlayer
   where
     c = (gs ^. activePlayer . #field) !! i -- crashes program when i is out of range
@@ -57,12 +57,16 @@ gameLoop :: Member (Input String) r => Game r ()
 gameLoop = do
   gs <- S.get
   Gio.logLn' ""
+
   Gio.logLn' "Enemy field:"
-  Gio.displayEnumeratedItems $ gs ^. enemyPlayer . #field
+  Gio.displayEnumeratedItems $ modifiedField enemyPlayer gs
+
   Gio.logLn' "Your field:"
-  Gio.displayEnumeratedItems $ gs ^. activePlayer . #field
+  Gio.displayEnumeratedItems $ modifiedField activePlayer gs
+
   Gio.logLn' "Player Hand:"
   Gio.displayEnumeratedItems $ gs ^. activePlayer . #hand
+
   Gio.log' "Select action (pass/end/p/c/a/d): "
   inp <- input
   if inp == "exit" || inp == "q"
