@@ -24,8 +24,8 @@ runForTests gs sem =
     & ignoreTrace
     & run
 
-playGame :: [Action] -> GameState -> GameState
-playGame actions gs = Game.playGame actions & runForTests gs
+playGame :: GameAction -> GameState -> GameState
+playGame action gs = Game.playGame (convertGameAction action gs) & runForTests gs
 
 resolve :: Action -> GameState -> GameState
 resolve action gs = Actions.resolve action & runForTests gs
@@ -57,12 +57,12 @@ spec = do
 
     describe "playing a creature" $ do
       it "should add that creature to the field of the active player" $ do
-        let newGame = playGame (convertGameAction (PlayFromHand 0) game) game
+        let newGame = playGame (PlayFromHand 0) game
 
         newGame ^. activePlayer . #field `shouldBe` [Cards.dog]
 
       it "should remove that creatue from the active player's hand" $ do
-        let newGame = playGame (convertGameAction (PlayFromHand 0) game) game
+        let newGame = playGame (PlayFromHand 0) game
 
         newGame ^. activePlayer . #hand `shouldBe` []
 
@@ -95,7 +95,7 @@ spec = do
         let player1 = defaultPlayer {field = [Cards.dog, Cards.buff]}
         let player2 = defaultPlayer {field = [Cards.dog]}
         let game = GameState (player1, player2)
-        let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game
+        let newGame = playGame (AnnounceAttack 0 0) game
 
         newGame ^. activePlayer . #field `shouldBe` [Cards.dog, Cards.buff]
         -- the buffed dog destroys the enemy dog
@@ -107,19 +107,19 @@ spec = do
         it "should destroy itself when its the only card on the active player's the field" $ do
           let player1 = defaultPlayer {field = [Cards.masterOfGreed]}
           let game = GameState (player1, player1)
-          let newGame = playGame (convertGameAction (ActivateFromField 0) game) game
+          let newGame = playGame (ActivateFromField 0) game
 
           newGame ^. activePlayer . #field `shouldBe` []
         it "should destroy another card on the field when the other card is chosen to be destroyed" $ do
           let player1 = defaultPlayer {field = [Cards.dog, Cards.masterOfGreed]}
           let game = GameState (player1, player1)
-          let newGame = playGame (convertGameAction (ActivateFromField 1) game) game
+          let newGame = playGame (ActivateFromField 1) game
 
           newGame ^. activePlayer . #field `shouldBe` [Cards.masterOfGreed]
         it "should draw a card for the active player" $ do
           let player1 = defaultPlayer {deck = [Cards.dog], field = [Cards.masterOfGreed]}
           let game = GameState (player1, player1)
-          let newGame = playGame (convertGameAction (ActivateFromField 0) game) game
+          let newGame = playGame (ActivateFromField 0) game
 
           newGame ^. activePlayer . #hand `shouldBe` [Cards.dog]
           newGame ^. activePlayer . #deck `shouldBe` []
@@ -129,7 +129,7 @@ spec = do
           let player1 = defaultPlayer {field = [Cards.catFactory]}
           let game = GameState (player1, player1)
 
-          let newGame = playGame (convertGameAction (ActivateFromField 0) game) game
+          let newGame = playGame (ActivateFromField 0) game
 
           newGame ^. activePlayer . #field `shouldSatisfy` elem Cards.cat
 
@@ -141,7 +141,7 @@ spec = do
         let game = GameState (catPlayer, dogPlayer)
 
         it "should destroy the cat" $ do
-          let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game
+          let newGame = playGame (AnnounceAttack 0 0) game
 
           newGame ^. activePlayer . #field `shouldBe` []
           newGame ^. enemyPlayer . #field `shouldBe` [Cards.dog]
@@ -150,7 +150,7 @@ spec = do
         let game = GameState (dogPlayer, catPlayer)
 
         it "should destroy the cat" $ do
-          let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game
+          let newGame = playGame (AnnounceAttack 0 0) game
 
           newGame ^. activePlayer . #field `shouldBe` [Cards.dog]
           newGame ^. enemyPlayer . #field `shouldBe` []
@@ -159,7 +159,7 @@ spec = do
         let game = GameState (catPlayer, catPlayer)
 
         it "should destroy the both cats" $ do
-          let newGame = playGame (convertGameAction (AnnounceAttack 0 0) game) game
+          let newGame = playGame (AnnounceAttack 0 0) game
 
           newGame ^. activePlayer . #field `shouldBe` []
           newGame ^. enemyPlayer . #field `shouldBe` []
@@ -170,6 +170,6 @@ spec = do
         it "should reduce the attacked players hp by 1" $ do
           let oldHp = game ^. enemyPlayer . playerHp
 
-          let newGame = playGame (convertGameAction (AnnounceDirectAttack 0) game) game
+          let newGame = playGame (AnnounceDirectAttack 0) game
 
           newGame ^. enemyPlayer . playerHp `shouldBe` (oldHp - 1)
