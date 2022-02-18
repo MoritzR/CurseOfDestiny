@@ -1,4 +1,4 @@
-module PolysemyLens ((+=), (-=), (<>=), (%=)) where
+module PolysemyLens ((+=), (-=), (++=), (%=)) where
 
 import Control.Lens (ASetter, (%~))
 import Polysemy (Member, Sem)
@@ -22,7 +22,7 @@ infixl 8 -=
 (-=) :: (Member (State s) r, Num a) => ASetter s s a a -> a -> Sem r ()
 l -= x = l %= (+ (- x))
 
-infixl 8 <>=
+infixl 8 ++=
 
-(<>=) :: (Member (State s) r) => ASetter s s [a] [a] -> [a] -> Sem r ()
-l <>= x = l %= (++ x)
+(++=) :: (Member (State s) r) => ASetter s s [a] [a] -> [a] -> Sem r ()
+l ++= x = l %= (++ x)

@@ -11,7 +11,7 @@ import Data.Tuple (swap)
 import DataTypes
 import qualified GameIO as Gio
 import qualified Polysemy.State as S
-import PolysemyLens ((%=), (-=), (<>=))
+import PolysemyLens ((%=), (-=), (++=))
 
 resolve :: Action -> Game r ()
 resolve action = case action of
@@ -60,7 +60,7 @@ attack target source = do
 
 addToField :: Card -> Game r ()
 addToField card = do
-  activePlayer . #field <>= [card]
+  activePlayer . #field ++= [card]
 
 destroy :: CardLens -> Card -> Game r ()
 destroy cardLens card = do
@@ -84,7 +84,7 @@ destroyOne cardLens = do
 draw :: PlayerLens -> Game r ()
 draw playerLens = do
   gs <- S.get
-  playerLens . #hand <>= [topOfDeck playerLens gs]
+  playerLens . #hand ++= [topOfDeck playerLens gs]
   playerLens . #deck %= tail
 
 topOfDeck :: PlayerLens -> GameState -> Card
