@@ -57,8 +57,11 @@ end = do
 digit :: ReadP Char
 digit = satisfy isDigit
 
+number :: ReadP Int
+number = read <$> many1 digit
+
 index :: ReadP Int
-index = minus1 . read <$> many1 digit
+index = minus1 <$> number
 
 minus1 :: Int -> Int
 minus1 x = x - 1
