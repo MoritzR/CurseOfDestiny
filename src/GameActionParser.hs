@@ -1,6 +1,5 @@
 module GameActionParser (parseGameAction) where
 
-import Control.Applicative ((<|>))
 import Data.Char (isDigit)
 import Data.Maybe (listToMaybe)
 import DataTypes
@@ -10,13 +9,14 @@ import Text.ParserCombinators.ReadP
     readP_to_S,
     satisfy,
     string,
+    choice
   )
 
 parseGameAction :: String -> Maybe GameAction
 parseGameAction = listToMaybe . map fst . readP_to_S gameAction
 
 gameAction :: ReadP GameAction
-gameAction = foldl1 (<|>) [playFromHand, activateFromField, announceDirectAttack, announceAttack, end, pass]
+gameAction = choice [playFromHand, activateFromField, announceDirectAttack, announceAttack, end, pass]
 
 -- Parsers for each action
 
