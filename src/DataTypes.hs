@@ -1,6 +1,6 @@
 module DataTypes where
 
-import Control.Lens (Lens', (^.), _1, _2)
+import Control.Lens (Iso', Lens', iso, (^.), _1, _2)
 import Data.Generics.Labels ()
 import GHC.Generics (Generic)
 import Polysemy (Members, Sem)
@@ -49,7 +49,15 @@ newtype GameState = GameState
   }
   deriving (Show, Eq, Generic)
 
-data Player = Player
+newState :: (PlayerWithoutId, PlayerWithoutId) -> GameState
+newState (player1, player2) =
+  GameState
+    { players =
+        ( Player {playerId = First, name = player1 ^. #name, deck = player1 ^. #deck, hand = player1 ^. #hand, field = player1 ^. #field, playerCreature = player1 ^. #playerCreature},
+          Player {playerId = Second, name = player2 ^. #name, deck = player2 ^. #deck, hand = player2 ^. #hand, field = player2 ^. #field, playerCreature = player2 ^. #playerCreature}
+        )
+    }
+data PlayerWithoutId = PlayerWithoutId
   { name :: String,
     deck :: [Card],
     hand :: [Card],
@@ -58,8 +66,21 @@ data Player = Player
   }
   deriving (Show, Generic)
 
+data PlayerId = First | Second
+  deriving (Show, Eq)
+
+data Player = Player
+  { playerId :: PlayerId,
+    name :: String,
+    deck :: [Card],
+    hand :: [Card],
+    field :: [Card],
+    playerCreature :: PlayerCreature
+  }
+  deriving (Show, Generic)
+
 instance Eq Player where
-  (==) = mapEq name
+  (==) = mapEq (\player -> player ^. #name)
 
 data PlayerCreature = PlayerCreature
   { playerCreatureId :: String,
@@ -112,11 +133,16 @@ activePlayer = #players . _1
 enemyPlayer :: Lens' GameState Player
 enemyPlayer = #players . _2
 
+otherPlayer :: GameState -> Iso' Player Player
+otherPlayer gs = iso getOtherPlayer getOtherPlayer
+  where
+    getOtherPlayer = \(player :: Player) -> if player ^. #playerId == gs ^. activePlayer . #playerId then gs ^. enemyPlayer else gs ^. activePlayer
+
 playerHp :: Lens' Player Int
 playerHp = #playerCreature . #hp
 
-newtype Aura = IncreaseAttack Int
-  deriving (Show)
+data Aura = IncreaseAttack Int | DecreaseAttack Int
+  deriving (Show, Eq)
 
 data CardEffects = CardEffects
   { onPlay :: [Action],

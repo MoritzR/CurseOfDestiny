@@ -2,7 +2,7 @@ module Cards where
 
 import DataTypes
   ( Action (AddToField, Choose, Destroy, DestroyOne, Draw),
-    Aura (IncreaseAttack),
+    Aura (IncreaseAttack, DecreaseAttack),
     Card (Card),
     CardEffects,
     CardType (Creature, Spell),
@@ -47,5 +47,7 @@ catFactory = creature "6" "Cat Factory" 500 (onActivate $ AddToField cat)
 masterOfGreed = creature "7" "Master of Greed" 500 (onActivate (DestroyOne $ activePlayer . #field) <> onActivate (Draw activePlayer))
 
 buff = creature "8" "Mr. Buff" 0 (whileOnField (IncreaseAttack 500))
+
+debuff = creature "9" "Mr. Debuff" 0 (whileOnField (DecreaseAttack 500))
 
 defaultPlayerCreature = PlayerCreature "1" 7

@@ -2,16 +2,17 @@
 
 module Actions (resolve, deleteFirst, creaturePower, modifiedField) where
 
-import Control.Lens (over, (^.), (^..))
+import Control.Lens (over, (%~), (^.), (^..))
 import Control.Lens.Setter (set)
 import Data.Function ((&))
 import Data.Generics.Sum.Constructors (_Ctor')
 import Data.Generics.Sum.Subtype (_Sub)
 import Data.Tuple (swap)
 import DataTypes
+import DataTypes (GameState (GameState))
 import qualified GameIO as Gio
 import qualified Polysemy.State as S
-import PolysemyLens ((%=), (-=), (++=))
+import PolysemyLens ((%=), (++=), (-=))
 
 resolve :: Action -> Game r ()
 resolve action = case action of
@@ -104,15 +105,25 @@ resolveChoose actions = do
 
 modifiedField :: PlayerLens -> GameState -> [Card]
 modifiedField playerLens gs =
-  map (modified playerLens gs) field
+  foldr (`resolveAura` playerLens) gs playerAuras
+    & \gs ->
+      foldr (`resolveAura` playerLens . otherPlayer gs) gs enemyAuras
+        ^. playerLens . #field
   where
-    field = gs ^. playerLens . #field
+    getAuras = #field . traverse . #effects . #whileOnField
+    playerAuras = gs ^. playerLens . getAuras
+    enemyAuras = gs ^. playerLens . otherPlayer gs . getAuras
 
 modified :: PlayerLens -> GameState -> Card -> Card
 modified playerLens gs card =
   foldr applyAura card onFieldEffects
   where
     onFieldEffects = gs ^. playerLens . #field . traverse . #effects . #whileOnField
+
+resolveAura :: Aura -> PlayerLens -> GameState -> GameState
+resolveAura aura owner gs = case aura of
+  IncreaseAttack amount -> gs & owner . #field . traverse %~ applyAura (IncreaseAttack amount)
+  DecreaseAttack amount -> gs & owner . otherPlayer gs . #field . traverse %~ applyAura (DecreaseAttack amount)
 
 applyAura :: Aura -> Card -> Card
 applyAura aura card = case aura of
@@ -121,6 +132,14 @@ applyAura aura card = case aura of
       #cardType
       ( \case
           Creature power -> Creature (power + amount)
+          other -> other
+      )
+      card
+  DecreaseAttack amount ->
+    over
+      #cardType
+      ( \case
+          Creature power -> Creature (power - amount)
           other -> other
       )
       card

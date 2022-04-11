@@ -15,8 +15,8 @@ import qualified Polysemy.State as S
 import Polysemy.Trace (Trace)
 import Prelude hiding (log)
 
-createPlayer :: String -> Player
-createPlayer name = Player {name = name, deck = Decks.mixed, hand = Decks.mixed, field = [], playerCreature = Cards.defaultPlayerCreature}
+createPlayer :: String -> PlayerWithoutId
+createPlayer name = PlayerWithoutId {name = name, deck = Decks.mixed, hand = Decks.mixed, field = [], playerCreature = Cards.defaultPlayerCreature}
 
 orElsePass :: Maybe GameAction -> GameAction
 orElsePass = fromMaybe Pass
@@ -79,5 +79,6 @@ startGame :: Members [Input String, Input Int, Trace] r => Sem r ()
 startGame = do
   let player1 = createPlayer "player1"
   let player2 = createPlayer "player2"
-  evalState (GameState (player1, player2)) gameLoop
+  let gameState = newState (player1, player2)
+  evalState gameState gameLoop
   Gio.logLn' "Game end"

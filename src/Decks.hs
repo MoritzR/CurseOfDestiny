@@ -8,7 +8,8 @@ mixed =
     dragon,
     catFactory,
     masterOfGreed,
-    buff
+    buff,
+    debuff 
   ]
 
 pets =
