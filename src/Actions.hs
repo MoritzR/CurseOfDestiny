@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 
-module Actions (resolve, deleteFirst, creaturePower, modifiedField) where
+module Actions (resolve, creaturePower, modifiedField) where
 
 import Control.Lens (over, (^.), (^..))
 import Control.Lens.Setter (set)
@@ -12,6 +12,7 @@ import DataTypes
 import qualified GameIO as Gio
 import qualified Polysemy.State as S
 import PolysemyLens ((%=), (-=), (++=))
+import Data.List (delete)
 
 resolve :: Action -> Game r ()
 resolve action = case action of
@@ -64,7 +65,7 @@ addToField card = do
 
 destroy :: CardLens -> Card -> Game r ()
 destroy cardLens card = do
-  cardLens %= deleteFirst card
+  cardLens %= delete card
 
 directAttack :: Card -> PlayerLens -> Game r ()
 directAttack _source targetPlayer = do
@@ -72,7 +73,7 @@ directAttack _source targetPlayer = do
 
 discardFromHand :: Card -> Game r ()
 discardFromHand card = do
-  activePlayer . #hand %= deleteFirst card
+  activePlayer . #hand %= delete card
 
 destroyOne :: CardLens -> Game r ()
 destroyOne cardLens = do
@@ -89,12 +90,6 @@ draw playerLens = do
 
 topOfDeck :: PlayerLens -> GameState -> Card
 topOfDeck playerLens = head . (^. playerLens . #deck)
-
-deleteFirst :: Eq a => a -> [a] -> [a]
-deleteFirst _ [] = []
-deleteFirst a (b : bc)
-  | a == b = bc
-  | otherwise = b : deleteFirst a bc
 
 resolveChoose :: [Action] -> Game r ()
 resolveChoose actions = do
