@@ -10,8 +10,8 @@ main = do
     startGame
         & traceToIO
         & runInputSem (embed getLine)
-        & runInputSem (embed (fmap toInt getLine))
+        & runInputSem (embed readInt)
         & runM
 
-toInt :: String -> Int
-toInt = read
+readInt :: IO Int
+readInt = readLn
