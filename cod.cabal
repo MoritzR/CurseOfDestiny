@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d9c2e6da7a79137ae8234d0738a7b12c1312d42e8fab0c6b785b8eb741949909
+-- hash: 4bf64349fed7f41118169c63098ce634beb63042084766bcb88f6cc720d7a3db
 
 name:           cod
 version:        0.1.0.0
@@ -58,10 +58,10 @@ library
   ghc-options: -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively
   build-depends:
       base >=4.7 && <5
-    , generic-lens >=2.0.0.0
+    , generic-lens
     , lens
-    , polysemy >=1.3.0.0
-    , polysemy-plugin >=0.2.5.1
+    , polysemy
+    , polysemy-plugin
   default-language: Haskell2010
 
 executable cod-exe
@@ -90,10 +90,10 @@ executable cod-exe
   build-depends:
       base >=4.7 && <5
     , cod
-    , generic-lens >=2.0.0.0
+    , generic-lens
     , lens
-    , polysemy >=1.3.0.0
-    , polysemy-plugin >=0.2.5.1
+    , polysemy
+    , polysemy-plugin
   default-language: Haskell2010
 
 test-suite cod-test
@@ -125,9 +125,9 @@ test-suite cod-test
   build-depends:
       base >=4.7 && <5
     , cod
-    , generic-lens >=2.0.0.0
+    , generic-lens
     , hspec
     , lens
-    , polysemy >=1.3.0.0
-    , polysemy-plugin >=0.2.5.1
+    , polysemy
+    , polysemy-plugin
   default-language: Haskell2010
