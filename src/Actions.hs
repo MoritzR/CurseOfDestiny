@@ -13,8 +13,9 @@ import qualified GameIO as Gio
 import qualified Polysemy.State as S
 import PolysemyLens ((%=), (-=), (++=), use)
 import Data.List (delete)
+import Polysemy (Sem)
 
-resolve :: Action -> Game r ()
+resolve :: HasStateIO r => Action -> Sem r ()
 resolve action = case action of
   AddToField c -> addToField c
   Choose l -> resolveChoose l
@@ -34,7 +35,7 @@ endRound = do
 changeCurrentPlayer :: GameState -> GameState
 changeCurrentPlayer = over #players swap
 
-applyTurnEnds :: Game r ()
+applyTurnEnds :: HasStateIO r => Sem r ()
 applyTurnEnds = do
   actions <- use $ activePlayer . #field . traverse . #effects . #onTurnEnd
   mapM_ resolve actions
@@ -90,7 +91,7 @@ draw playerLens = do
 topOfDeck :: PlayerLens -> GameState -> Card
 topOfDeck playerLens = head . (^. playerLens . #deck)
 
-resolveChoose :: [Action] -> Game r ()
+resolveChoose :: HasStateIO r => [Action] -> Sem r ()
 resolveChoose actions = do
   maybeChoice <- Gio.chooseOne actions
   Gio.logLn' . show $ maybeChoice
