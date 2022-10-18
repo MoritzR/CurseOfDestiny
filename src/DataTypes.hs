@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 module DataTypes where
 
 import Control.Lens (Lens', (^.), _1, _2)

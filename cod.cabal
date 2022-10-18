@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4bf64349fed7f41118169c63098ce634beb63042084766bcb88f6cc720d7a3db
+-- hash: e6bcbfa71f1d59b2537b6bd8212557f1ca68e5a0fca7d6cb684431a1a4e5f45e
 
 name:           cod
 version:        0.1.0.0
@@ -40,15 +40,18 @@ library
   hs-source-dirs:
       src
   default-extensions:
+      AllowAmbiguousTypes
       DataKinds
-      ConstraintKinds
       DeriveGeneric
       DuplicateRecordFields
       FlexibleContexts
+      NoMonomorphismRestriction
+      TypeApplications
+      OverloadedLabels
+      DataKinds
+      FlexibleContexts
       GADTs
       LambdaCase
-      NoMonomorphismRestriction
-      OverloadedLabels
       PolyKinds
       RankNTypes
       ScopedTypeVariables
@@ -71,15 +74,18 @@ executable cod-exe
   hs-source-dirs:
       app
   default-extensions:
+      AllowAmbiguousTypes
       DataKinds
-      ConstraintKinds
       DeriveGeneric
       DuplicateRecordFields
       FlexibleContexts
+      NoMonomorphismRestriction
+      TypeApplications
+      OverloadedLabels
+      DataKinds
+      FlexibleContexts
       GADTs
       LambdaCase
-      NoMonomorphismRestriction
-      OverloadedLabels
       PolyKinds
       RankNTypes
       ScopedTypeVariables
@@ -106,15 +112,18 @@ test-suite cod-test
   hs-source-dirs:
       test
   default-extensions:
+      AllowAmbiguousTypes
       DataKinds
-      ConstraintKinds
       DeriveGeneric
       DuplicateRecordFields
       FlexibleContexts
+      NoMonomorphismRestriction
+      TypeApplications
+      OverloadedLabels
+      DataKinds
+      FlexibleContexts
       GADTs
       LambdaCase
-      NoMonomorphismRestriction
-      OverloadedLabels
       PolyKinds
       RankNTypes
       ScopedTypeVariables

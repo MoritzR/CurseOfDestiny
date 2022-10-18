@@ -1,13 +1,13 @@
-name:                cod
-version:             0.1.0.0
-github:              "MoritzR/CurseOfDestiny"
-license:             GNU
-author:              "Moritz Rumpf"
+name: cod
+version: 0.1.0.0
+github: "MoritzR/CurseOfDestiny"
+license: GNU
+author: "Moritz Rumpf"
 # maintainer:          "example@example.com"
-copyright:           "2020 Moritz Rumpf"
+copyright: "2020 Moritz Rumpf"
 
 extra-source-files:
-- README.md
+  - README.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -16,14 +16,14 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/MoritzR/CurseOfDestiny#readme>
+description: Please see the README on GitHub at <https://github.com/MoritzR/CurseOfDestiny#readme>
 
 dependencies:
-- base >= 4.7 && < 5
-- lens
-- polysemy
-- polysemy-plugin
-- generic-lens
+  - base >= 4.7 && < 5
+  - lens
+  - polysemy
+  - polysemy-plugin
+  - generic-lens
 
 ghc-options:
   - -fplugin=Polysemy.Plugin # for type inference and performance, according to https://github.com/polysemy-research/polysemy#overview
@@ -32,15 +32,21 @@ ghc-options:
   - -fspecialise-aggressively
 
 default-extensions:
+  # generic-lens required extensions
+  - AllowAmbiguousTypes
   - DataKinds
-  - ConstraintKinds
   - DeriveGeneric
   - DuplicateRecordFields
   - FlexibleContexts
+  - NoMonomorphismRestriction
+  - TypeApplications
+  # for usage of the '#label' notation
+  - OverloadedLabels
+  # PolySemy required extensions
+  - DataKinds
+  - FlexibleContexts
   - GADTs
   - LambdaCase
-  - NoMonomorphismRestriction
-  - OverloadedLabels
   - PolyKinds
   - RankNTypes
   - ScopedTypeVariables
@@ -53,23 +59,23 @@ library:
 
 executables:
   cod-exe:
-    main:                Main.hs
-    source-dirs:         app
+    main: Main.hs
+    source-dirs: app
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - cod
+      - cod
 
 tests:
   cod-test:
-    main:                Spec.hs
-    source-dirs:         test
+    main: Spec.hs
+    source-dirs: test
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - cod
-    - hspec
+      - cod
+      - hspec
