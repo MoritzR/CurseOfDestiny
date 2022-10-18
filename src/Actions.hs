@@ -11,7 +11,7 @@ import Data.Tuple (swap)
 import DataTypes
 import qualified GameIO as Gio
 import qualified Polysemy.State as S
-import PolysemyLens ((%=), (-=), (++=))
+import PolysemyLens ((%=), (-=), (++=), use)
 import Data.List (delete)
 
 resolve :: Action -> Game r ()
@@ -36,8 +36,7 @@ changeCurrentPlayer = over #players swap
 
 applyTurnEnds :: Game r ()
 applyTurnEnds = do
-  gs <- S.get
-  let actions = gs ^. activePlayer . #field . traverse . #effects . #onTurnEnd
+  actions <- use $ activePlayer . #field . traverse . #effects . #onTurnEnd
   mapM_ resolve actions
 
 pass :: GameState -> GameState

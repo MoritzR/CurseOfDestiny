@@ -1,8 +1,8 @@
-module PolysemyLens ((+=), (-=), (++=), (%=)) where
+module PolysemyLens ((+=), (-=), (++=), (%=), use) where
 
-import Control.Lens (ASetter, (%~))
+import Control.Lens (ASetter, Getting, (%~), view)
 import Polysemy (Member, Sem)
-import Polysemy.State (State, modify)
+import Polysemy.State (State, modify, gets)
 
 -- These methods are for modifying the Polysemy state with lenses
 -- see https://github.com/polysemy-research/polysemy/issues/347
@@ -26,3 +26,6 @@ infixl 8 ++=
 
 (++=) :: (Member (State s) r) => ASetter s s [a] [a] -> [a] -> Sem r ()
 l ++= x = l %= (++ x)
+
+use :: (Member (State s) r) => Getting a s a -> Sem r a
+use = gets . view
