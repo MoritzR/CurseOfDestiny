@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e6bcbfa71f1d59b2537b6bd8212557f1ca68e5a0fca7d6cb684431a1a4e5f45e
+-- hash: 3222a5c6f4053d318dc24a46ef7fc22ca72c7911b3ead7322c5058c431aea8cb
 
 name:           cod
 version:        0.1.0.0
@@ -34,7 +34,6 @@ library
       GameActionParser
       GameIO
       PolysemyLens
-      PolysemyTest
   other-modules:
       Paths_cod
   hs-source-dirs:
