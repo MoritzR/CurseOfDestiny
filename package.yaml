@@ -32,6 +32,7 @@ ghc-options:
   - -fspecialise-aggressively
 
 default-extensions:
+  - ImportQualifiedPost
   # generic-lens required extensions
   - AllowAmbiguousTypes
   - DataKinds

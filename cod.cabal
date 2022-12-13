@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3222a5c6f4053d318dc24a46ef7fc22ca72c7911b3ead7322c5058c431aea8cb
+-- hash: b6091e665296a48b41c48c620d6953cfffacc9f24c43b61879c4dadfd5d94d91
 
 name:           cod
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
   hs-source-dirs:
       src
   default-extensions:
+      ImportQualifiedPost
       AllowAmbiguousTypes
       DataKinds
       DeriveGeneric
@@ -73,6 +74,7 @@ executable cod-exe
   hs-source-dirs:
       app
   default-extensions:
+      ImportQualifiedPost
       AllowAmbiguousTypes
       DataKinds
       DeriveGeneric
@@ -111,6 +113,7 @@ test-suite cod-test
   hs-source-dirs:
       test
   default-extensions:
+      ImportQualifiedPost
       AllowAmbiguousTypes
       DataKinds
       DeriveGeneric
