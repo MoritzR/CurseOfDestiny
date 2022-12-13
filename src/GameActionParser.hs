@@ -5,11 +5,11 @@ import Data.Maybe (listToMaybe)
 import DataTypes
 import Text.ParserCombinators.ReadP
   ( ReadP,
+    choice,
     many1,
     readP_to_S,
     satisfy,
     string,
-    choice
   )
 
 parseGameAction :: String -> Maybe GameAction

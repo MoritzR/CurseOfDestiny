@@ -1,14 +1,13 @@
 module GameSpec where
 
 import Actions (creaturePower)
-import qualified Actions
-import qualified Cards
+import Actions qualified
+import Cards qualified
 import Control.Lens
 import Data.Function ((&))
 import DataTypes
-import DataTypes (GameAction (AnnounceAttack))
 import Game (convertGameAction)
-import qualified Game
+import Game qualified
 import GameIO
 import Polysemy (Sem, run)
 import Polysemy.Input (Input, runInputConst)

@@ -1,17 +1,17 @@
 module Game where
 
 import Actions (modifiedField, resolve)
-import qualified Cards
+import Cards qualified
 import Control.Lens (view, (^.))
 import Data.Maybe (fromMaybe)
 import DataTypes
-import qualified Decks
+import Decks qualified
 import GameActionParser (parseGameAction)
-import qualified GameIO as Gio
+import GameIO qualified as Gio
 import Polysemy (Member, Members, Sem)
 import Polysemy.Input (Input, input)
 import Polysemy.State (State, evalState)
-import qualified Polysemy.State as S
+import Polysemy.State qualified as S
 import Polysemy.Trace (Trace)
 import Prelude hiding (log)
 

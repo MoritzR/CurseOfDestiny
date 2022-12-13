@@ -9,7 +9,7 @@ import DataTypes
     PlayerCreature (PlayerCreature),
     activePlayer,
   )
-import qualified DataTypes as T
+import DataTypes qualified as T
 
 noEffects :: CardEffects
 noEffects = mempty

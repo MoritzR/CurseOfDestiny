@@ -1,17 +1,18 @@
 module Main where
-import Game
+
 import Data.Function ((&))
-import Polysemy.Trace (traceToStdout)
+import Game
+import Polysemy (embed, runM)
 import Polysemy.Input (runInputSem)
-import Polysemy (runM, embed)
+import Polysemy.Trace (traceToStdout)
 
 main :: IO ()
 main = do
-    startGame
-        & traceToStdout
-        & runInputSem (embed getLine)
-        & runInputSem (embed readInt)
-        & runM
+  startGame
+    & traceToStdout
+    & runInputSem (embed getLine)
+    & runInputSem (embed readInt)
+    & runM
 
 readInt :: IO Int
 readInt = readLn

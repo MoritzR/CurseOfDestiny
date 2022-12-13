@@ -11,7 +11,7 @@ chooseOne l = do
   choice <- input
   if choice < 1 || choice > length l
     then return Nothing
-    else return $ Just (l !! (choice -1))
+    else return $ Just (l !! (choice - 1))
 
 displayEnumeratedItems :: (Member Trace r, Show a) => [a] -> Sem r ()
 displayEnumeratedItems = mapM_ displayTuple . zip [1 ..]

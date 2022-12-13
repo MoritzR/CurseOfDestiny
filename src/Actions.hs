@@ -7,13 +7,13 @@ import Control.Lens.Setter (set)
 import Data.Function ((&))
 import Data.Generics.Sum.Constructors (_Ctor')
 import Data.Generics.Sum.Subtype (_Sub)
+import Data.List (delete)
 import Data.Tuple (swap)
 import DataTypes
-import qualified GameIO as Gio
-import qualified Polysemy.State as S
-import PolysemyLens ((%=), (-=), (++=), use)
-import Data.List (delete)
+import GameIO qualified as Gio
 import Polysemy (Sem)
+import Polysemy.State qualified as S
+import PolysemyLens (use, (%=), (++=), (-=))
 
 resolve :: HasStateIO r => Action -> Sem r ()
 resolve action = case action of
