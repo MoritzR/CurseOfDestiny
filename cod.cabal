@@ -73,17 +73,8 @@ library
   hs-source-dirs:
       src
   default-extensions:
-      ImportQualifiedPost
       AllowAmbiguousTypes
-      DataKinds
-      DeriveGeneric
-      FlexibleContexts
       NoMonomorphismRestriction
-      TypeApplications
-      GADTs
-      LambdaCase
-      RankNTypes
-      TypeOperators
       TypeFamilies
   ghc-options: -O2 -flate-specialise -fspecialise-aggressively
   build-depends:
