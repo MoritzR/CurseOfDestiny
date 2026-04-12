@@ -72,10 +72,6 @@ library
       Paths_cod
   hs-source-dirs:
       src
-  default-extensions:
-      AllowAmbiguousTypes
-      NoMonomorphismRestriction
-      TypeFamilies
   ghc-options: -O2 -flate-specialise -fspecialise-aggressively
   build-depends:
       base >=4.7 && <5
