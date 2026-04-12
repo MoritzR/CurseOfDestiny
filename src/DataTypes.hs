@@ -4,15 +4,14 @@ module DataTypes where
 
 import Control.Lens (Lens', (^.), _1, _2)
 import Data.Generics.Labels ()
+import Effectful (Eff, (:>))
+import Effectful.State.Static.Local (State)
+import GameEffects (ChoiceInput, Log)
 import GHC.Generics (Generic)
-import Polysemy (Members, Sem)
-import Polysemy.Input (Input)
-import Polysemy.State (State)
-import Polysemy.Trace (Trace)
 
-type HasStateIO r = Members [State GameState, Input Int, Trace] r
+type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
 
-type Game r a = HasStateIO r => Sem r a
+type Game es a = HasStateIO es => Eff es a
 
 data Action
   = AddToField Card

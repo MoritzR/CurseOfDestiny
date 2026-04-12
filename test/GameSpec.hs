@@ -6,22 +6,21 @@ import Cards qualified
 import Control.Lens
 import Data.Function ((&))
 import DataTypes
+import Effectful (Eff, runPureEff)
+import Effectful.State.Static.Local (State, execState)
 import Game (convertGameAction)
 import Game qualified
+import GameEffects (ChoiceInput, Log, ignoreLog, runChoiceInputConst)
 import GameIO
-import Polysemy (Sem, run)
-import Polysemy.Input (Input, runInputConst)
-import Polysemy.State (State, execState)
-import Polysemy.Trace (Trace, ignoreTrace)
 import Test.Hspec
 
-runForTests :: GameState -> Sem '[State GameState, Input Int, Trace] a -> GameState
+runForTests :: GameState -> Eff '[State GameState, ChoiceInput, Log] a -> GameState
 runForTests gs sem =
   sem
     & execState gs
-    & runInputConst 1
-    & ignoreTrace
-    & run
+    & runChoiceInputConst 1
+    & ignoreLog
+    & runPureEff
 
 playGame :: GameAction -> GameState -> GameState
 playGame action gs = Game.playGame (convertGameAction action gs) & runForTests gs

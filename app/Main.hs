@@ -1,18 +1,17 @@
 module Main where
 
 import Data.Function ((&))
+import Effectful (runEff)
 import Game
-import Polysemy (embed, runM)
-import Polysemy.Input (runInputSem)
-import Polysemy.Trace (traceToStdout)
+import GameEffects (runChoiceInputIO, runCommandInputIO, runLogToIO)
 
 main :: IO ()
 main = do
   startGame
-    & traceToStdout
-    & runInputSem (embed getLine)
-    & runInputSem (embed readInt)
-    & runM
+    & runLogToIO putStrLn
+    & runCommandInputIO getLine
+    & runChoiceInputIO readInt
+    & runEff
 
 readInt :: IO Int
 readInt = readLn

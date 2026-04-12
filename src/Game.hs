@@ -6,13 +6,12 @@ import Control.Lens (view, (^.))
 import Data.Maybe (fromMaybe)
 import DataTypes
 import Decks qualified
+import Effectful (Eff, (:>))
+import Effectful.State.Static.Local (State, evalState)
+import Effectful.State.Static.Local qualified as S
 import GameActionParser (parseGameAction)
+import GameEffects (ChoiceInput, CommandInput, Log, readCommand)
 import GameIO qualified as Gio
-import Polysemy (Member, Members, Sem)
-import Polysemy.Input (Input, input)
-import Polysemy.State (State, evalState)
-import Polysemy.State qualified as S
-import Polysemy.Trace (Trace)
 import Prelude hiding (log)
 
 createPlayer :: String -> Player
@@ -50,10 +49,10 @@ playGame (x : xs) = do
   resolve x
   playGame xs
 
-gameOver :: Member Trace r => Sem r ()
+gameOver :: (Log :> es) => Eff es ()
 gameOver = Gio.logLn' "k bye"
 
-gameLoop :: Member (Input String) r => Game r ()
+gameLoop :: (CommandInput :> es, HasStateIO es) => Eff es ()
 gameLoop = do
   gs <- S.get
   Gio.logLn' ""
@@ -68,14 +67,14 @@ gameLoop = do
   Gio.displayEnumeratedItems $ gs ^. activePlayer . #hand
 
   Gio.log' "Select action (pass/end/p/c/a/d): "
-  inp <- input
+  inp <- readCommand
   if inp == "exit" || inp == "q"
     then gameOver
     else do
       playGame (parseActions inp gs)
       gameLoop
 
-startGame :: Members [Input String, Input Int, Trace] r => Sem r ()
+startGame :: (CommandInput :> es, ChoiceInput :> es, Log :> es) => Eff es ()
 startGame = do
   let player1 = createPlayer "player1"
   let player2 = createPlayer "player2"

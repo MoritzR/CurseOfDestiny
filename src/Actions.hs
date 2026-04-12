@@ -10,12 +10,12 @@ import Data.Generics.Sum.Subtype (_Sub)
 import Data.List (delete)
 import Data.Tuple (swap)
 import DataTypes
+import Effectful (Eff)
+import Effectful.State.Static.Local qualified as S
+import EffectfulLens (use, (%=), (++=), (-=))
 import GameIO qualified as Gio
-import Polysemy (Sem)
-import Polysemy.State qualified as S
-import PolysemyLens (use, (%=), (++=), (-=))
 
-resolve :: HasStateIO r => Action -> Sem r ()
+resolve :: HasStateIO es => Action -> Eff es ()
 resolve action = case action of
   AddToField c -> addToField c
   Choose l -> resolveChoose l
@@ -35,7 +35,7 @@ endRound = do
 changeCurrentPlayer :: GameState -> GameState
 changeCurrentPlayer = over #players swap
 
-applyTurnEnds :: HasStateIO r => Sem r ()
+applyTurnEnds :: HasStateIO es => Eff es ()
 applyTurnEnds = do
   actions <- use $ activePlayer . #field . traverse . #effects . #onTurnEnd
   mapM_ resolve actions
@@ -91,7 +91,7 @@ draw playerLens = do
 topOfDeck :: PlayerLens -> GameState -> Card
 topOfDeck playerLens = head . (^. playerLens . #deck)
 
-resolveChoose :: HasStateIO r => [Action] -> Sem r ()
+resolveChoose :: HasStateIO es => [Action] -> Eff es ()
 resolveChoose actions = do
   maybeChoice <- Gio.chooseOne actions
   Gio.logLn' . show $ maybeChoice
