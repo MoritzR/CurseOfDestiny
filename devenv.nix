@@ -5,6 +5,6 @@
   ];
   languages.haskell = {
     enable = true;
-    package = pkgs.haskell.compiler.ghc910;
+    package = pkgs.haskell.compiler.ghc912;
   };
 }
