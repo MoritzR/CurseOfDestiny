@@ -15,7 +15,7 @@ import GameIO qualified as Gio
 import Prelude hiding (log)
 
 createPlayer :: String -> Player
-createPlayer name = Player {name = name, deck = Decks.mixed, hand = Decks.mixed, field = [], playerCreature = Cards.defaultPlayerCreature}
+createPlayer name = Player {name = name, deck = Decks.mixed, hand = Decks.mixed, field = [], playerCreature = undefined}
 
 orElsePass :: Maybe GameAction -> GameAction
 orElsePass = fromMaybe Pass

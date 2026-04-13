@@ -62,6 +62,10 @@ library
       Actions
       Cards
       DataTypes
+      DataTypesNew
+      CardEffect
+      Trigger
+      Element
       Decks
       EffectfulLens
       Game
@@ -78,6 +82,7 @@ library
     , effectful ^>=2.6.1.0
     , generic-lens
     , lens
+    , optics
 
 executable cod-exe
   import: common
