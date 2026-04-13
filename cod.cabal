@@ -49,7 +49,7 @@ build-type:         Simple
 extra-doc-files:    CHANGELOG.md
 
 common common
-    ghc-options: -Wall
+    ghc-options: -Wall -Wno-missing-signatures
     default-language: GHC2024
     default-extensions:
       BlockArguments
