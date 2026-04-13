@@ -1,11 +1,11 @@
 module Trigger where
 
 import CardEffect (CardEffect)
+import Element (Kosten)
 
 type Trigger = TriggerInstructionF ()
 
 data Aura
-data Kosten
 
 data TriggerInstruction
   = AmEndeDerRunde CardEffect
