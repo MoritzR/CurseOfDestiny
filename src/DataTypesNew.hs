@@ -9,15 +9,7 @@ data Aura
 
 type Stärke = Int
 
-
-
 data CardType
-  = Allmagie
-  | Gegenmagie
-  | Magie
-  | MagieDauerhaft
-  | Wesen Stärke
-
 
 type CardLens = Lens' GameState [Card]
 
