@@ -10,6 +10,7 @@ data Element
   | Licht
   | Tod
   | Doppel Element Element
+  deriving (Eq, Show)
 
 newtype Kosten = Kosten [ElementKosten]
 
@@ -36,6 +37,9 @@ instance Num Kosten where
   abs = error "not used"
   negate = error "not used"
   signum = error "not used"
+
+nichts :: Kosten
+nichts = Kosten [Nichts]
 
 test :: Kosten
 test = 3 Wasser + 4 Feuer + 2 (Feuer // Wasser)

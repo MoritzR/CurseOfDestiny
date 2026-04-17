@@ -89,10 +89,10 @@ series26 = [
   Card {
     name = "Kristallobelisk",
     cardType = MagieDauerhaft,
-      cost = 3 Neutral,
+    cost = 3 Neutral,
     trigger = do
-      amBeginnDerRunde do
-        undefined
+      zahle nichts do
+        wähle \element -> spende 1 element
   }
   ]
 
