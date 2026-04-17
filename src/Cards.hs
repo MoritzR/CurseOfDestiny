@@ -91,7 +91,7 @@ series26 = [
     cardType = MagieDauerhaft,
     cost = 3 Neutral,
     trigger = do
-      zahle nichts do
+      zahle nichts do -- TODO: only allow this once per turn
         wähle $ spende 1
   }
   ]
