@@ -9,12 +9,14 @@ data Aura
 
 data TriggerInstruction
   = AmEndeDerRunde CardEffect
+  | AmBeginnDerRunde CardEffect
   | Zahle Kosten CardEffect
   | WennGespielt CardEffect
   | WennAufDemFeld Aura
 
 -- instruction methods
 amEndeDerRunde effekt = TriggerInstructionF [AmEndeDerRunde effekt] ()
+amBeginnDerRunde effekt = TriggerInstructionF [AmBeginnDerRunde effekt] ()
 zahle kosten effekt = TriggerInstructionF [Zahle kosten effekt] ()
 wennGespielt effekt = TriggerInstructionF [WennGespielt effekt] ()
 wennAufDemFeld aura = TriggerInstructionF [WennAufDemFeld aura] ()

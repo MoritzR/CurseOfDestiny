@@ -1,3 +1,4 @@
+{-# LANGUAGE ApplicativeDo #-}
 module Cards where
 
 import Trigger
@@ -10,7 +11,12 @@ data CardType
   | Gegenmagie
   | Magie
   | MagieDauerhaft
-  | Wesen Stärke
+  | Wesen Wesenstyp Stärke
+
+data Wesenstyp
+  = Konstrukt
+  | Magier
+  | Krieger
 
 type Stärke = Int
 
@@ -21,14 +27,72 @@ type Stärke = Int
 data Card = Card 
   { name :: String
   , cost :: Kosten
+  , cardType :: CardType
   , trigger :: Trigger
   }
 
 -- series 26
-edorsKonstruct = Card {
-  name = "Edors Konstruct",
-  cost = 1 Neutral,
-  trigger = zahle (5 Neutral) do
-    erhöhe Stärke EinAnderesWesen Dauerhaft 5000
-}
+series26 = [
+  Card {
+    name = "Edors Konstruct",
+    cardType = Wesen Konstrukt 1000,
+    cost = 1 Neutral,
+    trigger = zahle (5 Neutral) do
+      erhöhe Stärke EinAnderesWesen Dauerhaft 1000
+  },
+  Card {
+    name = "Energieladung",
+    cardType = Allmagie,
+    cost = 2 Neutral,
+    trigger = wennGespielt do
+      erhöhe Stärke EinAnderesWesen BisZumEndeDesZuges 2000
+  },
+  Card {
+    name = "Fehrens Obelisk",
+    cardType = MagieDauerhaft,
+    cost = 3 Neutral,
+    trigger = do
+      wennGespielt do
+        ziehe 1
+      zahle (5 Neutral) do
+        vision 1
+      pure ()
+  },
+  Card {
+    name = "Forscher der Royalen Akademie",
+    cardType = Wesen Magier 2000,
+    cost = 4 Neutral,
+    trigger = do
+      wennGespielt do
+        vision 3
+  },
+  Card {
+    name = "Hemtaras Krieger",
+    cardType = Wesen Krieger 0,
+    cost = X Neutral + 4 Neutral,
+    trigger = do
+      wennGespielt do
+        prisma \x ->
+          erhöhe Stärke Selbst Dauerhaft (x * 1000)
+      zahle (5 Neutral) do
+        vision 1
+      pure ()
+  },
+  Card {
+    name = "Kolossale Stärke",
+    cardType = Allmagie,
+      cost = 6 Neutral,
+    trigger = do
+      wennGespielt do
+        erhöhe Stärke EinAnderesWesen Dauerhaft 8000
+  },
+  Card {
+    name = "Kristallobelisk",
+    cardType = MagieDauerhaft,
+      cost = 3 Neutral,
+    trigger = do
+      amBeginnDerRunde do
+        undefined
+  }
+  ]
 
