@@ -24,7 +24,7 @@ type Stärke = Int
 --   can battle other creatures, but not spells. Some cards can target any kind of card, like "destroy one card" or "prevent a card from activating", while others
 --   will only target either creatures or spells.
 
-data Card = Card 
+data Card = Card
   { name :: String
   , cost :: Kosten
   , cardType :: CardType
@@ -92,7 +92,7 @@ series26 = [
     cost = 3 Neutral,
     trigger = do
       zahle nichts do
-        wähle \element -> spende 1 element
+        wähle $ spende 1
   }
   ]
 
