@@ -1,23 +1,6 @@
 {-# LANGUAGE GADTs #-}
 
-module CardEffect
-  ( CardEffect,
-    Instruction (..),
-    InstructionF (..),
-    Wählbar (..),
-    Dauer (..),
-    Ziel (..),
-    Wert (..),
-    Anzahl,
-    ziehe,
-    erhöhe,
-    vision,
-    prisma,
-    spende,
-    wähle,
-    wähleAus,
-  )
-where
+module CardEffect where
 
 import Element (Element (..))
 
@@ -30,6 +13,11 @@ data Instruction
   | Prisma (Anzahl -> InstructionF ())
   | Spende Anzahl Element
   | forall a. Wählbar a => Wähle [a] (a -> InstructionF ())
+  | Opfere Ziel
+  | Heile Anzahl
+  | GibAufDieHandZurück Ziel
+  | Zerstöre Ziel
+  | VerringereUndZerstöre Ziel Dauer Höhe
 
 -- instruction methods
 ziehe anzahl = InstructionF [Ziehe anzahl] ()
@@ -39,6 +27,11 @@ prisma next = InstructionF [Prisma next] ()
 spende anzahl element = InstructionF [Spende anzahl element] ()
 wähle :: Wählbar a => (a -> InstructionF ()) -> InstructionF ()
 wähle = wähleAus wahlmöglichkeiten
+opfere ziel = InstructionF [Opfere ziel] ()
+heile anzahl = InstructionF [Heile anzahl] ()
+gibAufDieHandZurück ziel = InstructionF [GibAufDieHandZurück ziel] ()
+zerstöre ziel = InstructionF [Zerstöre ziel] ()
+verringereUndZerstöre ziel dauer höhe = InstructionF [VerringereUndZerstöre ziel dauer höhe] ()
 
 wähleAus :: Wählbar a => [a] -> (a -> InstructionF ()) -> InstructionF ()
 wähleAus möglichkeiten next = InstructionF [Wähle möglichkeiten next] ()
@@ -47,7 +40,7 @@ wähleAus möglichkeiten next = InstructionF [Wähle möglichkeiten next] ()
 type Anzahl = Int
 type Höhe = Int
 data Dauer = BisZumEndeDesZuges | Dauerhaft
-data Ziel = Selbst | EinAnderesWesen
+data Ziel = Selbst | EinAnderesWesen | AlleWesenUnterDeinerKontrolle | EinNichtWesen | AlleWesen
 data Wert = Stärke 
 -- boilerplate
 

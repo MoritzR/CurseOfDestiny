@@ -13,6 +13,8 @@ data TriggerInstruction
   | Zahle Kosten CardEffect
   | WennGespielt CardEffect
   | WennAufDemFeld Aura
+  | EinmalProRunde CardEffect
+  | Blockierung
 
 -- instruction methods
 amEndeDerRunde effekt = TriggerInstructionF [AmEndeDerRunde effekt] ()
@@ -20,6 +22,8 @@ amBeginnDerRunde effekt = TriggerInstructionF [AmBeginnDerRunde effekt] ()
 zahle kosten effekt = TriggerInstructionF [Zahle kosten effekt] ()
 wennGespielt effekt = TriggerInstructionF [WennGespielt effekt] ()
 wennAufDemFeld aura = TriggerInstructionF [WennAufDemFeld aura] ()
+einmalProRunde effekt = TriggerInstructionF [EinmalProRunde effekt] ()
+blockierung = TriggerInstructionF [Blockierung] ()
 
 -- end instruction methods
 

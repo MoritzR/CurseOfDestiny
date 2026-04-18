@@ -90,9 +90,69 @@ series26 = [
     name = "Kristallobelisk",
     cardType = MagieDauerhaft,
     cost = 3 Neutral,
+    trigger = einmalProRunde $ wähle $ spende 1
+  },
+  Card {
+    name = "Lurs Konstrukt",
+    cardType = Wesen Konstrukt 1000,
+    cost = 5 Neutral,
     trigger = do
-      zahle nichts do -- TODO: only allow this once per turn
-        wähle $ spende 1
+      wennGespielt $ ziehe 1
+      blockierung
+      pure ()
+  },
+  Card {
+    name = "Magiestein der Arkanen Seele",
+    cardType = MagieDauerhaft,
+    cost = 1 Neutral,
+    trigger = do
+      zahle (1 Neutral + 1 Licht) do
+        opfere Selbst
+        heile 1
+        pure ()
+      zahle (1 Neutral + 1 Wasser) do
+        opfere Selbst
+        ziehe 1
+        pure ()
+      zahle (1 Neutral + 1 Wind) do
+        opfere Selbst
+        gibAufDieHandZurück EinAnderesWesen
+        pure ()
+      pure ()
+  },
+  Card {
+    name = "Magiestein der Erdkraft",
+    cardType = MagieDauerhaft,
+    cost = 1 Neutral,
+    trigger = do
+      zahle (1 Neutral + 1 Wald) do
+        opfere Selbst
+        erhöhe Stärke EinAnderesWesen BisZumEndeDesZuges 3000
+        pure ()
+      zahle (3 Neutral + 2 Wald) do
+        opfere Selbst
+        erhöhe Stärke AlleWesenUnterDeinerKontrolle Dauerhaft 3000
+        pure ()
+      pure ()
+  },
+  Card {
+    name = "Magiestein der Erhebung",
+    cardType = MagieDauerhaft,
+    cost = 1 Neutral,
+    trigger = do
+      zahle (1 Neutral + 1 Wald) do
+        opfere Selbst
+        zerstöre EinNichtWesen
+        pure ()
+      zahle (1 Neutral + 1 Wasser) do
+        opfere Selbst
+        ziehe 1
+        pure ()
+      zahle (2 Neutral + 1 Tod) do
+        opfere Selbst
+        verringereUndZerstöre AlleWesen BisZumEndeDesZuges 3000
+        pure ()
+      pure ()
   }
   ]
 
