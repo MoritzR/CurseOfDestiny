@@ -2,22 +2,7 @@
 
 module CardEffect where
 
-import Element (Element (..))
-
-type CardEffect = InstructionF ()
-
-data Instruction
-  = Ziehe Anzahl
-  | Erhöhe Wert Ziel Dauer Höhe
-  | Vision Anzahl
-  | Prisma (Anzahl -> InstructionF ())
-  | Spende Anzahl Element
-  | forall a. Wählbar a => Wähle [a] (a -> InstructionF ())
-  | Opfere Ziel
-  | Heile Anzahl
-  | GibAufDieHandZurück Ziel
-  | Zerstöre Ziel
-  | VerringereUndZerstöre Ziel Dauer Höhe
+import DataTypesNew (InstructionF(..), Wählbar(wahlmöglichkeiten), Instruction(..))
 
 -- instruction methods
 ziehe anzahl = InstructionF [Ziehe anzahl] ()
@@ -31,31 +16,15 @@ opfere ziel = InstructionF [Opfere ziel] ()
 heile anzahl = InstructionF [Heile anzahl] ()
 gibAufDieHandZurück ziel = InstructionF [GibAufDieHandZurück ziel] ()
 zerstöre ziel = InstructionF [Zerstöre ziel] ()
+verringere wert ziel dauer höhe = InstructionF [Verringere wert ziel dauer höhe] ()
 verringereUndZerstöre ziel dauer höhe = InstructionF [VerringereUndZerstöre ziel dauer höhe] ()
+nimmAufDieHand ziel = InstructionF [NimmAufDieHand ziel] ()
+zeigeObenVomDeck anzahl wert next = InstructionF [ZeigeObenVomDeck anzahl wert next] ()
+beschwöre karte = InstructionF [Beschwöre karte] ()
+gibFähigkeit ziel dauer fähigkeit = InstructionF [GibFähigkeit ziel dauer fähigkeit] ()
+einSpielerOpfertEinWesen = InstructionF [EinSpielerOpfertEinWesen] ()
+siehHandkartenAnUndEntferneEineAusDemSpiel = InstructionF [SiehHandkartenAnUndEntferneEineAusDemSpiel] ()
 
 wähleAus :: Wählbar a => [a] -> (a -> InstructionF ()) -> InstructionF ()
 wähleAus möglichkeiten next = InstructionF [Wähle möglichkeiten next] ()
 
--- end instruction methods
-type Anzahl = Int
-type Höhe = Int
-data Dauer = BisZumEndeDesZuges | Dauerhaft
-data Ziel = Selbst | EinAnderesWesen | AlleWesenUnterDeinerKontrolle | EinNichtWesen | AlleWesen
-data Wert = Stärke 
--- boilerplate
-
-data InstructionF a = InstructionF [Instruction] a
-
-instance Functor InstructionF where
-  fmap f (InstructionF instructions a) = InstructionF instructions (f a)
-
-instance Applicative InstructionF where
-  pure = InstructionF []
-  InstructionF instructions1 f <*> InstructionF instructions2 a =
-    InstructionF (instructions1 <> instructions2) (f a)
-
-class Show a => Wählbar a where
-  wahlmöglichkeiten :: [a]
-
-instance Wählbar Element where
-  wahlmöglichkeiten = [Neutral, Feuer, Wald, Wasser, Wind, Licht, Tod]

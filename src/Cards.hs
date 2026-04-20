@@ -3,49 +3,33 @@ module Cards where
 
 import Trigger
 import CardEffect
-import Element
+import DataTypesNew
+import Target
 
-
-data CardType
-  = Allmagie
-  | Gegenmagie
-  | Magie
-  | MagieDauerhaft
-  | Wesen Wesenstyp Stärke
-
-data Wesenstyp
-  = Konstrukt
-  | Magier
-  | Krieger
-
-type Stärke = Int
-
--- In my TGC, how do I best model different card types? In my game I have two main types of cards. Creatures and Spells. Creatures have power, e.g. 4000, and
---   can battle other creatures, but not spells. Some cards can target any kind of card, like "destroy one card" or "prevent a card from activating", while others
---   will only target either creatures or spells.
-
-data Card = Card
-  { name :: String
-  , cost :: Kosten
-  , cardType :: CardType
-  , trigger :: Trigger
+-- tokens
+schirmBestie = Card {
+      name = "Schirmbestie",
+    cardType = Wesen Bestie 4000,
+    cost = 2 Wald,
+    trigger = pure ()
   }
 
--- series 26
+-- series
+
 series26 = [
   Card {
     name = "Edors Konstruct",
     cardType = Wesen Konstrukt 1000,
     cost = 1 Neutral,
     trigger = zahle (5 Neutral) do
-      erhöhe Stärke EinAnderesWesen Dauerhaft 1000
+      erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 1000
   },
   Card {
     name = "Energieladung",
     cardType = Allmagie,
     cost = 2 Neutral,
     trigger = wennGespielt do
-      erhöhe Stärke EinAnderesWesen BisZumEndeDesZuges 2000
+      erhöhe Stärke (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges 2000
   },
   Card {
     name = "Fehrens Obelisk",
@@ -73,7 +57,7 @@ series26 = [
     trigger = do
       wennGespielt do
         prisma \x ->
-          erhöhe Stärke Selbst Dauerhaft (x * 1000)
+          erhöhe Stärke selbst Dauerhaft (x * 1000)
       zahle (5 Neutral) do
         vision 1
       pure ()
@@ -84,7 +68,7 @@ series26 = [
       cost = 6 Neutral,
     trigger = do
       wennGespielt do
-        erhöhe Stärke EinAnderesWesen Dauerhaft 8000
+        erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 8000
   },
   Card {
     name = "Kristallobelisk",
@@ -107,16 +91,16 @@ series26 = [
     cost = 1 Neutral,
     trigger = do
       zahle (1 Neutral + 1 Licht) do
-        opfere Selbst
+        opfere selbst
         heile 1
         pure ()
       zahle (1 Neutral + 1 Wasser) do
-        opfere Selbst
+        opfere selbst
         ziehe 1
         pure ()
       zahle (1 Neutral + 1 Wind) do
-        opfere Selbst
-        gibAufDieHandZurück EinAnderesWesen
+        opfere selbst
+        gibAufDieHandZurück (ein $ wesen <> aufDemFeld)
         pure ()
       pure ()
   },
@@ -126,12 +110,12 @@ series26 = [
     cost = 1 Neutral,
     trigger = do
       zahle (1 Neutral + 1 Wald) do
-        opfere Selbst
-        erhöhe Stärke EinAnderesWesen BisZumEndeDesZuges 3000
+        opfere selbst
+        erhöhe Stärke (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges 3000
         pure ()
       zahle (3 Neutral + 2 Wald) do
-        opfere Selbst
-        erhöhe Stärke AlleWesenUnterDeinerKontrolle Dauerhaft 3000
+        opfere selbst
+        erhöhe Stärke (alle $ eigene <> wesen) Dauerhaft 3000
         pure ()
       pure ()
   },
@@ -141,18 +125,102 @@ series26 = [
     cost = 1 Neutral,
     trigger = do
       zahle (1 Neutral + 1 Wald) do
-        opfere Selbst
-        zerstöre EinNichtWesen
+        opfere selbst
+        zerstöre (eine $ magie <> aufDemFeld)
         pure ()
       zahle (1 Neutral + 1 Wasser) do
-        opfere Selbst
+        opfere selbst
         ziehe 1
         pure ()
       zahle (2 Neutral + 1 Tod) do
-        opfere Selbst
-        verringereUndZerstöre AlleWesen BisZumEndeDesZuges 3000
+        opfere selbst
+        verringereUndZerstöre (alle wesen) BisZumEndeDesZuges 3000
+        pure ()
+      pure ()
+  },
+  Card {
+    name = "Magiestein der Erzürnung",
+    cardType = MagieDauerhaft,
+    cost = 1 Neutral,
+    trigger = do
+      zahle (2 Neutral + 1 Tod) do
+        opfere selbst
+        nimmAufDieHand (ein $ wesen <> aufDemFriedHof)
+        pure ()
+      zahle (2 Neutral + 1 Feuer) do
+        opfere selbst
+        vision 2
+        zeigeObenVomDeck 2 LesbarKosten \x -> erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges (sum x * 1000)
+        pure ()
+      zahle (2 Neutral + 2 Wald) do
+        opfere selbst
+        beschwöre schirmBestie
+        pure ()
+      pure ()
+  },
+  Card {
+    name = "Magiestein der Feuerkraft",
+    cardType = MagieDauerhaft,
+    cost = 1 Neutral,
+    trigger = do
+      zahle (1 Feuer) do
+        opfere selbst
+        gibFähigkeit (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges doppelZerstörung
+        pure ()
+      zahle (4 Feuer) do
+        opfere selbst
+        verringere Stärke (ein $ gegnerisches <> wesen) BisZumEndeDesZuges 2000
+        erhöhe Stärke (ein $ eigenes <> wesen) BisZumEndeDesZuges 2000
+        pure ()
+      pure ()
+  },
+  Card {
+    name = "Magiestein der Finsterkraft",
+    cardType = MagieDauerhaft,
+    cost = 1 Neutral,
+    trigger = do
+      zahle (2 Neutral + 1 Tod) do
+        opfere selbst
+        nimmAufDieHand (ein $ wesen <> aufDemFriedHof)
+        pure ()
+      zahle (5 Neutral + 1 Tod) do
+        opfere selbst
+        einSpielerOpfertEinWesen
+        pure ()
+      pure ()
+  },
+  Card {
+    name = "Magiestein der Lichtkraft",
+    cardType = MagieDauerhaft,
+    cost = 1 Neutral,
+    trigger = do
+      zahle (1 Neutral + 1 Licht) do
+        opfere selbst
+        erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
+        pure ()
+      zahle (1 Neutral + 2 Licht) do
+        opfere selbst
+        heile 1
+        pure ()
+      pure ()
+  },
+  Card {
+    name = "Magiestein der Manipulation",
+    cardType = MagieDauerhaft,
+    cost = 1 Neutral,
+    trigger = do
+      zahle (2 Neutral + 1 Tod) do
+        opfere selbst
+        siehHandkartenAnUndEntferneEineAusDemSpiel 
+        pure ()
+      zahle (2 Neutral + 2 Wind) do
+        opfere selbst
+        nimmAufDieHand $ eine $ eigene <> (magie `oder` gegenmagie) <> aufDemFriedHof
+        pure ()
+      zahle (4 Neutral + 2 Wasser) do
+        opfere selbst
+        ziehe 2
         pure ()
       pure ()
   }
   ]
-
