@@ -150,7 +150,7 @@ series26 = [
       zahle (2 Neutral + 1 Feuer) do
         opfere selbst
         vision 2
-        zeigeObenVomDeck 2 LesbarKosten \x -> erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges (sum x * 1000)
+        zeigeObenVomDeck 2 LesbarKosten \x -> erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges (x * 1000)
         pure ()
       zahle (2 Neutral + 2 Wald) do
         opfere selbst

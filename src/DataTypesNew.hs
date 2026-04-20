@@ -58,7 +58,7 @@ data Instruction
   | Verringere Wert Ziel Dauer Höhe
   | VerringereUndZerstöre Ziel Dauer Höhe
   | NimmAufDieHand Ziel
-  | ZeigeObenVomDeck Anzahl LesbarerWert ([Höhe] -> InstructionF ())
+  | ZeigeObenVomDeck Anzahl LesbarerWert (Höhe -> InstructionF ())
   | Beschwöre Card
   | GibFähigkeit Ziel Dauer (TriggerInstructionF ())
   | EinSpielerOpfertEinWesen
@@ -76,7 +76,7 @@ instance Show Anzahl where
   show = \case
     Actual i -> show i
     PlaceHolderX -> "X"
-    Mul PlaceHolderX (Actual 1000) -> "X000"
+    Mul PlaceHolderX 1000 -> "X000"
     Mul a b -> show a <> " * " <> show b
     Add a b -> show a <> " + " <> show b
     Neg a -> "-" <> show a
@@ -163,4 +163,3 @@ instance Num Kosten where
   abs = error "not used"
   negate = error "not used"
   signum = error "not used"
-

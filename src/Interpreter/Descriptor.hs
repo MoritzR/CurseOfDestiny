@@ -87,8 +87,9 @@ describeInstruction = \case
     describeZiel ziel <> " verringert " <> possessive describeWert Stärke <> " " <> describeDauer dauer <> " um " <> show höhe <> ", wird sie dadurch 0, zerstöre es"
   NimmAufDieHand ziel ->
     "nimm " <> describeZiel ziel <> " auf deine Hand"
-  ZeigeObenVomDeck n lesbarerWert _ ->
-    "zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks; der folgende Effekt hängt von " <> describeLesbarerWert lesbarerWert <> " ab"
+  ZeigeObenVomDeck n lesbarerWert next ->
+    let effect = describeEffectInline $ next PlaceHolderX
+    in "zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
   Beschwöre card ->
     "beschwöre " <> card.name
   GibFähigkeit ziel dauer triggerInstrs ->
@@ -130,7 +131,7 @@ describeWert = \case
 
 describeLesbarerWert :: LesbarerWert -> String
 describeLesbarerWert = \case
-  LesbarKosten -> "den Kosten"
+  LesbarKosten -> "Kosten"
 
 plural :: String -> Anzahl -> String
 plural word n
