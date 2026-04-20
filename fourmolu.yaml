@@ -1,0 +1,9 @@
+# Number of spaces per indentation step
+indentation: 2
+
+# Whether to put parentheses around a single constraint (choices: auto, always, or never)
+single-constraint-parens: never
+
+# Whether to put parentheses around a single deriving class (choices: auto, always, or never)
+single-deriving-parens: never
+

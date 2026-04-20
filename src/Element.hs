@@ -1,5 +1,6 @@
 module Element where
-import DataTypesNew (Element(..), Kosten(..), ElementKosten(..))
+
+import DataTypesNew (Element (..), ElementKosten (..), Kosten (..))
 
 infixr 8 //
 (//) :: Element -> Element -> Element

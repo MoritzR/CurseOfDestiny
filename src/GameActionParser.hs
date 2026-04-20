@@ -3,14 +3,14 @@ module GameActionParser (parseGameAction) where
 import Data.Char (isDigit)
 import Data.Maybe (listToMaybe)
 import DataTypes
-import Text.ParserCombinators.ReadP
-  ( ReadP,
-    choice,
-    many1,
-    readP_to_S,
-    satisfy,
-    string,
-  )
+import Text.ParserCombinators.ReadP (
+  ReadP,
+  choice,
+  many1,
+  readP_to_S,
+  satisfy,
+  string,
+ )
 
 parseGameAction :: String -> Maybe GameAction
 parseGameAction = listToMaybe . map fst . readP_to_S gameAction

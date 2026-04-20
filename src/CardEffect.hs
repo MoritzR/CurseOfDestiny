@@ -2,7 +2,7 @@
 
 module CardEffect where
 
-import DataTypesNew (InstructionF(..), Wählbar(wahlmöglichkeiten), Instruction(..))
+import DataTypesNew (Instruction (..), InstructionF (..), Wählbar (wahlmöglichkeiten))
 
 -- instruction methods
 ziehe anzahl = InstructionF [Ziehe anzahl] ()
@@ -27,4 +27,3 @@ siehHandkartenAnUndEntferneEineAusDemSpiel = InstructionF [SiehHandkartenAnUndEn
 
 wähleAus :: Wählbar a => [a] -> (a -> InstructionF ()) -> InstructionF ()
 wähleAus möglichkeiten next = InstructionF [Wähle möglichkeiten next] ()
-

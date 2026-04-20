@@ -1,7 +1,6 @@
 module Trigger where
 
-import DataTypesNew (CardEffect, Kosten, TriggerInstructionF(..), TriggerInstruction(..))
-
+import DataTypesNew (CardEffect, Kosten, TriggerInstruction (..), TriggerInstructionF (..))
 
 -- instruction methods
 amEndeDerRunde effekt = TriggerInstructionF [AmEndeDerRunde effekt] ()
@@ -15,4 +14,3 @@ blockierung = TriggerInstructionF [Blockierung] ()
 doppelZerstörung = TriggerInstructionF [Doppelzerstörung] ()
 
 -- end instruction methods
-

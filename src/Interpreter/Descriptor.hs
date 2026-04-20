@@ -1,18 +1,18 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Interpreter.Descriptor
-  ( describeCard
-  , describeTrigger
-  , describeTriggerLines
-  , describeEffect
-  , describeInstruction
-  , testRenderCard
-  ) where
+module Interpreter.Descriptor (
+  describeCard,
+  describeTrigger,
+  describeTriggerLines,
+  describeEffect,
+  describeInstruction,
+  testRenderCard,
+) where
 
+import Cards (series26)
 import Data.List (intercalate)
 import DataTypesNew
-import Cards (series26)
 
 testRenderCard :: String
 testRenderCard = intercalate "\n\n" $ describeCard <$> series26
@@ -68,7 +68,7 @@ describeInstruction = \case
     "Vision " <> show n
   Prisma next ->
     let effect = describeEffectInline $ next PlaceHolderX
-    in "Prisma - " <> effect <> " (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)"
+     in "Prisma - " <> effect <> " (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)"
   Spende n element ->
     "spende " <> show n <> " " <> show element
   Wähle options _ ->
@@ -89,7 +89,7 @@ describeInstruction = \case
     "nimm " <> describeZiel ziel <> " auf deine Hand"
   ZeigeObenVomDeck n lesbarerWert next ->
     let effect = describeEffectInline $ next PlaceHolderX
-    in "zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
+     in "zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
   Beschwöre card ->
     "beschwöre " <> card.name
   GibFähigkeit ziel dauer triggerInstrs ->
@@ -116,9 +116,9 @@ describeElementKosten = \case
 describeZiel :: Ziel -> String
 describeZiel (Ziel zielAnzahl einZiel) =
   prefix zielAnzahl <> show einZiel
-  where
-    prefix Ein = ""
-    prefix Alle = "alle "
+ where
+  prefix Ein = ""
+  prefix Alle = "alle "
 
 describeDauer :: Dauer -> String
 describeDauer = \case

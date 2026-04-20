@@ -6,8 +6,8 @@ import Control.Lens (Lens', (^.), _1, _2)
 import Data.Generics.Labels ()
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State)
-import GameEffects (ChoiceInput, Log)
 import GHC.Generics (Generic)
+import GameEffects (ChoiceInput, Log)
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
 
@@ -51,11 +51,11 @@ newtype GameState = GameState
   deriving (Show, Eq, Generic)
 
 data Player = Player
-  { name :: String,
-    deck :: [Card],
-    hand :: [Card],
-    field :: [Card],
-    playerCreature :: PlayerCreature
+  { name :: String
+  , deck :: [Card]
+  , hand :: [Card]
+  , field :: [Card]
+  , playerCreature :: PlayerCreature
   }
   deriving (Show, Generic)
 
@@ -63,8 +63,8 @@ instance Eq Player where
   (==) = mapEq name
 
 data PlayerCreature = PlayerCreature
-  { playerCreatureId :: String,
-    hp :: Int
+  { playerCreatureId :: String
+  , hp :: Int
   }
   deriving (Show, Generic)
 
@@ -82,12 +82,12 @@ data GameAction
   deriving (Eq, Show)
 
 data Card = Card
-  { cardType :: CardType,
-    cardId :: String,
-    cardName :: String,
-    effects :: CardEffects
+  { cardType :: CardType
+  , cardId :: String
+  , cardName :: String
+  , effects :: CardEffects
   }
-  deriving (Generic)
+  deriving Generic
 
 instance Show Card where
   show c = cardName c ++ " (" ++ show (cardType c) ++ ")"
@@ -101,7 +101,7 @@ mapEq f e1 e2 = f e1 == f e2
 data CardType
   = Spell
   | Creature Int
-  deriving (Eq)
+  deriving Eq
 
 instance Show CardType where
   show Spell = "S,"
@@ -117,24 +117,24 @@ playerHp :: Lens' Player Int
 playerHp = #playerCreature . #hp
 
 newtype Aura = IncreaseAttack Int
-  deriving (Show)
+  deriving Show
 
 data CardEffects = CardEffects
-  { onPlay :: [Action],
-    onTurnEnd :: [Action],
-    onActivate :: [Action],
-    whileOnField :: [Aura]
+  { onPlay :: [Action]
+  , onTurnEnd :: [Action]
+  , onActivate :: [Action]
+  , whileOnField :: [Aura]
   }
-  deriving (Generic)
+  deriving Generic
 
 instance Semigroup CardEffects where
   a <> b =
     CardEffects
-      { onPlay = onPlay a <> onPlay b,
-        onTurnEnd = onTurnEnd a <> onTurnEnd b,
-        onActivate = onActivate a <> onActivate b,
-        whileOnField = whileOnField a <> whileOnField b
+      { onPlay = onPlay a <> onPlay b
+      , onTurnEnd = onTurnEnd a <> onTurnEnd b
+      , onActivate = onActivate a <> onActivate b
+      , whileOnField = whileOnField a <> whileOnField b
       }
 
 instance Monoid CardEffects where
-  mempty = CardEffects {onPlay = [], onTurnEnd = [], onActivate = [], whileOnField = []}
+  mempty = CardEffects{onPlay = [], onTurnEnd = [], onActivate = [], whileOnField = []}

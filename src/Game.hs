@@ -15,7 +15,7 @@ import GameIO qualified as Gio
 import Prelude hiding (log)
 
 createPlayer :: String -> Player
-createPlayer name = Player {name = name, deck = Decks.mixed, hand = Decks.mixed, field = [], playerCreature = undefined}
+createPlayer name = Player{name = name, deck = Decks.mixed, hand = Decks.mixed, field = [], playerCreature = undefined}
 
 orElsePass :: Maybe GameAction -> GameAction
 orElsePass = fromMaybe Pass
@@ -23,18 +23,18 @@ orElsePass = fromMaybe Pass
 convertGameAction :: GameAction -> GameState -> [Action]
 convertGameAction (Play c) _ = c ^. #effects . #onPlay
 convertGameAction (PlayFromHand i) gs = DiscardFromHand c : c ^. #effects . #onPlay
-  where
-    c = (gs ^. activePlayer . #hand) !! i -- crashes program when i is out of range
+ where
+  c = (gs ^. activePlayer . #hand) !! i -- crashes program when i is out of range
 convertGameAction (ActivateFromField i) gs = c ^. #effects . #onActivate
-  where
-    c = modifiedField activePlayer gs !! i -- crashes program when i is out of range
+ where
+  c = modifiedField activePlayer gs !! i -- crashes program when i is out of range
 convertGameAction (AnnounceAttack target source) gs = [Attack targetCard sourceCard]
-  where
-    targetCard = modifiedField enemyPlayer gs !! target -- crashes program when target is out of range
-    sourceCard = modifiedField activePlayer gs !! source -- crashes program when source is out of range
+ where
+  targetCard = modifiedField enemyPlayer gs !! target -- crashes program when target is out of range
+  sourceCard = modifiedField activePlayer gs !! source -- crashes program when source is out of range
 convertGameAction (AnnounceDirectAttack i) gs = return $ DirectAttack c enemyPlayer
-  where
-    c = (gs ^. activePlayer . #field) !! i -- crashes program when i is out of range
+ where
+  c = (gs ^. activePlayer . #field) !! i -- crashes program when i is out of range
 convertGameAction EndRound _ = return EndTurn
 convertGameAction _ _ = []
 
@@ -49,7 +49,7 @@ playGame (x : xs) = do
   resolve x
   playGame xs
 
-gameOver :: (Log :> es) => Eff es ()
+gameOver :: Log :> es => Eff es ()
 gameOver = Gio.logLn' "k bye"
 
 gameLoop :: (CommandInput :> es, HasStateIO es) => Eff es ()

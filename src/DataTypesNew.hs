@@ -1,10 +1,9 @@
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE NoFieldSelectors #-}
 
 module DataTypesNew where
-
 
 pattern X :: Element -> Kosten
 pattern X element = Kosten [VariableElementKosten element]
@@ -88,7 +87,6 @@ instance Num Anzahl where
   negate = Neg
   abs = error "unused"
   signum = error "unused"
-  
 
 type Höhe = Anzahl
 data Dauer = BisZumEndeDesZuges | Dauerhaft
@@ -121,16 +119,16 @@ instance Applicative TriggerInstructionF where
 
 data Aura
 
-data Ziel = Ziel { anzahl :: ZielAnzahl, ziel :: EinZiel }
+data Ziel = Ziel {anzahl :: ZielAnzahl, ziel :: EinZiel}
 data ZielAnzahl = Ein | Alle
 
-data EinZiel = EinZiel { description :: String, filter :: Card -> Bool }
+data EinZiel = EinZiel {description :: String, filter :: Card -> Bool}
 
 instance Show EinZiel where
   show = (.description)
 
 instance Semigroup EinZiel where
-   a <> b = EinZiel (a.description <> " " <> b.description) $ \card -> a.filter card && b.filter card
+  a <> b = EinZiel (a.description <> " " <> b.description) $ \card -> a.filter card && b.filter card
 
 data InstructionF a = InstructionF [Instruction] a
 

@@ -1,8 +1,10 @@
-{-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OrPatterns #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE NoFieldSelectors #-}
+
 module Target where
-import DataTypesNew (Card(..), EinZiel(..), Ziel(..), ZielAnzahl(..), CardType(..))
+
+import DataTypesNew (Card (..), CardType (..), EinZiel (..), Ziel (..), ZielAnzahl (..))
 
 oder :: EinZiel -> EinZiel -> EinZiel
 oder a b = EinZiel (a.description <> " oder " <> b.description) $ \card -> a.filter card || b.filter card
@@ -19,12 +21,11 @@ gegenmagie = EinZiel "Gegenmagie" \card -> case card.cardType of
 aufDemFeld = EinZiel "auf dem Feld" (const undefined)
 aufDemFriedHof = EinZiel "auf dem Friedhof" (const undefined)
 eigene = EinZiel "eigene" (const undefined)
-eigenes = eigene { description = "eigenes" }
+eigenes = eigene{description = "eigenes"}
 gegnerisches = EinZiel "gegnerisches" (const undefined)
 
-selbst = Ziel { anzahl = Ein, ziel = EinZiel "diese Karte" (const undefined)}
+selbst = Ziel{anzahl = Ein, ziel = EinZiel "diese Karte" (const undefined)}
 
 ein = Ziel Ein
 eine = ein
 alle = Ziel Alle
-

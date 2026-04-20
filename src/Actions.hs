@@ -100,14 +100,14 @@ resolveChoose actions = do
 modifiedField :: PlayerLens -> GameState -> [Card]
 modifiedField playerLens gs =
   map (modified playerLens gs) field
-  where
-    field = gs ^. playerLens . #field
+ where
+  field = gs ^. playerLens . #field
 
 modified :: PlayerLens -> GameState -> Card -> Card
 modified playerLens gs card =
   foldr applyAura card onFieldEffects
-  where
-    onFieldEffects = gs ^. playerLens . #field . traverse . #effects . #whileOnField
+ where
+  onFieldEffects = gs ^. playerLens . #field . traverse . #effects . #whileOnField
 
 applyAura :: Aura -> Card -> Card
 applyAura aura card = case aura of

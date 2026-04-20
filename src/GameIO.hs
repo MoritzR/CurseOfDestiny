@@ -14,11 +14,11 @@ chooseOne l = do
 
 displayEnumeratedItems :: (Log :> es, Show a) => [a] -> Eff es ()
 displayEnumeratedItems = mapM_ displayTuple . zip [1 ..]
-  where
-    displayTuple (i, v) = log' $ show i ++ ": " ++ show v
+ where
+  displayTuple (i, v) = log' $ show i ++ ": " ++ show v
 
-log' :: (Log :> es) => String -> Eff es ()
+log' :: Log :> es => String -> Eff es ()
 log' = logMessage
 
-logLn' :: (Log :> es) => String -> Eff es ()
+logLn' :: Log :> es => String -> Eff es ()
 logLn' s = logMessage $ "\n" ++ s
