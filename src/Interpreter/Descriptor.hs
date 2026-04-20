@@ -123,7 +123,7 @@ describeGrantedTrigger (TriggerInstructionF instructions _) =
 
 describeKosten :: Kosten -> String
 describeKosten (Kosten kosten) =
-  intercalate " + " (map describeElementKosten kosten)
+  intercalate " " (map describeElementKosten kosten)
 
 describeElementKosten :: ElementKosten -> String
 describeElementKosten = \case

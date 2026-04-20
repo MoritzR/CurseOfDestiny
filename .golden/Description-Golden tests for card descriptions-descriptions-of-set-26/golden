@@ -15,7 +15,7 @@ Forscher der Royalen Akademie - 4⏺
 Wenn diese Karte gespielt wird: Vision 3
 
 
-Hemtaras Krieger - X⏺ + 4⏺
+Hemtaras Krieger - X⏺ 4⏺
 Wenn diese Karte gespielt wird: Prisma - diese Karte erhöht seine Stärke dauerhaft um X000 (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)
 5⏺: Vision 1
 
@@ -34,26 +34,26 @@ Blockierung
 
 
 Magiestein der Arkanen Seele - 1⏺
-1⏺ + 1🌞: opfere diese Karte, erhalte 1 Schicksalsmacht
-1⏺ + 1💧: opfere diese Karte, ziehe 1 Karte
-1⏺ + 1⚡: opfere diese Karte, gib ein Wesen auf dem Feld auf die Hand des Besitzers zurück
+1⏺ 1🌞: opfere diese Karte, erhalte 1 Schicksalsmacht
+1⏺ 1💧: opfere diese Karte, ziehe 1 Karte
+1⏺ 1⚡: opfere diese Karte, gib ein Wesen auf dem Feld auf die Hand des Besitzers zurück
 
 
 Magiestein der Erdkraft - 1⏺
-1⏺ + 1🌳: opfere diese Karte, ein Wesen auf dem Feld erhöht seine Stärke bis zum Ende des Zuges um 3000
-3⏺ + 2🌳: opfere diese Karte, alle eigene Wesen erhöht seine Stärke dauerhaft um 3000
+1⏺ 1🌳: opfere diese Karte, ein Wesen auf dem Feld erhöht seine Stärke bis zum Ende des Zuges um 3000
+3⏺ 2🌳: opfere diese Karte, alle eigene Wesen erhöht seine Stärke dauerhaft um 3000
 
 
 Magiestein der Erhebung - 1⏺
-1⏺ + 1🌳: opfere diese Karte, zerstöre eine Magie
-1⏺ + 1💧: opfere diese Karte, ziehe 1 Karte
-2⏺ + 1💀: opfere diese Karte, alle Wesen verringert seine Stärke bis zum Ende des Zuges um 3000, wird sie dadurch 0, zerstöre es
+1⏺ 1🌳: opfere diese Karte, zerstöre eine Magie
+1⏺ 1💧: opfere diese Karte, ziehe 1 Karte
+2⏺ 1💀: opfere diese Karte, alle Wesen verringert seine Stärke bis zum Ende des Zuges um 3000, wird sie dadurch 0, zerstöre es
 
 
 Magiestein der Erzürnung - 1⏺
-2⏺ + 1💀: opfere diese Karte, nimm ein Wesen auf dem Friedhof auf deine Hand
-2⏺ + 1🔥: opfere diese Karte, Vision 2, zeige die obersten 2 Karten deines Decks, alle eigene Wesen erhöht seine Stärke bis zum Ende des Zuges um X000 (X ist die Summe der Kosten der gezeigten Karten)
-2⏺ + 2🌳: opfere diese Karte, bringe Schirmbestie ins Spiel
+2⏺ 1💀: opfere diese Karte, nimm ein Wesen auf dem Friedhof auf deine Hand
+2⏺ 1🔥: opfere diese Karte, Vision 2, zeige die obersten 2 Karten deines Decks, alle eigene Wesen erhöht seine Stärke bis zum Ende des Zuges um X000 (X ist die Summe der Kosten der gezeigten Karten)
+2⏺ 2🌳: opfere diese Karte, bringe Schirmbestie ins Spiel
 
 
 Magiestein der Feuerkraft - 1⏺
@@ -62,44 +62,44 @@ Magiestein der Feuerkraft - 1⏺
 
 
 Magiestein der Finsterkraft - 1⏺
-2⏺ + 1💀: opfere diese Karte, nimm ein Wesen auf dem Friedhof auf deine Hand
-5⏺ + 1💀: opfere diese Karte, ein Spieler opfert ein Wesen
+2⏺ 1💀: opfere diese Karte, nimm ein Wesen auf dem Friedhof auf deine Hand
+5⏺ 1💀: opfere diese Karte, ein Spieler opfert ein Wesen
 
 
 Magiestein der Lichtkraft - 1⏺
-1⏺ + 1🌞: opfere diese Karte, ein Wesen auf dem Feld erhöht seine Stärke dauerhaft um 2000
-1⏺ + 2🌞: opfere diese Karte, erhalte 1 Schicksalsmacht
+1⏺ 1🌞: opfere diese Karte, ein Wesen auf dem Feld erhöht seine Stärke dauerhaft um 2000
+1⏺ 2🌞: opfere diese Karte, erhalte 1 Schicksalsmacht
 
 
 Magiestein der Manipulation - 1⏺
-2⏺ + 1💀: opfere diese Karte, sieh Handkarten an und entferne eine davon aus dem Spiel
-2⏺ + 2⚡: opfere diese Karte, nimm eine eigene Magie oder Gegenmagie auf dem Friedhof auf deine Hand
-4⏺ + 2💧: opfere diese Karte, ziehe 2 Karten
+2⏺ 1💀: opfere diese Karte, sieh Handkarten an und entferne eine davon aus dem Spiel
+2⏺ 2⚡: opfere diese Karte, nimm eine eigene Magie oder Gegenmagie auf dem Friedhof auf deine Hand
+4⏺ 2💧: opfere diese Karte, ziehe 2 Karten
 
 
 Magiestein der Säuberung - 1⏺
-2⏺ + 1🌞: opfere diese Karte, X ist die Anzahl von alle eigene Wesen auf dem Feld. erhalte X Schicksalsmacht
-2⏺ + 1🌳: Schaue dir die obersten 5 Karten deines Decks an. TODO: implement
-4⏺ + 1💧: opfere diese Karte, X ist die Anzahl von alle eigene Wesen auf dem Feld. ziehe X Karten
+2⏺ 1🌞: opfere diese Karte, X ist die Anzahl von alle eigene Wesen auf dem Feld. erhalte X Schicksalsmacht
+2⏺ 1🌳: Schaue dir die obersten 5 Karten deines Decks an. TODO: implement
+4⏺ 1💧: opfere diese Karte, X ist die Anzahl von alle eigene Wesen auf dem Feld. ziehe X Karten
 
 
 Magiestein der Wasserkraft - 1⏺
 1💧: opfere diese Karte, Vision 3
-5⏺ + 1💧: opfere diese Karte, ziehe 2 Karten
+5⏺ 1💧: opfere diese Karte, ziehe 2 Karten
 
 
 Magiestein der Windkraft - 1⏺
-2⏺ + 1⚡: opfere diese Karte, gib ein Wesen auf dem Feld auf die Hand des Besitzers zurück
-4⏺ + 1⚡: opfere diese Karte, ziehe 3 Karten, wirf 2 Karten von der Hand ab. Sie spenden keine Schicksalspunkte
+2⏺ 1⚡: opfere diese Karte, gib ein Wesen auf dem Feld auf die Hand des Besitzers zurück
+4⏺ 1⚡: opfere diese Karte, ziehe 3 Karten, wirf 2 Karten von der Hand ab. Sie spenden keine Schicksalspunkte
 
 
 Magiestein des Chaos - 1⏺
-1⏺ + 1🔥: opfere diese Karte, alle eigene Wesen erhält Doppelzerstörung bis zum Ende des Zuges
-1⏺ + 2⚡: opfere diese Karte, Vision 1, Schaue dir die obersten 1 Karten deines Decks an. TODO: implement
-4⏺ + 2💀: opfere diese Karte, zerstöre ein Wesen
+1⏺ 1🔥: opfere diese Karte, alle eigene Wesen erhält Doppelzerstörung bis zum Ende des Zuges
+1⏺ 2⚡: opfere diese Karte, Vision 1, Schaue dir die obersten 1 Karten deines Decks an. TODO: implement
+4⏺ 2💀: opfere diese Karte, zerstöre ein Wesen
 
 
 Magiestein des Nexus - 1⏺
 1🔥: opfere diese Karte, ein Wesen auf dem Feld erhält 'Kann nicht abwehren' bis zum Ende des Zuges
-2⏺ + 1🌳: opfere diese Karte, lege 3 Karten vom Deck auf den Friedhof. Sie spenden keine Schicksalspunkte, nimm eine auf dem Friedhof auf deine Hand
-2⏺ + 2🌞: opfere diese Karte, bringe ins Spiel: ein Wesen auf dem Friedhof mit kosten von 3 oder weniger
+2⏺ 1🌳: opfere diese Karte, lege 3 Karten vom Deck auf den Friedhof. Sie spenden keine Schicksalspunkte, nimm eine auf dem Friedhof auf deine Hand
+2⏺ 2🌞: opfere diese Karte, bringe ins Spiel: ein Wesen auf dem Friedhof mit kosten von 3 oder weniger
