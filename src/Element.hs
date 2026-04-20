@@ -1,6 +1,6 @@
 module Element where
 
-import DataTypesNew (Element (..), ElementKosten (..), Kosten (..))
+import DataTypesNew (Anzahl (..), Element (..), ElementKosten (..), Kosten (..))
 
 infixr 8 //
 (//) :: Element -> Element -> Element
@@ -9,5 +9,16 @@ infixr 8 //
 nichts :: Kosten
 nichts = Kosten [Nichts]
 
-test :: Kosten
-test = 3 Wasser + 4 Feuer + 2 (Feuer // Wasser)
+gesamtKosten :: Kosten -> Int
+gesamtKosten (Kosten alleElemente) = anzahlToInt $ foldr sumCosts 0 alleElemente
+ where
+  sumCosts elementKosten = case elementKosten of
+    Nichts -> (+ 0)
+    VariableElementKosten _element -> (+ PlaceHolderX)
+    ElementKosten anzahl _element -> (+ anzahl)
+  anzahlToInt = \case
+    Actual i -> i
+    PlaceHolderX -> 0
+    Mul a b -> anzahlToInt a * anzahlToInt b
+    Add a b -> anzahlToInt a + anzahlToInt b
+    Neg a -> negate $ anzahlToInt a

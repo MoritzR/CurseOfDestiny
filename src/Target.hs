@@ -5,6 +5,7 @@
 module Target where
 
 import DataTypesNew (Card (..), CardType (..), EinZiel (..), Ziel (..), ZielAnzahl (..))
+import Element (gesamtKosten)
 
 oder :: EinZiel -> EinZiel -> EinZiel
 oder a b = EinZiel (a.description <> " oder " <> b.description) $ \card -> a.filter card || b.filter card
@@ -23,6 +24,7 @@ aufDemFriedHof = EinZiel "auf dem Friedhof" (const undefined)
 eigene = EinZiel "eigene" (const undefined)
 eigenes = eigene{description = "eigenes"}
 gegnerisches = EinZiel "gegnerisches" (const undefined)
+kostetMaximal anzahl = EinZiel ("mit kosten von " <> show anzahl <> " oder weniger") \card -> gesamtKosten card.cost <= anzahl
 
 selbst = Ziel{anzahl = Undefiniert, ziel = EinZiel "diese Karte" (const undefined)}
 

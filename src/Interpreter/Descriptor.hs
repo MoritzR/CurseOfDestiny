@@ -47,6 +47,8 @@ describeTriggerInstruction = \case
     ["Blockierung"]
   Doppelzerstörung ->
     ["Doppelzerstörung"]
+  KannNichtAbwehren ->
+    ["'Kann nicht abwehren'"]
 
 describeEffect :: CardEffect -> String
 describeEffect = unlines . describeEffectLines
@@ -90,14 +92,25 @@ describeInstruction = \case
   ZeigeObenVomDeck n lesbarerWert next ->
     let effect = describeEffectInline $ next PlaceHolderX
      in "zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
-  Beschwöre card ->
-    "beschwöre " <> card.name
+  BringeInsSpiel card ->
+    "bringe " <> card.name <> " ins Spiel"
+  BringeInsSpielAusZiel ziel ->
+    "bringe ins Spiel: " <> describeZiel ziel
+  WirfAb anzahl spendet -> "wirf " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
+  LegeVomDeckAufDenFriedhof anzahl spendet ->
+    "lege " <> show anzahl <> " vom Deck auf den Friedhof." <> describeSpendet spendet
   GibFähigkeit ziel dauer triggerInstrs ->
     describeZiel ziel <> " erhält " <> describeGrantedTrigger triggerInstrs <> " " <> describeDauer dauer
   EinSpielerOpfertEinWesen ->
     "ein Spieler opfert ein Wesen"
   SiehHandkartenAnUndEntferneEineAusDemSpiel ->
     "sieh Handkarten an und entferne eine davon aus dem Spiel"
+  AnzahlVon ziel next ->
+    "X ist die Anzahl von " <> describeZiel ziel <> ". " <> describeEffectInline (next PlaceHolderX)
+
+describeSpendet :: SpendetOderSpendetNicht -> String
+describeSpendet SpendetNicht = " Sie spenden keine Schicksalspunkte"
+describeSpendet Spendet = ""
 
 describeGrantedTrigger :: Trigger -> String
 describeGrantedTrigger (TriggerInstructionF instructions _) =

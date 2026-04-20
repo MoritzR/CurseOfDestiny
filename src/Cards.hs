@@ -128,7 +128,7 @@ series26 =
       , trigger = do
           zahle (1 Neutral + 1 Wald) do
             opfere selbst
-            zerstöre (eine $ magie <> aufDemFeld)
+            zerstöre $ eine magie
             pure ()
           zahle (1 Neutral + 1 Wasser) do
             opfere selbst
@@ -156,7 +156,7 @@ series26 =
             pure ()
           zahle (2 Neutral + 2 Wald) do
             opfere selbst
-            beschwöre schirmBestie
+            bringeInsSpiel schirmBestie
             pure ()
           pure ()
       }
@@ -222,6 +222,99 @@ series26 =
           zahle (4 Neutral + 2 Wasser) do
             opfere selbst
             ziehe 2
+            pure ()
+          pure ()
+      }
+  , Card
+      { name = "Magiestein der Säuberung"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (2 Neutral + 1 Licht) do
+            opfere selbst
+            anzahlVon (alle $ eigene <> wesen <> aufDemFeld) heile
+            pure ()
+          -- TODO
+          -- zahle (2 Neutral + 1 Wald) do
+          --   schaueObenVomDeck 5 do
+          --     nimmAufDieHand (ein Wesen)
+          --     legeRestUnterDeck
+          zahle (4 Neutral + 1 Wasser) do
+            opfere selbst
+            anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
+            pure ()
+          pure ()
+      }
+  , Card
+      { name = "Magiestein der Wasserkraft"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 Wasser) do
+            opfere selbst
+            vision 3
+            pure ()
+          zahle (5 Neutral + 1 Wasser) do
+            opfere selbst
+            ziehe 2
+            pure ()
+          pure ()
+      }
+  , Card
+      { name = "Magiestein der Windkraft"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (2 Neutral + 1 Wind) do
+            opfere selbst
+            gibAufDieHandZurück (ein $ wesen <> aufDemFeld)
+            pure ()
+          zahle (4 Neutral + 1 Wind) do
+            opfere selbst
+            ziehe 3
+            wirfAb 2 SpendetNicht
+            pure ()
+          pure ()
+      }
+  , Card
+      { name = "Magiestein des Chaos"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 Neutral + 1 Feuer) do
+            opfere selbst
+            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges doppelZerstörung
+            pure ()
+          zahle (1 Neutral + 2 Wind) do
+            opfere selbst
+            vision 1
+            -- TODO
+            --   schaueObersteKarte \karte ->
+            --     wähle [AufDieHand, AufDenFriedhof] ...
+            pure ()
+          zahle (4 Neutral + 2 Tod) do
+            opfere selbst
+            zerstöre $ ein wesen
+            pure ()
+          pure ()
+      }
+  , Card
+      { name = "Magiestein des Nexus"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 Feuer) do
+            opfere selbst
+            gibFähigkeit (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges kannNichtAbwehren
+            pure ()
+          zahle (2 Neutral + 1 Wald) do
+            opfere selbst
+            legeVomDeckAufDenFriedhof 3 SpendetNicht
+            nimmAufDieHand (eine aufDemFriedHof)
+            pure ()
+          zahle (2 Neutral + 2 Licht) do
+            opfere selbst
+            bringeInsSpielAusZiel (ein $ wesen <> aufDemFriedHof <> kostetMaximal 3)
             pure ()
           pure ()
       }

@@ -58,10 +58,16 @@ data Instruction
   | VerringereUndZerstöre Ziel Dauer Höhe
   | NimmAufDieHand Ziel
   | ZeigeObenVomDeck Anzahl LesbarerWert (Höhe -> InstructionF ())
-  | Beschwöre Card
+  | BringeInsSpiel Card
+  | BringeInsSpielAusZiel Ziel
   | GibFähigkeit Ziel Dauer (TriggerInstructionF ())
   | EinSpielerOpfertEinWesen
+  | AnzahlVon Ziel (Anzahl -> InstructionF ())
+  | WirfAb Anzahl SpendetOderSpendetNicht
+  | LegeVomDeckAufDenFriedhof Anzahl SpendetOderSpendetNicht
   | SiehHandkartenAnUndEntferneEineAusDemSpiel
+
+data SpendetOderSpendetNicht = Spendet | SpendetNicht
 
 data Anzahl
   = PlaceHolderX
@@ -106,6 +112,7 @@ data TriggerInstruction
   | EinmalProRunde CardEffect
   | Blockierung
   | Doppelzerstörung
+  | KannNichtAbwehren
 
 data TriggerInstructionF a = TriggerInstructionF [TriggerInstruction] a
 
