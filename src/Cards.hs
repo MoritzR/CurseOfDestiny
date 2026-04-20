@@ -234,11 +234,11 @@ series26 =
             opfere selbst
             anzahlVon (alle $ eigene <> wesen <> aufDemFeld) heile
             pure ()
-          -- TODO
-          -- zahle (2 Neutral + 1 Wald) do
-          --   schaueObenVomDeck 5 do
-          --     nimmAufDieHand (ein Wesen)
-          --     legeRestUnterDeck
+          zahle (2 Neutral + 1 Wald) do
+            schaueObenVomDeck 5 do
+              zeigeVorUndNimmtAufDieHand (ein wesen)
+              legeRestUnterDeck
+              pure ()
           zahle (4 Neutral + 1 Wasser) do
             opfere selbst
             anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
@@ -288,9 +288,10 @@ series26 =
           zahle (1 Neutral + 2 Wind) do
             opfere selbst
             vision 1
+            schaueObenVomDeck 1 do
+              pure ()
             -- TODO
-            --   schaueObersteKarte \karte ->
-            --     wähle [AufDieHand, AufDenFriedhof] ...
+            -- wähle [zeigeVorUndNimmtAufDieHand (eine karte), zeigeVorUndWirfAb (eine karte)]
             pure ()
           zahle (4 Neutral + 2 Tod) do
             opfere selbst

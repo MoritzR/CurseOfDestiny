@@ -2,7 +2,7 @@
 
 module CardEffect where
 
-import DataTypesNew (Instruction (..), InstructionF (..), Wählbar (wahlmöglichkeiten))
+import DataTypesNew (Instruction (..), InstructionF (..), InstructionWhenViewingDeck (..), InstructionWhenViewingDeckF (..), Wählbar (wahlmöglichkeiten))
 
 -- instruction methods
 ziehe anzahl = InstructionF [Ziehe anzahl] ()
@@ -27,7 +27,13 @@ einSpielerOpfertEinWesen = InstructionF [EinSpielerOpfertEinWesen] ()
 anzahlVon ziel next = InstructionF [AnzahlVon ziel next] ()
 wirfAb anzahl spendet = InstructionF [WirfAb anzahl spendet] ()
 legeVomDeckAufDenFriedhof anzahl spendet = InstructionF [LegeVomDeckAufDenFriedhof anzahl spendet] ()
+schaueObenVomDeck anzahl next = InstructionF [SchaueObenVomDeck anzahl next] ()
 siehHandkartenAnUndEntferneEineAusDemSpiel = InstructionF [SiehHandkartenAnUndEntferneEineAusDemSpiel] ()
 
 wähleAus :: Wählbar a => [a] -> (a -> InstructionF ()) -> InstructionF ()
 wähleAus möglichkeiten next = InstructionF [Wähle möglichkeiten next] ()
+
+-- instruction when viewing deck
+legeRestUnterDeck = InstructionWhenViewingDeckF [LegeRestUnterDasDeck] ()
+zeigeVorUndNimmtAufDieHand ziel = InstructionWhenViewingDeckF [ZeigeVorUndNimmAufDieHand ziel] ()
+zeigeVorUndWirfAb ziel = InstructionWhenViewingDeckF [ZeigeVorUndWirfAb ziel] ()

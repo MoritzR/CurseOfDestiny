@@ -65,7 +65,13 @@ data Instruction
   | AnzahlVon Ziel (Anzahl -> InstructionF ())
   | WirfAb Anzahl SpendetOderSpendetNicht
   | LegeVomDeckAufDenFriedhof Anzahl SpendetOderSpendetNicht
+  | SchaueObenVomDeck Anzahl (InstructionWhenViewingDeckF ())
   | SiehHandkartenAnUndEntferneEineAusDemSpiel
+
+data InstructionWhenViewingDeck
+  = ZeigeVorUndNimmAufDieHand Ziel
+  | ZeigeVorUndWirfAb Ziel
+  | LegeRestUnterDasDeck
 
 data SpendetOderSpendetNicht = Spendet | SpendetNicht
 
@@ -123,6 +129,16 @@ instance Applicative TriggerInstructionF where
   pure = TriggerInstructionF []
   TriggerInstructionF instructions1 f <*> TriggerInstructionF instructions2 a =
     TriggerInstructionF (instructions1 <> instructions2) (f a)
+
+data InstructionWhenViewingDeckF a = InstructionWhenViewingDeckF [InstructionWhenViewingDeck] a
+
+instance Functor InstructionWhenViewingDeckF where
+  fmap f (InstructionWhenViewingDeckF instructions a) = InstructionWhenViewingDeckF instructions (f a)
+
+instance Applicative InstructionWhenViewingDeckF where
+  pure = InstructionWhenViewingDeckF []
+  InstructionWhenViewingDeckF instructions1 f <*> InstructionWhenViewingDeckF instructions2 a =
+    InstructionWhenViewingDeckF (instructions1 <> instructions2) (f a)
 
 data Aura
 

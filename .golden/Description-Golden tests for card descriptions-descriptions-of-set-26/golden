@@ -45,7 +45,7 @@ Magiestein der Erdkraft
 
 
 Magiestein der Erhebung
-1 Neutral + 1 Wald: opfere diese Karte, zerstöre eine Magie auf dem Feld
+1 Neutral + 1 Wald: opfere diese Karte, zerstöre eine Magie
 1 Neutral + 1 Wasser: opfere diese Karte, ziehe 1 Karte
 2 Neutral + 1 Tod: opfere diese Karte, alle Wesen verringert seine Stärke bis zum Ende des Zuges um 3000, wird sie dadurch 0, zerstöre es
 
@@ -53,7 +53,7 @@ Magiestein der Erhebung
 Magiestein der Erzürnung
 2 Neutral + 1 Tod: opfere diese Karte, nimm ein Wesen auf dem Friedhof auf deine Hand
 2 Neutral + 1 Feuer: opfere diese Karte, Vision 2, zeige die obersten 2 Karten deines Decks, alle eigene Wesen erhöht seine Stärke bis zum Ende des Zuges um X000 (X ist die Summe der Kosten der gezeigten Karten)
-2 Neutral + 2 Wald: opfere diese Karte, beschwöre Schirmbestie
+2 Neutral + 2 Wald: opfere diese Karte, bringe Schirmbestie ins Spiel
 
 
 Magiestein der Feuerkraft
@@ -75,3 +75,31 @@ Magiestein der Manipulation
 2 Neutral + 1 Tod: opfere diese Karte, sieh Handkarten an und entferne eine davon aus dem Spiel
 2 Neutral + 2 Wind: opfere diese Karte, nimm eine eigene Magie oder Gegenmagie auf dem Friedhof auf deine Hand
 4 Neutral + 2 Wasser: opfere diese Karte, ziehe 2 Karten
+
+
+Magiestein der Säuberung
+2 Neutral + 1 Licht: opfere diese Karte, X ist die Anzahl von alle eigene Wesen auf dem Feld. erhalte X Schicksalsmacht
+2 Neutral + 1 Wald: Schaue dir die obersten 5 Karten deines Decks an. TODO: implement
+4 Neutral + 1 Wasser: opfere diese Karte, X ist die Anzahl von alle eigene Wesen auf dem Feld. ziehe X Karten
+
+
+Magiestein der Wasserkraft
+1 Wasser: opfere diese Karte, Vision 3
+5 Neutral + 1 Wasser: opfere diese Karte, ziehe 2 Karten
+
+
+Magiestein der Windkraft
+2 Neutral + 1 Wind: opfere diese Karte, gib ein Wesen auf dem Feld auf die Hand des Besitzers zurück
+4 Neutral + 1 Wind: opfere diese Karte, ziehe 3 Karten, wirf 2 Karten von der Hand ab. Sie spenden keine Schicksalspunkte
+
+
+Magiestein des Chaos
+1 Neutral + 1 Feuer: opfere diese Karte, alle eigene Wesen erhält Doppelzerstörung bis zum Ende des Zuges
+1 Neutral + 2 Wind: opfere diese Karte, Vision 1, Schaue dir die obersten 1 Karten deines Decks an. TODO: implement
+4 Neutral + 2 Tod: opfere diese Karte, zerstöre ein Wesen
+
+
+Magiestein des Nexus
+1 Feuer: opfere diese Karte, ein Wesen auf dem Feld erhält 'Kann nicht abwehren' bis zum Ende des Zuges
+2 Neutral + 1 Wald: opfere diese Karte, lege 3 Karten vom Deck auf den Friedhof. Sie spenden keine Schicksalspunkte, nimm eine auf dem Friedhof auf deine Hand
+2 Neutral + 2 Licht: opfere diese Karte, bringe ins Spiel: ein Wesen auf dem Friedhof mit kosten von 3 oder weniger

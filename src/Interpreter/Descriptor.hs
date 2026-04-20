@@ -98,7 +98,7 @@ describeInstruction = \case
     "bringe ins Spiel: " <> describeZiel ziel
   WirfAb anzahl spendet -> "wirf " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
   LegeVomDeckAufDenFriedhof anzahl spendet ->
-    "lege " <> show anzahl <> " vom Deck auf den Friedhof." <> describeSpendet spendet
+    "lege " <> show anzahl <> " Karten vom Deck auf den Friedhof." <> describeSpendet spendet
   GibFähigkeit ziel dauer triggerInstrs ->
     describeZiel ziel <> " erhält " <> describeGrantedTrigger triggerInstrs <> " " <> describeDauer dauer
   EinSpielerOpfertEinWesen ->
@@ -107,6 +107,11 @@ describeInstruction = \case
     "sieh Handkarten an und entferne eine davon aus dem Spiel"
   AnzahlVon ziel next ->
     "X ist die Anzahl von " <> describeZiel ziel <> ". " <> describeEffectInline (next PlaceHolderX)
+  SchaueObenVomDeck anzahl next ->
+    "Schaue dir die obersten " <> show anzahl <> " Karten deines Decks an. " <> describeWhenViewingDeckEffect next
+
+describeWhenViewingDeckEffect :: InstructionWhenViewingDeckF () -> String
+describeWhenViewingDeckEffect _ = "TODO: implement" -- TODO
 
 describeSpendet :: SpendetOderSpendetNicht -> String
 describeSpendet SpendetNicht = " Sie spenden keine Schicksalspunkte"

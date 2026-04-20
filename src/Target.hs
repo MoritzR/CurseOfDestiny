@@ -10,6 +10,7 @@ import Element (gesamtKosten)
 oder :: EinZiel -> EinZiel -> EinZiel
 oder a b = EinZiel (a.description <> " oder " <> b.description) $ \card -> a.filter card || b.filter card
 
+karte = EinZiel "Karte" (const True)
 wesen = EinZiel "Wesen" \card -> case card.cardType of
   Wesen _ _ -> True
   _ -> False
