@@ -107,7 +107,7 @@ test-suite cod-test
   main-is: Spec.hs
   other-modules:
       GameActionParserSpec
-      GameSpec
+      DescriptionSpec
       Paths_cod
   hs-source-dirs:
       test
@@ -117,5 +117,6 @@ test-suite cod-test
     , effectful
     , generic-lens
     , hspec ^>=2.11
+    , hspec-golden ^>=0.2.2.0
     , lens
   build-tool-depends: hspec-discover:hspec-discover == 2.*

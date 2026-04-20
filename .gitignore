@@ -29,4 +29,7 @@ devenv.local.yaml
 # pre-commit
 .pre-commit-config.yaml
 
+# hspec-golden tests
+.golden/**/actual
+
 .codex
