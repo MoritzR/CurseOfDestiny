@@ -2,6 +2,7 @@
 {
   packages = with pkgs; [
     haskellPackages.fourmolu
+    haskellPackages.hspec-golden
   ];
   languages.haskell = {
     enable = true;

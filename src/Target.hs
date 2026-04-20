@@ -24,8 +24,8 @@ eigene = EinZiel "eigene" (const undefined)
 eigenes = eigene{description = "eigenes"}
 gegnerisches = EinZiel "gegnerisches" (const undefined)
 
-selbst = Ziel{anzahl = Ein, ziel = EinZiel "diese Karte" (const undefined)}
+selbst = Ziel{anzahl = Undefiniert, ziel = EinZiel "diese Karte" (const undefined)}
 
 ein = Ziel Ein
-eine = ein
+eine = Ziel Eine
 alle = Ziel Alle

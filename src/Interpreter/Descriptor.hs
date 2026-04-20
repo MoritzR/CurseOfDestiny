@@ -117,8 +117,10 @@ describeZiel :: Ziel -> String
 describeZiel (Ziel zielAnzahl einZiel) =
   prefix zielAnzahl <> show einZiel
  where
-  prefix Ein = ""
+  prefix Ein = "ein "
+  prefix Eine = "eine "
   prefix Alle = "alle "
+  prefix Undefiniert = ""
 
 describeDauer :: Dauer -> String
 describeDauer = \case

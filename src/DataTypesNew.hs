@@ -120,7 +120,7 @@ instance Applicative TriggerInstructionF where
 data Aura
 
 data Ziel = Ziel {anzahl :: ZielAnzahl, ziel :: EinZiel}
-data ZielAnzahl = Ein | Alle
+data ZielAnzahl = Ein | Eine | Alle | Undefiniert
 
 data EinZiel = EinZiel {description :: String, filter :: Card -> Bool}
 
