@@ -18,7 +18,7 @@ data Element
   | Licht
   | Tod
   | Doppel Element Element
-  deriving (Eq)
+  deriving Eq
 
 instance Show Element where
   show = \case
