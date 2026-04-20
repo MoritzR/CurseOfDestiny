@@ -66,8 +66,9 @@ describeInstruction = \case
     describeZiel ziel <> " erhöht " <> possessive describeWert wert <> " " <> describeDauer dauer <> " um " <> show höhe
   Vision n ->
     "Vision " <> show n
-  Prisma _ ->
-    "Prisma"
+  Prisma next ->
+    let effect = describeEffectInline $ next PlaceHolderX
+    in "Prisma - " <> effect <> " (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)"
   Spende n element ->
     "spende " <> show n <> " " <> show element
   Wähle options _ ->
