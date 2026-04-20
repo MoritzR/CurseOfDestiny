@@ -18,7 +18,7 @@ testRenderCard :: String
 testRenderCard = intercalate "\n\n" $ describeCard <$> series26
 
 describeCard :: Card -> String
-describeCard card = unlines (card.name : describeTriggerLines card.trigger)
+describeCard card = unlines (card.name <> " - " <> describeKosten card.cost : describeTriggerLines card.trigger)
 
 describeTrigger :: Trigger -> String
 describeTrigger = unlines . describeTriggerLines
@@ -127,8 +127,8 @@ describeKosten (Kosten kosten) =
 
 describeElementKosten :: ElementKosten -> String
 describeElementKosten = \case
-  ElementKosten n element -> show n <> " " <> show element
-  VariableElementKosten element -> "X " <> show element
+  ElementKosten n element -> show n <> show element
+  VariableElementKosten element -> "X" <> show element
   Nichts -> "nichts"
 
 describeZiel :: Ziel -> String

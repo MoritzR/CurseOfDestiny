@@ -18,7 +18,18 @@ data Element
   | Licht
   | Tod
   | Doppel Element Element
-  deriving (Eq, Show)
+  deriving (Eq)
+
+instance Show Element where
+  show = \case
+    Neutral -> "⏺"
+    Feuer -> "🔥"
+    Wald -> "🌳"
+    Wasser -> "💧"
+    Wind -> "⚡"
+    Licht -> "🌞"
+    Tod -> "💀"
+    Doppel a b -> show a <> "/" <> show b
 
 newtype Kosten = Kosten [ElementKosten]
 
