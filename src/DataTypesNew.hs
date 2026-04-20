@@ -9,7 +9,7 @@ module DataTypesNew where
 pattern X :: Element -> Kosten
 pattern X element = Kosten [VariableElementKosten element]
 
-data ElementKosten = ElementKosten Int Element | VariableElementKosten Element | Nichts
+data ElementKosten = ElementKosten Anzahl Element | VariableElementKosten Element | Nichts
 data Element
   = Neutral
   | Feuer
@@ -58,18 +58,43 @@ data Instruction
   | Verringere Wert Ziel Dauer Höhe
   | VerringereUndZerstöre Ziel Dauer Höhe
   | NimmAufDieHand Ziel
-  | ZeigeObenVomDeck Anzahl LesbarerWert ([Int] -> InstructionF ())
+  | ZeigeObenVomDeck Anzahl LesbarerWert ([Höhe] -> InstructionF ())
   | Beschwöre Card
   | GibFähigkeit Ziel Dauer (TriggerInstructionF ())
   | EinSpielerOpfertEinWesen
-  | SiehHandkartenAnUndEntferneEineAusDemSpiel 
+  | SiehHandkartenAnUndEntferneEineAusDemSpiel
 
-type Anzahl = Int
-type Höhe = Int
+data Anzahl
+  = PlaceHolderX
+  | Actual Int
+  | Mul Anzahl Anzahl
+  | Add Anzahl Anzahl
+  | Neg Anzahl
+  deriving Eq
+
+instance Show Anzahl where
+  show = \case
+    Actual i -> show i
+    PlaceHolderX -> "X"
+    Mul PlaceHolderX (Actual 1000) -> "X000"
+    Mul a b -> show a <> " * " <> show b
+    Add a b -> show a <> " + " <> show b
+    Neg a -> "-" <> show a
+
+instance Num Anzahl where
+  fromInteger = Actual . fromIntegral
+  (*) = Mul
+  (+) = Add
+  negate = Neg
+  abs = error "unused"
+  signum = error "unused"
+  
+
+type Höhe = Anzahl
 data Dauer = BisZumEndeDesZuges | Dauerhaft
 data LesbarerWert = LesbarKosten
 data Ort = Friedhof
-data Wert = Stärke 
+data Wert = Stärke
 
 type Trigger = TriggerInstructionF ()
 

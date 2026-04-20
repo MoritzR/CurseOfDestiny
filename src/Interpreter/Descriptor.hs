@@ -69,7 +69,7 @@ describeInstruction = \case
   Prisma _ ->
     "Prisma"
   Spende n element ->
-    "spende " <> show n <> " " <> pluralizedElement element n
+    "spende " <> show n <> " " <> show element
   Wähle options _ ->
     "wähle " <> intercalate ", " (map show options)
   Opfere ziel ->
@@ -107,7 +107,7 @@ describeKosten (Kosten kosten) =
 
 describeElementKosten :: ElementKosten -> String
 describeElementKosten = \case
-  ElementKosten n element -> show n <> " " <> pluralizedElement element n
+  ElementKosten n element -> show n <> " " <> show element
   VariableElementKosten element -> "X " <> show element
   Nichts -> "nichts"
 
@@ -131,15 +131,10 @@ describeLesbarerWert :: LesbarerWert -> String
 describeLesbarerWert = \case
   LesbarKosten -> "den Kosten"
 
-plural :: String -> Int -> String
+plural :: String -> Anzahl -> String
 plural word n
   | n == 1 = word
   | otherwise = word <> "n"
-
-pluralizedElement :: Element -> Int -> String
-pluralizedElement element n
-  | n == 1 = show element
-  | otherwise = show element <> "-Elemente"
 
 possessive :: (a -> String) -> a -> String
 possessive render value = "seine " <> render value
