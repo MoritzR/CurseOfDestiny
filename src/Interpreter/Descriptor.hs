@@ -75,6 +75,8 @@ describeInstruction = \case
     "spende " <> show n <> " " <> show element
   Wähle options _ ->
     "wähle " <> intercalate ", " (map show options)
+  WähleAktion aktionen ->
+    "wähle aus:\n - " <> intercalate "\n - " (describeInstructionF <$> aktionen)
   Opfere ziel ->
     "opfere " <> describeZiel ziel
   Heile n ->
@@ -110,8 +112,23 @@ describeInstruction = \case
   SchaueObenVomDeck anzahl next ->
     "Schaue dir die obersten " <> show anzahl <> " Karten deines Decks an. " <> describeWhenViewingDeckEffect next
 
+describeInstructionF :: InstructionF () -> String
+describeInstructionF (InstructionF instructions _) = unlines $ describeInstruction <$> instructions
+
 describeWhenViewingDeckEffect :: InstructionWhenViewingDeckF () -> String
-describeWhenViewingDeckEffect _ = "TODO: implement" -- TODO
+describeWhenViewingDeckEffect (InstructionWhenViewingDeckF instructions _) =
+  intercalate ", " $ describeWhenViewingDeckInstruction <$> instructions
+
+describeWhenViewingDeckInstruction :: InstructionWhenViewingDeck -> String
+describeWhenViewingDeckInstruction = \case
+  ZeigeVorUndNimmAufDieHand ziel ->
+    "zeige " <> describeZiel ziel <> " offen vor und nimm es auf die Hand"
+  ZeigeVorUndWirfAb ziel ->
+    "zeige " <> describeZiel ziel <> " offen vor und wirf es ab"
+  LegeRestUnterDasDeck ->
+    "lege den Rest unter das Deck"
+  WähleVomDeck aktionen ->
+    "wähle aus:\n - " <> intercalate "\n - " (describeWhenViewingDeckEffect <$> aktionen)
 
 describeSpendet :: SpendetOderSpendetNicht -> String
 describeSpendet SpendetNicht = " Sie spenden keine Schicksalspunkte"

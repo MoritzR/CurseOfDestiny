@@ -79,7 +79,7 @@ Magiestein der Manipulation - 1⏺
 
 Magiestein der Säuberung - 1⏺
 2⏺ 1🌞: opfere diese Karte, X ist die Anzahl von alle eigene Wesen auf dem Feld. erhalte X Schicksalsmacht
-2⏺ 1🌳: Schaue dir die obersten 5 Karten deines Decks an. TODO: implement
+2⏺ 1🌳: Schaue dir die obersten 5 Karten deines Decks an. zeige ein Wesen offen vor und nimm es auf die Hand, lege den Rest unter das Deck
 4⏺ 1💧: opfere diese Karte, X ist die Anzahl von alle eigene Wesen auf dem Feld. ziehe X Karten
 
 
@@ -95,7 +95,9 @@ Magiestein der Windkraft - 1⏺
 
 Magiestein des Chaos - 1⏺
 1⏺ 1🔥: opfere diese Karte, alle eigene Wesen erhält Doppelzerstörung bis zum Ende des Zuges
-1⏺ 2⚡: opfere diese Karte, Vision 1, Schaue dir die obersten 1 Karten deines Decks an. TODO: implement
+1⏺ 2⚡: opfere diese Karte, Vision 1, Schaue dir die obersten 1 Karten deines Decks an. wähle aus:
+ - zeige eine Karte offen vor und nimm es auf die Hand
+ - zeige eine Karte offen vor und wirf es ab
 4⏺ 2💀: opfere diese Karte, zerstöre ein Wesen
 
 

@@ -61,6 +61,7 @@ data Instruction
   | Prisma (Anzahl -> InstructionF ())
   | Spende Anzahl Element
   | forall a. Wählbar a => Wähle [a] (a -> InstructionF ())
+  | WähleAktion [InstructionF ()]
   | Opfere Ziel
   | Heile Anzahl
   | GibAufDieHandZurück Ziel
@@ -83,6 +84,7 @@ data InstructionWhenViewingDeck
   = ZeigeVorUndNimmAufDieHand Ziel
   | ZeigeVorUndWirfAb Ziel
   | LegeRestUnterDasDeck
+  | WähleVomDeck [InstructionWhenViewingDeckF ()]
 
 data SpendetOderSpendetNicht = Spendet | SpendetNicht
 

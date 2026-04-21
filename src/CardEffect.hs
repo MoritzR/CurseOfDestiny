@@ -33,6 +33,18 @@ siehHandkartenAnUndEntferneEineAusDemSpiel = InstructionF [SiehHandkartenAnUndEn
 wähleAus :: Wählbar a => [a] -> (a -> InstructionF ()) -> InstructionF ()
 wähleAus möglichkeiten next = InstructionF [Wähle möglichkeiten next] ()
 
+wähleAktion :: WählbareAktion f => [f ()] -> f ()
+wähleAktion = wähleAktionen
+
+class Applicative f => WählbareAktion f where
+  wähleAktionen :: [f ()] -> f ()
+
+instance WählbareAktion InstructionF where
+  wähleAktionen optionen = InstructionF [WähleAktion optionen] ()
+
+instance WählbareAktion InstructionWhenViewingDeckF where
+  wähleAktionen optionen = InstructionWhenViewingDeckF [WähleVomDeck optionen] ()
+
 -- instruction when viewing deck
 legeRestUnterDeck = InstructionWhenViewingDeckF [LegeRestUnterDasDeck] ()
 zeigeVorUndNimmtAufDieHand ziel = InstructionWhenViewingDeckF [ZeigeVorUndNimmAufDieHand ziel] ()

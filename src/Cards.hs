@@ -289,9 +289,10 @@ series26 =
             opfere selbst
             vision 1
             schaueObenVomDeck 1 do
-              pure ()
-            -- TODO
-            -- wähle [zeigeVorUndNimmtAufDieHand (eine karte), zeigeVorUndWirfAb (eine karte)]
+              wähleAktion
+                [ zeigeVorUndNimmtAufDieHand $ eine karte
+                , zeigeVorUndWirfAb $ eine karte
+                ]
             pure ()
           zahle (4 Neutral + 2 Tod) do
             opfere selbst
