@@ -49,6 +49,13 @@ describeTriggerInstruction = \case
     ["Doppelzerstörung"]
   KannNichtAbwehren ->
     ["'Kann nicht abwehren'"]
+  Lebensentzug ->
+    ["Lebensentzug"]
+  BeimAngriff phase effect ->
+    let describePhase = \case
+          ZuBeginn -> "amgreift"
+          WennNichtAbgewehrtWird -> "angreift und nicht abgewehrt wird"
+     in ["Wenn diese Karte " <> describePhase phase <> ": " <> describeEffectInline effect]
 
 describeEffect :: CardEffect -> String
 describeEffect = unlines . describeEffectLines
@@ -69,7 +76,7 @@ describeInstruction = \case
   Vision n ->
     "Vision " <> show n
   Prisma next ->
-    let effect = describeEffectInline $ next PlaceHolderX
+    let effect = describeEffectInline $ next $ PlaceHolder "X"
      in "Prisma - " <> effect <> " (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)"
   Spende n element ->
     "spende " <> show n <> " " <> show element
@@ -92,7 +99,7 @@ describeInstruction = \case
   NimmAufDieHand ziel ->
     "nimm " <> describeZiel ziel <> " auf deine Hand"
   ZeigeObenVomDeck n lesbarerWert next ->
-    let effect = describeEffectInline $ next PlaceHolderX
+    let effect = describeEffectInline $ next $ PlaceHolder "X"
      in "zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
   BringeInsSpiel card ->
     "bringe " <> card.name <> " ins Spiel"
@@ -108,9 +115,16 @@ describeInstruction = \case
   SiehHandkartenAnUndEntferneEineAusDemSpiel ->
     "sieh Handkarten an und entferne eine davon aus dem Spiel"
   AnzahlVon ziel next ->
-    "X ist die Anzahl von " <> describeZiel ziel <> ". " <> describeEffectInline (next PlaceHolderX)
+    "X ist die Anzahl von " <> describeZiel ziel <> ". " <> describeEffectInline (next $ PlaceHolder "X")
+  AnzahlSchicksalsMächte spielerZiel next ->
+    let describeSpielerZiel = \case
+          Du -> "deiner"
+          Gegner -> "der gegnerischen"
+     in "S ist die Anzahl " <> describeSpielerZiel spielerZiel <> " Schicksalsmächte. " <> describeEffectInline (next $ PlaceHolder "S")
   SchaueObenVomDeck anzahl next ->
     "Schaue dir die obersten " <> show anzahl <> " Karten deines Decks an. " <> describeWhenViewingDeckEffect next
+  BringeKopieInsSpiel ziel ->
+    "Wähle " <> describeZiel ziel <> " und bringe eine Kopie ins Spiel"
 
 describeInstructionF :: InstructionF () -> String
 describeInstructionF (InstructionF instructions _) = unlines $ describeInstruction <$> instructions

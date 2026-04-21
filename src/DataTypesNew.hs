@@ -79,6 +79,8 @@ data Instruction
   | LegeVomDeckAufDenFriedhof Anzahl SpendetOderSpendetNicht
   | SchaueObenVomDeck Anzahl (InstructionWhenViewingDeckF ())
   | SiehHandkartenAnUndEntferneEineAusDemSpiel
+  | BringeKopieInsSpiel Ziel
+  | AnzahlSchicksalsMächte SpielerZiel (Anzahl -> InstructionF ())
 
 data InstructionWhenViewingDeck
   = ZeigeVorUndNimmAufDieHand Ziel
@@ -88,20 +90,24 @@ data InstructionWhenViewingDeck
 
 data SpendetOderSpendetNicht = Spendet | SpendetNicht
 
+data SpielerZiel = Du | Gegner
+
 data Anzahl
-  = PlaceHolderX
+  = PlaceHolder String
   | Actual Int
   | Mul Anzahl Anzahl
   | Add Anzahl Anzahl
+  | Minus Anzahl Anzahl
   | Neg Anzahl
   deriving Eq
 
 instance Show Anzahl where
   show = \case
     Actual i -> show i
-    PlaceHolderX -> "X"
-    Mul PlaceHolderX 1000 -> "X000"
+    PlaceHolder s -> s
+    Mul (PlaceHolder _) 1000 -> "X000"
     Mul a b -> show a <> " * " <> show b
+    Minus a b -> show a <> " - " <> show b
     Add a b -> show a <> " + " <> show b
     Neg a -> "-" <> show a
 
@@ -109,9 +115,19 @@ instance Num Anzahl where
   fromInteger = Actual . fromIntegral
   (*) = Mul
   (+) = Add
+  (-) = Minus
   negate = Neg
-  abs = error "unused"
+  abs = Actual . abs . anzahlToInt
   signum = error "unused"
+
+anzahlToInt :: Anzahl -> Int
+anzahlToInt = \case
+  Actual i -> i
+  PlaceHolder _ -> 0
+  Mul a b -> anzahlToInt a * anzahlToInt b
+  Add a b -> anzahlToInt a + anzahlToInt b
+  Minus a b -> anzahlToInt a - anzahlToInt b
+  Neg a -> negate $ anzahlToInt a
 
 type Höhe = Anzahl
 data Dauer = BisZumEndeDesZuges | Dauerhaft
@@ -129,9 +145,15 @@ data TriggerInstruction
   | WennGespielt CardEffect
   | WennAufDemFeld Aura
   | EinmalProRunde CardEffect
+  | BeimAngriff AngriffsPhase CardEffect
   | Blockierung
   | Doppelzerstörung
+  | Lebensentzug
   | KannNichtAbwehren
+
+data AngriffsPhase
+  = ZuBeginn
+  | WennNichtAbgewehrtWird
 
 data TriggerInstructionF a = TriggerInstructionF [TriggerInstruction] a
 

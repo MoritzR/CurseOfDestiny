@@ -320,4 +320,90 @@ series26 =
             pure ()
           pure ()
       }
+  , Card
+      { name = "Magiestein des Strahlens"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 + 1 Feuer) do
+            opfere selbst
+            zerstöre (ein $ wesen <> kostetMaximal 3)
+            pure ()
+          zahle (1 + 2 Wind) do
+            opfere selbst
+            vision 1
+            ziehe 1
+            pure ()
+          zahle (1 + 2 Licht) do
+            opfere selbst
+            verringereUndZerstöre (alle wesen) BisZumEndeDesZuges 3000
+            pure ()
+          pure ()
+      }
+  , Card
+      { name = "Magiestein für Belebung und Erhebung"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 Licht) do
+            opfere selbst
+            erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
+            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges lebensentzug
+            pure ()
+          zahle (1 Feuer) do
+            opfere selbst
+            erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
+            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges doppelZerstörung
+            pure ()
+          pure ()
+      }
+  , Card
+      { name = "Magiestein für Einheit und Reinheit"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          -- TODO: confirm activation costs from the original source.
+          zahle (3 + 1 Wald) do
+            opfere selbst
+            anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
+            pure ()
+          zahle (4 + 1 Licht) do
+            opfere selbst
+            bringeKopieInsSpiel (ein $ eigene <> wesen <> aufDemFeld)
+            pure ()
+          pure ()
+      }
+  , Card
+      { name = "Magiestein für Entdeckung und Vollstreckung"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 + 1 Wind) do
+            opfere selbst
+            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges do
+              beimAngriff WennNichtAbgewehrtWird $ ziehe 1
+            pure ()
+          zahle (1 + 3 Tod) do
+            opfere selbst
+            siehHandkartenAnUndEntferneEineAusDemSpiel
+            pure ()
+          pure ()
+      }
+  , Card
+      { name = "Magiestein für Gabe und Habe"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (2 + 2 Licht) do
+            opfere selbst
+            heile 2
+            pure ()
+          zahle (3 + 2 Wind) do
+            opfere selbst
+            anzahlVon (alle $ eigene <> karten <> aufDerHand) \kartenAufDerHand ->
+              anzahlSchicksalsmächte Du \schicksalsmächte ->
+                ziehe $ schicksalsmächte - kartenAufDerHand
+            pure ()
+          pure ()
+      }
   ]

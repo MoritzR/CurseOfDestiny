@@ -11,6 +11,7 @@ oder :: EinZiel -> EinZiel -> EinZiel
 oder a b = EinZiel (a.description <> " oder " <> b.description) $ \card -> a.filter card || b.filter card
 
 karte = EinZiel "Karte" (const True)
+karten = karte{description = "Karten"}
 wesen = EinZiel "Wesen" \card -> case card.cardType of
   Wesen _ _ -> True
   _ -> False
@@ -22,6 +23,7 @@ gegenmagie = EinZiel "Gegenmagie" \card -> case card.cardType of
   _ -> False
 aufDemFeld = EinZiel "auf dem Feld" (const undefined)
 aufDemFriedHof = EinZiel "auf dem Friedhof" (const undefined)
+aufDerHand = EinZiel "auf der Hand" (const undefined)
 eigene = EinZiel "eigene" (const undefined)
 eigenes = eigene{description = "eigenes"}
 gegnerisches = EinZiel "gegnerisches" (const undefined)
