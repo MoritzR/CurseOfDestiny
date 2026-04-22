@@ -11,8 +11,8 @@ module Interpreter.Descriptor (
 ) where
 
 import Cards (series26)
-import Control.Monad.Free (Free (Free, Pure))
-import Data.Foldable (toList)
+import Control.Monad.Free (iter)
+import Data.Foldable (fold)
 import Data.List (intercalate)
 import DataTypesNew
 
@@ -26,39 +26,37 @@ describeTrigger :: Trigger -> String
 describeTrigger = unlines . describeTriggerLines
 
 describeTriggerLines :: Trigger -> [String]
-describeTriggerLines = \case
-  Pure () -> []
-  Free instruction -> describeTriggerInstruction instruction
+describeTriggerLines = iter describeTriggerInstruction . fmap (const [])
 
-describeTriggerInstruction :: TriggerInstruction (TriggerInstructionF ()) -> [String]
+describeTriggerInstruction :: TriggerInstruction [String] -> [String]
 describeTriggerInstruction = \case
   AmEndeDerRunde effect next ->
-    ["Am Ende der Runde: " <> describeEffectInline effect] <> describeTriggerLines next
+    ["Am Ende der Runde: " <> describeEffectInline effect] <> next
   AmBeginnDerRunde effect next ->
-    ["Am Beginn der Runde: " <> describeEffectInline effect] <> describeTriggerLines next
+    ["Am Beginn der Runde: " <> describeEffectInline effect] <> next
   Zahle kosten effect next ->
-    [describeKosten kosten <> ": " <> describeEffectInline effect] <> describeTriggerLines next
+    [describeKosten kosten <> ": " <> describeEffectInline effect] <> next
   ZahleText text effect next ->
-    [text <> ": " <> describeEffectInline effect] <> describeTriggerLines next
+    [text <> ": " <> describeEffectInline effect] <> next
   WennGespielt effect next ->
-    ["Wenn diese Karte gespielt wird: " <> describeEffectInline effect] <> describeTriggerLines next
+    ["Wenn diese Karte gespielt wird: " <> describeEffectInline effect] <> next
   WennAufDemFeld _ next ->
-    ["Solange diese Karte auf dem Feld ist: [Aura]"] <> describeTriggerLines next
+    ["Solange diese Karte auf dem Feld ist: [Aura]"] <> next
   EinmalProRunde effect next ->
-    ["Einmal pro Runde: " <> describeEffectInline effect] <> describeTriggerLines next
+    ["Einmal pro Runde: " <> describeEffectInline effect] <> next
   Blockierung next ->
-    ["Blockierung"] <> describeTriggerLines next
+    ["Blockierung"] <> next
   Doppelzerstörung next ->
-    ["Doppelzerstörung"] <> describeTriggerLines next
+    ["Doppelzerstörung"] <> next
   KannNichtAbwehren next ->
-    ["'Kann nicht abwehren'"] <> describeTriggerLines next
+    ["'Kann nicht abwehren'"] <> next
   Lebensentzug next ->
-    ["Lebensentzug"] <> describeTriggerLines next
+    ["Lebensentzug"] <> next
   BeimAngriff phase effect next ->
     let describePhase = \case
           ZuBeginn -> "amgreift"
           WennNichtAbgewehrtWird -> "angreift und nicht abgewehrt wird"
-     in ["Wenn diese Karte " <> describePhase phase <> ": " <> describeEffectInline effect] <> describeTriggerLines next
+     in ["Wenn diese Karte " <> describePhase phase <> ": " <> describeEffectInline effect] <> next
 
 describeEffect :: CardEffect -> String
 describeEffect = unlines . describeEffectLines
@@ -67,9 +65,7 @@ describeEffectInline :: CardEffect -> String
 describeEffectInline = intercalate ", " . describeEffectLines
 
 describeEffectLines :: CardEffect -> [String]
-describeEffectLines = \case
-  Pure () -> []
-  Free instruction -> describeInstructionStep instruction
+describeEffectLines = iter describeInstructionStep . fmap (const [])
 
 describeInstruction :: Instruction next -> String
 describeInstruction = \case
@@ -130,10 +126,8 @@ describeInstruction = \case
   BringeKopieInsSpiel ziel _ ->
     "Wähle " <> describeZiel ziel <> " und bringe eine Kopie ins Spiel"
 
-describeInstructionStep :: Instruction (InstructionF ()) -> [String]
-describeInstructionStep instruction =
-  let [next] = toList instruction
-   in describeInstruction instruction : describeEffectLines next
+describeInstructionStep :: Instruction [String] -> [String]
+describeInstructionStep instruction = describeInstruction instruction : fold instruction
 
 describeInstructionF :: InstructionF () -> String
 describeInstructionF = intercalate ", " . describeEffectLines
@@ -142,11 +136,9 @@ describeWhenViewingDeckEffect :: InstructionWhenViewingDeckF () -> String
 describeWhenViewingDeckEffect = intercalate ", " . describeWhenViewingDeckSteps
 
 describeWhenViewingDeckSteps :: InstructionWhenViewingDeckF () -> [String]
-describeWhenViewingDeckSteps = \case
-  Pure () -> []
-  Free instruction -> describeWhenViewingDeckStep instruction
+describeWhenViewingDeckSteps = iter describeWhenViewingDeckStep . fmap (const [])
 
-describeWhenViewingDeckInstruction :: InstructionWhenViewingDeck (InstructionWhenViewingDeckF ()) -> String
+describeWhenViewingDeckInstruction :: InstructionWhenViewingDeck next -> String
 describeWhenViewingDeckInstruction = \case
   ZeigeVorUndNimmAufDieHand ziel _ ->
     "zeige " <> describeZiel ziel <> " offen vor und nimm es auf die Hand"
@@ -157,10 +149,8 @@ describeWhenViewingDeckInstruction = \case
   WähleVomDeck aktionen _ ->
     "wähle aus:\n - " <> intercalate "\n - " (describeWhenViewingDeckEffect <$> aktionen)
 
-describeWhenViewingDeckStep :: InstructionWhenViewingDeck (InstructionWhenViewingDeckF ()) -> [String]
-describeWhenViewingDeckStep instruction =
-  let [next] = toList instruction
-   in describeWhenViewingDeckInstruction instruction : describeWhenViewingDeckSteps next
+describeWhenViewingDeckStep :: InstructionWhenViewingDeck [String] -> [String]
+describeWhenViewingDeckStep instruction = describeWhenViewingDeckInstruction instruction : fold instruction
 
 describeSpendet :: SpendetOderSpendetNicht -> String
 describeSpendet SpendetNicht = " Sie spenden keine Schicksalspunkte"
