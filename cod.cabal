@@ -82,6 +82,7 @@ library
   build-depends:
       base >=4.7 && <5
     , effectful ^>=2.6.1.0
+    , free ^>=5.2
     , generic-lens
     , lens
     , optics
