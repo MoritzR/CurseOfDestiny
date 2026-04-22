@@ -12,6 +12,7 @@ module Interpreter.Descriptor (
 
 import Cards (series26)
 import Control.Monad.Free (Free (Free, Pure))
+import Data.Foldable (toList)
 import Data.List (intercalate)
 import DataTypesNew
 
@@ -130,36 +131,9 @@ describeInstruction = \case
     "Wähle " <> describeZiel ziel <> " und bringe eine Kopie ins Spiel"
 
 describeInstructionStep :: Instruction (InstructionF ()) -> [String]
-describeInstructionStep instruction = describeInstruction instruction : describeEffectLines (instructionNext instruction)
-
-instructionNext :: Instruction next -> next
-instructionNext = \case
-  Ziehe _ next -> next
-  Erhöhe _ _ _ _ next -> next
-  Vision _ next -> next
-  Prisma _ next -> next
-  Spende _ _ next -> next
-  WähleAus _ _ next -> next
-  WähleEffekt _ next -> next
-  Opfere _ next -> next
-  Heile _ next -> next
-  GibAufDieHandZurück _ next -> next
-  Zerstöre _ next -> next
-  Verringere _ _ _ _ next -> next
-  VerringereUndZerstöre _ _ _ next -> next
-  NimmAufDieHand _ next -> next
-  ZeigeObenVomDeck _ _ _ next -> next
-  BringeInsSpiel _ next -> next
-  BringeInsSpielAusZiel _ next -> next
-  GibFähigkeit _ _ _ next -> next
-  EinSpielerOpfertEinWesen next -> next
-  AnzahlVon _ _ next -> next
-  WirfAb _ _ next -> next
-  LegeVomDeckAufDenFriedhof _ _ next -> next
-  SchaueObenVomDeck _ _ next -> next
-  SiehHandkartenAnUndEntferneEineAusDemSpiel next -> next
-  BringeKopieInsSpiel _ next -> next
-  AnzahlSchicksalsMächte _ _ next -> next
+describeInstructionStep instruction =
+  let [next] = toList instruction
+   in describeInstruction instruction : describeEffectLines next
 
 describeInstructionF :: InstructionF () -> String
 describeInstructionF = intercalate ", " . describeEffectLines
@@ -170,7 +144,7 @@ describeWhenViewingDeckEffect = intercalate ", " . describeWhenViewingDeckSteps
 describeWhenViewingDeckSteps :: InstructionWhenViewingDeckF () -> [String]
 describeWhenViewingDeckSteps = \case
   Pure () -> []
-  Free instruction -> describeWhenViewingDeckInstruction instruction : describeWhenViewingDeckSteps (whenViewingDeckNext instruction)
+  Free instruction -> describeWhenViewingDeckStep instruction
 
 describeWhenViewingDeckInstruction :: InstructionWhenViewingDeck (InstructionWhenViewingDeckF ()) -> String
 describeWhenViewingDeckInstruction = \case
@@ -183,12 +157,10 @@ describeWhenViewingDeckInstruction = \case
   WähleVomDeck aktionen _ ->
     "wähle aus:\n - " <> intercalate "\n - " (describeWhenViewingDeckEffect <$> aktionen)
 
-whenViewingDeckNext :: InstructionWhenViewingDeck next -> next
-whenViewingDeckNext = \case
-  ZeigeVorUndNimmAufDieHand _ next -> next
-  ZeigeVorUndWirfAb _ next -> next
-  LegeRestUnterDasDeck next -> next
-  WähleVomDeck _ next -> next
+describeWhenViewingDeckStep :: InstructionWhenViewingDeck (InstructionWhenViewingDeckF ()) -> [String]
+describeWhenViewingDeckStep instruction =
+  let [next] = toList instruction
+   in describeWhenViewingDeckInstruction instruction : describeWhenViewingDeckSteps next
 
 describeSpendet :: SpendetOderSpendetNicht -> String
 describeSpendet SpendetNicht = " Sie spenden keine Schicksalspunkte"
