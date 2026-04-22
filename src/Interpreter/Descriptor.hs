@@ -11,6 +11,7 @@ module Interpreter.Descriptor (
 ) where
 
 import Cards (series26)
+import Control.Monad.Free (Free (Free, Pure))
 import Data.List (intercalate)
 import DataTypesNew
 
@@ -24,38 +25,39 @@ describeTrigger :: Trigger -> String
 describeTrigger = unlines . describeTriggerLines
 
 describeTriggerLines :: Trigger -> [String]
-describeTriggerLines (TriggerInstructionF instructions _) =
-  concatMap describeTriggerInstruction instructions
+describeTriggerLines = \case
+  Pure () -> []
+  Free instruction -> describeTriggerInstruction instruction
 
-describeTriggerInstruction :: TriggerInstruction -> [String]
+describeTriggerInstruction :: TriggerInstruction (TriggerInstructionF ()) -> [String]
 describeTriggerInstruction = \case
-  AmEndeDerRunde effect ->
-    ["Am Ende der Runde: " <> describeEffectInline effect]
-  AmBeginnDerRunde effect ->
-    ["Am Beginn der Runde: " <> describeEffectInline effect]
-  Zahle kosten effect ->
-    [describeKosten kosten <> ": " <> describeEffectInline effect]
-  ZahleText text effect ->
-    [text <> ": " <> describeEffectInline effect]
-  WennGespielt effect ->
-    ["Wenn diese Karte gespielt wird: " <> describeEffectInline effect]
-  WennAufDemFeld _ ->
-    ["Solange diese Karte auf dem Feld ist: [Aura]"]
-  EinmalProRunde effect ->
-    ["Einmal pro Runde: " <> describeEffectInline effect]
-  Blockierung ->
-    ["Blockierung"]
-  Doppelzerstörung ->
-    ["Doppelzerstörung"]
-  KannNichtAbwehren ->
-    ["'Kann nicht abwehren'"]
-  Lebensentzug ->
-    ["Lebensentzug"]
-  BeimAngriff phase effect ->
+  AmEndeDerRunde effect next ->
+    ["Am Ende der Runde: " <> describeEffectInline effect] <> describeTriggerLines next
+  AmBeginnDerRunde effect next ->
+    ["Am Beginn der Runde: " <> describeEffectInline effect] <> describeTriggerLines next
+  Zahle kosten effect next ->
+    [describeKosten kosten <> ": " <> describeEffectInline effect] <> describeTriggerLines next
+  ZahleText text effect next ->
+    [text <> ": " <> describeEffectInline effect] <> describeTriggerLines next
+  WennGespielt effect next ->
+    ["Wenn diese Karte gespielt wird: " <> describeEffectInline effect] <> describeTriggerLines next
+  WennAufDemFeld _ next ->
+    ["Solange diese Karte auf dem Feld ist: [Aura]"] <> describeTriggerLines next
+  EinmalProRunde effect next ->
+    ["Einmal pro Runde: " <> describeEffectInline effect] <> describeTriggerLines next
+  Blockierung next ->
+    ["Blockierung"] <> describeTriggerLines next
+  Doppelzerstörung next ->
+    ["Doppelzerstörung"] <> describeTriggerLines next
+  KannNichtAbwehren next ->
+    ["'Kann nicht abwehren'"] <> describeTriggerLines next
+  Lebensentzug next ->
+    ["Lebensentzug"] <> describeTriggerLines next
+  BeimAngriff phase effect next ->
     let describePhase = \case
           ZuBeginn -> "amgreift"
           WennNichtAbgewehrtWird -> "angreift und nicht abgewehrt wird"
-     in ["Wenn diese Karte " <> describePhase phase <> ": " <> describeEffectInline effect]
+     in ["Wenn diese Karte " <> describePhase phase <> ": " <> describeEffectInline effect] <> describeTriggerLines next
 
 describeEffect :: CardEffect -> String
 describeEffect = unlines . describeEffectLines
@@ -64,93 +66,136 @@ describeEffectInline :: CardEffect -> String
 describeEffectInline = intercalate ", " . describeEffectLines
 
 describeEffectLines :: CardEffect -> [String]
-describeEffectLines (InstructionF instructions _) =
-  map describeInstruction instructions
+describeEffectLines = \case
+  Pure () -> []
+  Free instruction -> describeInstructionStep instruction
 
-describeInstruction :: Instruction -> String
+describeInstruction :: Instruction next -> String
 describeInstruction = \case
-  Ziehe n ->
+  Ziehe n _ ->
     "ziehe " <> show n <> plural " Karte" n
-  Erhöhe wert ziel dauer höhe ->
+  Erhöhe wert ziel dauer höhe _ ->
     describeZiel ziel <> " erhöht " <> possessive describeWert wert <> " " <> describeDauer dauer <> " um " <> show höhe
-  Vision n ->
+  Vision n _ ->
     "Vision " <> show n
-  Prisma next ->
-    let effect = describeEffectInline $ next $ PlaceHolder "X"
+  Prisma effectForX _ ->
+    let effect = describeEffectInline $ effectForX $ PlaceHolder "X"
      in "Prisma - " <> effect <> " (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)"
-  Spende n element ->
+  Spende n element _ ->
     "spende " <> show n <> " " <> show element
-  Wähle options _ ->
+  WähleAus options _ _ ->
     "wähle " <> intercalate ", " (map show options)
-  WähleAktion aktionen ->
+  WähleEffekt aktionen _ ->
     "wähle aus:\n - " <> intercalate "\n - " (describeInstructionF <$> aktionen)
-  Opfere ziel ->
+  Opfere ziel _ ->
     "opfere " <> describeZiel ziel
-  Heile n ->
+  Heile n _ ->
     "erhalte " <> show n <> " Schicksalsmacht"
-  GibAufDieHandZurück ziel ->
+  GibAufDieHandZurück ziel _ ->
     "gib " <> describeZiel ziel <> " auf die Hand des Besitzers zurück"
-  Zerstöre ziel ->
+  Zerstöre ziel _ ->
     "zerstöre " <> describeZiel ziel
-  Verringere wert ziel dauer höhe ->
+  Verringere wert ziel dauer höhe _ ->
     describeZiel ziel <> " verringert " <> possessive describeWert wert <> " " <> describeDauer dauer <> " um " <> show höhe
-  VerringereUndZerstöre ziel dauer höhe ->
+  VerringereUndZerstöre ziel dauer höhe _ ->
     describeZiel ziel <> " verringert " <> possessive describeWert Stärke <> " " <> describeDauer dauer <> " um " <> show höhe <> ", wird sie dadurch 0, zerstöre es"
-  NimmAufDieHand ziel ->
+  NimmAufDieHand ziel _ ->
     "nimm " <> describeZiel ziel <> " auf deine Hand"
-  ZeigeObenVomDeck n lesbarerWert next ->
-    let effect = describeEffectInline $ next $ PlaceHolder "X"
+  ZeigeObenVomDeck n lesbarerWert effectForX _ ->
+    let effect = describeEffectInline $ effectForX $ PlaceHolder "X"
      in "zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
-  BringeInsSpiel card ->
+  BringeInsSpiel card _ ->
     "bringe " <> card.name <> " ins Spiel"
-  BringeInsSpielAusZiel ziel ->
+  BringeInsSpielAusZiel ziel _ ->
     "bringe ins Spiel: " <> describeZiel ziel
-  WirfAb anzahl spendet -> "wirf " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
-  LegeVomDeckAufDenFriedhof anzahl spendet ->
+  WirfAb anzahl spendet _ -> "wirf " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
+  LegeVomDeckAufDenFriedhof anzahl spendet _ ->
     "lege " <> show anzahl <> " Karten vom Deck auf den Friedhof." <> describeSpendet spendet
-  GibFähigkeit ziel dauer triggerInstrs ->
+  GibFähigkeit ziel dauer triggerInstrs _ ->
     describeZiel ziel <> " erhält " <> describeGrantedTrigger triggerInstrs <> " " <> describeDauer dauer
-  EinSpielerOpfertEinWesen ->
+  EinSpielerOpfertEinWesen _ ->
     "ein Spieler opfert ein Wesen"
-  SiehHandkartenAnUndEntferneEineAusDemSpiel ->
+  SiehHandkartenAnUndEntferneEineAusDemSpiel _ ->
     "sieh Handkarten an und entferne eine davon aus dem Spiel"
-  AnzahlVon ziel next ->
-    "X ist die Anzahl von " <> describeZiel ziel <> ". " <> describeEffectInline (next $ PlaceHolder "X")
-  AnzahlSchicksalsMächte spielerZiel next ->
+  AnzahlVon ziel effectForX _ ->
+    "X ist die Anzahl von " <> describeZiel ziel <> ". " <> describeEffectInline (effectForX $ PlaceHolder "X")
+  AnzahlSchicksalsMächte spielerZiel effectForS _ ->
     let describeSpielerZiel = \case
           Du -> "deiner"
           Gegner -> "der gegnerischen"
-     in "S ist die Anzahl " <> describeSpielerZiel spielerZiel <> " Schicksalsmächte. " <> describeEffectInline (next $ PlaceHolder "S")
-  SchaueObenVomDeck anzahl next ->
+     in "S ist die Anzahl " <> describeSpielerZiel spielerZiel <> " Schicksalsmächte. " <> describeEffectInline (effectForS $ PlaceHolder "S")
+  SchaueObenVomDeck anzahl next _ ->
     "Schaue dir die obersten " <> show anzahl <> " Karten deines Decks an. " <> describeWhenViewingDeckEffect next
-  BringeKopieInsSpiel ziel ->
+  BringeKopieInsSpiel ziel _ ->
     "Wähle " <> describeZiel ziel <> " und bringe eine Kopie ins Spiel"
 
+describeInstructionStep :: Instruction (InstructionF ()) -> [String]
+describeInstructionStep instruction = describeInstruction instruction : describeEffectLines (instructionNext instruction)
+
+instructionNext :: Instruction next -> next
+instructionNext = \case
+  Ziehe _ next -> next
+  Erhöhe _ _ _ _ next -> next
+  Vision _ next -> next
+  Prisma _ next -> next
+  Spende _ _ next -> next
+  WähleAus _ _ next -> next
+  WähleEffekt _ next -> next
+  Opfere _ next -> next
+  Heile _ next -> next
+  GibAufDieHandZurück _ next -> next
+  Zerstöre _ next -> next
+  Verringere _ _ _ _ next -> next
+  VerringereUndZerstöre _ _ _ next -> next
+  NimmAufDieHand _ next -> next
+  ZeigeObenVomDeck _ _ _ next -> next
+  BringeInsSpiel _ next -> next
+  BringeInsSpielAusZiel _ next -> next
+  GibFähigkeit _ _ _ next -> next
+  EinSpielerOpfertEinWesen next -> next
+  AnzahlVon _ _ next -> next
+  WirfAb _ _ next -> next
+  LegeVomDeckAufDenFriedhof _ _ next -> next
+  SchaueObenVomDeck _ _ next -> next
+  SiehHandkartenAnUndEntferneEineAusDemSpiel next -> next
+  BringeKopieInsSpiel _ next -> next
+  AnzahlSchicksalsMächte _ _ next -> next
+
 describeInstructionF :: InstructionF () -> String
-describeInstructionF (InstructionF instructions _) = unlines $ describeInstruction <$> instructions
+describeInstructionF = intercalate ", " . describeEffectLines
 
 describeWhenViewingDeckEffect :: InstructionWhenViewingDeckF () -> String
-describeWhenViewingDeckEffect (InstructionWhenViewingDeckF instructions _) =
-  intercalate ", " $ describeWhenViewingDeckInstruction <$> instructions
+describeWhenViewingDeckEffect = intercalate ", " . describeWhenViewingDeckSteps
 
-describeWhenViewingDeckInstruction :: InstructionWhenViewingDeck -> String
+describeWhenViewingDeckSteps :: InstructionWhenViewingDeckF () -> [String]
+describeWhenViewingDeckSteps = \case
+  Pure () -> []
+  Free instruction -> describeWhenViewingDeckInstruction instruction : describeWhenViewingDeckSteps (whenViewingDeckNext instruction)
+
+describeWhenViewingDeckInstruction :: InstructionWhenViewingDeck (InstructionWhenViewingDeckF ()) -> String
 describeWhenViewingDeckInstruction = \case
-  ZeigeVorUndNimmAufDieHand ziel ->
+  ZeigeVorUndNimmAufDieHand ziel _ ->
     "zeige " <> describeZiel ziel <> " offen vor und nimm es auf die Hand"
-  ZeigeVorUndWirfAb ziel ->
+  ZeigeVorUndWirfAb ziel _ ->
     "zeige " <> describeZiel ziel <> " offen vor und wirf es ab"
-  LegeRestUnterDasDeck ->
+  LegeRestUnterDasDeck _ ->
     "lege den Rest unter das Deck"
-  WähleVomDeck aktionen ->
+  WähleVomDeck aktionen _ ->
     "wähle aus:\n - " <> intercalate "\n - " (describeWhenViewingDeckEffect <$> aktionen)
+
+whenViewingDeckNext :: InstructionWhenViewingDeck next -> next
+whenViewingDeckNext = \case
+  ZeigeVorUndNimmAufDieHand _ next -> next
+  ZeigeVorUndWirfAb _ next -> next
+  LegeRestUnterDasDeck next -> next
+  WähleVomDeck _ next -> next
 
 describeSpendet :: SpendetOderSpendetNicht -> String
 describeSpendet SpendetNicht = " Sie spenden keine Schicksalspunkte"
 describeSpendet Spendet = ""
 
 describeGrantedTrigger :: Trigger -> String
-describeGrantedTrigger (TriggerInstructionF instructions _) =
-  intercalate ", " (concatMap describeTriggerInstruction instructions)
+describeGrantedTrigger = intercalate ", " . describeTriggerLines
 
 describeKosten :: Kosten -> String
 describeKosten (Kosten kosten) = unwords $ map describeElementKosten kosten

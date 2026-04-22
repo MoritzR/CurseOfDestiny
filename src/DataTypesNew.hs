@@ -1,9 +1,10 @@
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
 module DataTypesNew where
+
+import Control.Monad.Free (Free)
 
 pattern X :: Element -> Kosten
 pattern X element = Kosten [VariableElementKosten element]
@@ -52,42 +53,6 @@ data Card = Card
   , trigger :: Trigger
   }
 
-type CardEffect = InstructionF ()
-
-data Instruction
-  = Ziehe Anzahl
-  | Erhöhe Wert Ziel Dauer Höhe
-  | Vision Anzahl
-  | Prisma (Anzahl -> InstructionF ())
-  | Spende Anzahl Element
-  | forall a. Wählbar a => Wähle [a] (a -> InstructionF ())
-  | WähleAktion [InstructionF ()]
-  | Opfere Ziel
-  | Heile Anzahl
-  | GibAufDieHandZurück Ziel
-  | Zerstöre Ziel
-  | Verringere Wert Ziel Dauer Höhe
-  | VerringereUndZerstöre Ziel Dauer Höhe
-  | NimmAufDieHand Ziel
-  | ZeigeObenVomDeck Anzahl LesbarerWert (Höhe -> InstructionF ())
-  | BringeInsSpiel Card
-  | BringeInsSpielAusZiel Ziel
-  | GibFähigkeit Ziel Dauer (TriggerInstructionF ())
-  | EinSpielerOpfertEinWesen
-  | AnzahlVon Ziel (Anzahl -> InstructionF ())
-  | WirfAb Anzahl SpendetOderSpendetNicht
-  | LegeVomDeckAufDenFriedhof Anzahl SpendetOderSpendetNicht
-  | SchaueObenVomDeck Anzahl (InstructionWhenViewingDeckF ())
-  | SiehHandkartenAnUndEntferneEineAusDemSpiel
-  | BringeKopieInsSpiel Ziel
-  | AnzahlSchicksalsMächte SpielerZiel (Anzahl -> InstructionF ())
-
-data InstructionWhenViewingDeck
-  = ZeigeVorUndNimmAufDieHand Ziel
-  | ZeigeVorUndWirfAb Ziel
-  | LegeRestUnterDasDeck
-  | WähleVomDeck [InstructionWhenViewingDeckF ()]
-
 data SpendetOderSpendetNicht = Spendet | SpendetNicht
 
 data SpielerZiel = Du | Gegner
@@ -135,45 +100,9 @@ data LesbarerWert = LesbarKosten
 data Ort = Friedhof
 data Wert = Stärke
 
-type Trigger = TriggerInstructionF ()
-
-data TriggerInstruction
-  = AmEndeDerRunde CardEffect
-  | AmBeginnDerRunde CardEffect
-  | Zahle Kosten CardEffect
-  | ZahleText String CardEffect
-  | WennGespielt CardEffect
-  | WennAufDemFeld Aura
-  | EinmalProRunde CardEffect
-  | BeimAngriff AngriffsPhase CardEffect
-  | Blockierung
-  | Doppelzerstörung
-  | Lebensentzug
-  | KannNichtAbwehren
-
 data AngriffsPhase
   = ZuBeginn
   | WennNichtAbgewehrtWird
-
-data TriggerInstructionF a = TriggerInstructionF [TriggerInstruction] a
-
-instance Functor TriggerInstructionF where
-  fmap f (TriggerInstructionF instructions a) = TriggerInstructionF instructions (f a)
-
-instance Applicative TriggerInstructionF where
-  pure = TriggerInstructionF []
-  TriggerInstructionF instructions1 f <*> TriggerInstructionF instructions2 a =
-    TriggerInstructionF (instructions1 <> instructions2) (f a)
-
-data InstructionWhenViewingDeckF a = InstructionWhenViewingDeckF [InstructionWhenViewingDeck] a
-
-instance Functor InstructionWhenViewingDeckF where
-  fmap f (InstructionWhenViewingDeckF instructions a) = InstructionWhenViewingDeckF instructions (f a)
-
-instance Applicative InstructionWhenViewingDeckF where
-  pure = InstructionWhenViewingDeckF []
-  InstructionWhenViewingDeckF instructions1 f <*> InstructionWhenViewingDeckF instructions2 a =
-    InstructionWhenViewingDeckF (instructions1 <> instructions2) (f a)
 
 data Aura
 
@@ -188,15 +117,65 @@ instance Show EinZiel where
 instance Semigroup EinZiel where
   a <> b = EinZiel (a.description <> " " <> b.description) $ \card -> a.filter card && b.filter card
 
-data InstructionF a = InstructionF [Instruction] a
+data TriggerInstruction next
+  = AmEndeDerRunde CardEffect next
+  | AmBeginnDerRunde CardEffect next
+  | Zahle Kosten CardEffect next
+  | ZahleText String CardEffect next
+  | WennGespielt CardEffect next
+  | WennAufDemFeld Aura next
+  | EinmalProRunde CardEffect next
+  | BeimAngriff AngriffsPhase CardEffect next
+  | Blockierung next
+  | Doppelzerstörung next
+  | Lebensentzug next
+  | KannNichtAbwehren next
+  deriving Functor
 
-instance Functor InstructionF where
-  fmap f (InstructionF instructions a) = InstructionF instructions (f a)
+data InstructionWhenViewingDeck next
+  = ZeigeVorUndNimmAufDieHand Ziel next
+  | ZeigeVorUndWirfAb Ziel next
+  | LegeRestUnterDasDeck next
+  | WähleVomDeck [InstructionWhenViewingDeckF ()] next
+  deriving Functor
 
-instance Applicative InstructionF where
-  pure = InstructionF []
-  InstructionF instructions1 f <*> InstructionF instructions2 a =
-    InstructionF (instructions1 <> instructions2) (f a)
+data Instruction next
+  = Ziehe Anzahl next
+  | Erhöhe Wert Ziel Dauer Höhe next
+  | Vision Anzahl next
+  | Prisma (Anzahl -> CardEffect) next
+  | Spende Anzahl Element next
+  | forall a. Wählbar a => WähleAus [a] (a -> CardEffect) next
+  | WähleEffekt [CardEffect] next
+  | Opfere Ziel next
+  | Heile Anzahl next
+  | GibAufDieHandZurück Ziel next
+  | Zerstöre Ziel next
+  | Verringere Wert Ziel Dauer Höhe next
+  | VerringereUndZerstöre Ziel Dauer Höhe next
+  | NimmAufDieHand Ziel next
+  | ZeigeObenVomDeck Anzahl LesbarerWert (Höhe -> CardEffect) next
+  | BringeInsSpiel Card next
+  | BringeInsSpielAusZiel Ziel next
+  | GibFähigkeit Ziel Dauer (TriggerInstructionF ()) next
+  | EinSpielerOpfertEinWesen next
+  | AnzahlVon Ziel (Anzahl -> CardEffect) next
+  | WirfAb Anzahl SpendetOderSpendetNicht next
+  | LegeVomDeckAufDenFriedhof Anzahl SpendetOderSpendetNicht next
+  | SchaueObenVomDeck Anzahl (InstructionWhenViewingDeckF ()) next
+  | SiehHandkartenAnUndEntferneEineAusDemSpiel next
+  | BringeKopieInsSpiel Ziel next
+  | AnzahlSchicksalsMächte SpielerZiel (Anzahl -> CardEffect) next
+
+deriving instance Functor Instruction
+
+type TriggerInstructionF = Free TriggerInstruction
+type Trigger = TriggerInstructionF ()
+
+type InstructionWhenViewingDeckF = Free InstructionWhenViewingDeck
+
+type InstructionF = Free Instruction
+type CardEffect = InstructionF ()
 
 class Show a => Wählbar a where
   wahlmöglichkeiten :: [a]

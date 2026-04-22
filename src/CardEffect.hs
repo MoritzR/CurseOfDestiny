@@ -1,53 +1,38 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module CardEffect where
 
-import DataTypesNew (Instruction (..), InstructionF (..), InstructionWhenViewingDeck (..), InstructionWhenViewingDeckF (..), Wählbar (wahlmöglichkeiten))
+import Control.Monad.Free (Free)
+import Control.Monad.Free.Class (MonadFree, liftF)
+import Control.Monad.Free.TH (makeFree)
+import DataTypesNew
 
--- instruction methods
-ziehe anzahl = InstructionF [Ziehe anzahl] ()
-erhöhe wert ziel dauer höhe = InstructionF [Erhöhe wert ziel dauer höhe] ()
-vision anzahlKarten = InstructionF [Vision anzahlKarten] ()
-prisma next = InstructionF [Prisma next] ()
-spende anzahl element = InstructionF [Spende anzahl element] ()
+$(makeFree ''Instruction)
+$(makeFree ''InstructionWhenViewingDeck)
+
+keinEffekt :: Applicative f => f ()
+keinEffekt = pure ()
+
 wähle :: Wählbar a => (a -> InstructionF ()) -> InstructionF ()
 wähle = wähleAus wahlmöglichkeiten
-opfere ziel = InstructionF [Opfere ziel] ()
-heile anzahl = InstructionF [Heile anzahl] ()
-gibAufDieHandZurück ziel = InstructionF [GibAufDieHandZurück ziel] ()
-zerstöre ziel = InstructionF [Zerstöre ziel] ()
-verringere wert ziel dauer höhe = InstructionF [Verringere wert ziel dauer höhe] ()
-verringereUndZerstöre ziel dauer höhe = InstructionF [VerringereUndZerstöre ziel dauer höhe] ()
-nimmAufDieHand ziel = InstructionF [NimmAufDieHand ziel] ()
-zeigeObenVomDeck anzahl wert next = InstructionF [ZeigeObenVomDeck anzahl wert next] ()
-bringeInsSpiel karte = InstructionF [BringeInsSpiel karte] ()
-bringeInsSpielAusZiel ziel = InstructionF [BringeInsSpielAusZiel ziel] ()
-gibFähigkeit ziel dauer fähigkeit = InstructionF [GibFähigkeit ziel dauer fähigkeit] ()
-einSpielerOpfertEinWesen = InstructionF [EinSpielerOpfertEinWesen] ()
-anzahlVon ziel next = InstructionF [AnzahlVon ziel next] ()
-wirfAb anzahl spendet = InstructionF [WirfAb anzahl spendet] ()
-legeVomDeckAufDenFriedhof anzahl spendet = InstructionF [LegeVomDeckAufDenFriedhof anzahl spendet] ()
-schaueObenVomDeck anzahl next = InstructionF [SchaueObenVomDeck anzahl next] ()
-bringeKopieInsSpiel ziel = InstructionF [BringeKopieInsSpiel ziel] ()
-siehHandkartenAnUndEntferneEineAusDemSpiel = InstructionF [SiehHandkartenAnUndEntferneEineAusDemSpiel] ()
-anzahlSchicksalsmächte spielerZiel next = InstructionF [AnzahlSchicksalsMächte spielerZiel next] ()
-
-wähleAus :: Wählbar a => [a] -> (a -> InstructionF ()) -> InstructionF ()
-wähleAus möglichkeiten next = InstructionF [Wähle möglichkeiten next] ()
 
 wähleAktion :: WählbareAktion f => [f ()] -> f ()
 wähleAktion = wähleAktionen
 
-class Applicative f => WählbareAktion f where
+class Monad f => WählbareAktion f where
   wähleAktionen :: [f ()] -> f ()
 
-instance WählbareAktion InstructionF where
-  wähleAktionen optionen = InstructionF [WähleAktion optionen] ()
+instance WählbareAktion (Free Instruction) where
+  wähleAktionen = wähleEffekt
 
-instance WählbareAktion InstructionWhenViewingDeckF where
-  wähleAktionen optionen = InstructionWhenViewingDeckF [WähleVomDeck optionen] ()
+instance WählbareAktion (Free InstructionWhenViewingDeck) where
+  wähleAktionen = wähleVomDeck
 
--- instruction when viewing deck
-legeRestUnterDeck = InstructionWhenViewingDeckF [LegeRestUnterDasDeck] ()
-zeigeVorUndNimmtAufDieHand ziel = InstructionWhenViewingDeckF [ZeigeVorUndNimmAufDieHand ziel] ()
-zeigeVorUndWirfAb ziel = InstructionWhenViewingDeckF [ZeigeVorUndWirfAb ziel] ()
+legeRestUnterDeck :: InstructionWhenViewingDeckF ()
+legeRestUnterDeck = legeRestUnterDasDeck
+
+zeigeVorUndNimmtAufDieHand :: Ziel -> InstructionWhenViewingDeckF ()
+zeigeVorUndNimmtAufDieHand = zeigeVorUndNimmAufDieHand
+
+anzahlSchicksalsmächte :: SpielerZiel -> (Anzahl -> InstructionF ()) -> InstructionF ()
+anzahlSchicksalsmächte = anzahlSchicksalsMächte

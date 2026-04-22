@@ -1,5 +1,3 @@
-{-# LANGUAGE ApplicativeDo #-}
-
 module Cards where
 
 import CardEffect
@@ -13,7 +11,7 @@ schirmBestie =
     { name = "Schirmbestie"
     , cardType = Wesen Bestie 4000
     , cost = 2 Wald
-    , trigger = pure ()
+    , trigger = keinEffekt
     }
 
 -- series
@@ -42,7 +40,6 @@ series26 =
             ziehe 1
           zahle (5 Neutral) do
             vision 1
-          pure ()
       }
   , Card
       { name = "Forscher der Royalen Akademie"
@@ -62,7 +59,6 @@ series26 =
               erhöhe Stärke selbst Dauerhaft (x * 1000)
           zahle (5 Neutral) do
             vision 1
-          pure ()
       }
   , Card
       { name = "Kolossale Stärke"
@@ -85,7 +81,6 @@ series26 =
       , trigger = do
           wennGespielt $ ziehe 1
           blockierung
-          pure ()
       }
   , Card
       { name = "Magiestein der Arkanen Seele"
@@ -95,16 +90,12 @@ series26 =
           zahle (1 Neutral + 1 Licht) do
             opfere selbst
             heile 1
-            pure ()
           zahle (1 Neutral + 1 Wasser) do
             opfere selbst
             ziehe 1
-            pure ()
           zahle (1 Neutral + 1 Wind) do
             opfere selbst
             gibAufDieHandZurück (ein $ wesen <> aufDemFeld)
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Erdkraft"
@@ -114,12 +105,9 @@ series26 =
           zahle (1 Neutral + 1 Wald) do
             opfere selbst
             erhöhe Stärke (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges 3000
-            pure ()
           zahle (3 Neutral + 2 Wald) do
             opfere selbst
             erhöhe Stärke (alle $ eigene <> wesen) Dauerhaft 3000
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Erhebung"
@@ -129,16 +117,12 @@ series26 =
           zahle (1 Neutral + 1 Wald) do
             opfere selbst
             zerstöre $ eine magie
-            pure ()
           zahle (1 Neutral + 1 Wasser) do
             opfere selbst
             ziehe 1
-            pure ()
           zahle (2 Neutral + 1 Tod) do
             opfere selbst
             verringereUndZerstöre (alle wesen) BisZumEndeDesZuges 3000
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Erzürnung"
@@ -148,17 +132,13 @@ series26 =
           zahle (2 Neutral + 1 Tod) do
             opfere selbst
             nimmAufDieHand (ein $ wesen <> aufDemFriedHof)
-            pure ()
           zahle (2 Neutral + 1 Feuer) do
             opfere selbst
             vision 2
             zeigeObenVomDeck 2 LesbarKosten \x -> erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges (x * 1000)
-            pure ()
           zahle (2 Neutral + 2 Wald) do
             opfere selbst
             bringeInsSpiel schirmBestie
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Feuerkraft"
@@ -167,14 +147,11 @@ series26 =
       , trigger = do
           zahle (1 Feuer) do
             opfere selbst
-            gibFähigkeit (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges doppelZerstörung
-            pure ()
+            gibFähigkeit (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges doppelzerstörung
           zahle (4 Feuer) do
             opfere selbst
             verringere Stärke (ein $ gegnerisches <> wesen) BisZumEndeDesZuges 2000
             erhöhe Stärke (ein $ eigenes <> wesen) BisZumEndeDesZuges 2000
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Finsterkraft"
@@ -184,12 +161,9 @@ series26 =
           zahle (2 Neutral + 1 Tod) do
             opfere selbst
             nimmAufDieHand (ein $ wesen <> aufDemFriedHof)
-            pure ()
           zahle (5 Neutral + 1 Tod) do
             opfere selbst
             einSpielerOpfertEinWesen
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Lichtkraft"
@@ -199,12 +173,9 @@ series26 =
           zahle (1 Neutral + 1 Licht) do
             opfere selbst
             erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
-            pure ()
           zahle (1 Neutral + 2 Licht) do
             opfere selbst
             heile 1
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Manipulation"
@@ -214,16 +185,12 @@ series26 =
           zahle (2 Neutral + 1 Tod) do
             opfere selbst
             siehHandkartenAnUndEntferneEineAusDemSpiel
-            pure ()
           zahle (2 Neutral + 2 Wind) do
             opfere selbst
             nimmAufDieHand $ eine $ eigene <> (magie `oder` gegenmagie) <> aufDemFriedHof
-            pure ()
           zahle (4 Neutral + 2 Wasser) do
             opfere selbst
             ziehe 2
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Säuberung"
@@ -233,17 +200,13 @@ series26 =
           zahle (2 Neutral + 1 Licht) do
             opfere selbst
             anzahlVon (alle $ eigene <> wesen <> aufDemFeld) heile
-            pure ()
           zahle (2 Neutral + 1 Wald) do
             schaueObenVomDeck 5 do
               zeigeVorUndNimmtAufDieHand (ein wesen)
               legeRestUnterDeck
-              pure ()
           zahle (4 Neutral + 1 Wasser) do
             opfere selbst
             anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Wasserkraft"
@@ -253,12 +216,9 @@ series26 =
           zahle (1 Wasser) do
             opfere selbst
             vision 3
-            pure ()
           zahle (5 Neutral + 1 Wasser) do
             opfere selbst
             ziehe 2
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein der Windkraft"
@@ -268,13 +228,10 @@ series26 =
           zahle (2 Neutral + 1 Wind) do
             opfere selbst
             gibAufDieHandZurück (ein $ wesen <> aufDemFeld)
-            pure ()
           zahle (4 Neutral + 1 Wind) do
             opfere selbst
             ziehe 3
             wirfAb 2 SpendetNicht
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein des Chaos"
@@ -283,8 +240,7 @@ series26 =
       , trigger = do
           zahle (1 Neutral + 1 Feuer) do
             opfere selbst
-            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges doppelZerstörung
-            pure ()
+            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges doppelzerstörung
           zahle (1 Neutral + 2 Wind) do
             opfere selbst
             vision 1
@@ -293,12 +249,9 @@ series26 =
                 [ zeigeVorUndNimmtAufDieHand $ eine karte
                 , zeigeVorUndWirfAb $ eine karte
                 ]
-            pure ()
           zahle (4 Neutral + 2 Tod) do
             opfere selbst
             zerstöre $ ein wesen
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein des Nexus"
@@ -308,17 +261,13 @@ series26 =
           zahle (1 Feuer) do
             opfere selbst
             gibFähigkeit (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges kannNichtAbwehren
-            pure ()
           zahle (2 Neutral + 1 Wald) do
             opfere selbst
             legeVomDeckAufDenFriedhof 3 SpendetNicht
             nimmAufDieHand (eine aufDemFriedHof)
-            pure ()
           zahle (2 Neutral + 2 Licht) do
             opfere selbst
             bringeInsSpielAusZiel (ein $ wesen <> aufDemFriedHof <> kostetMaximal 3)
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein des Strahlens"
@@ -328,17 +277,13 @@ series26 =
           zahle (1 + 1 Feuer) do
             opfere selbst
             zerstöre (ein $ wesen <> kostetMaximal 3)
-            pure ()
           zahle (1 + 2 Wind) do
             opfere selbst
             vision 1
             ziehe 1
-            pure ()
           zahle (1 + 2 Licht) do
             opfere selbst
             verringereUndZerstöre (alle wesen) BisZumEndeDesZuges 3000
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein für Belebung und Erhebung"
@@ -349,29 +294,22 @@ series26 =
             opfere selbst
             erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
             gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges lebensentzug
-            pure ()
           zahle (1 Feuer) do
             opfere selbst
             erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
-            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges doppelZerstörung
-            pure ()
-          pure ()
+            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges doppelzerstörung
       }
   , Card
       { name = "Magiestein für Einheit und Reinheit"
       , cardType = MagieDauerhaft
       , cost = 1 Neutral
       , trigger = do
-          -- TODO: confirm activation costs from the original source.
           zahle (3 + 1 Wald) do
             opfere selbst
             anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
-            pure ()
           zahle (4 + 1 Licht) do
             opfere selbst
             bringeKopieInsSpiel (ein $ eigene <> wesen <> aufDemFeld)
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein für Entdeckung und Vollstreckung"
@@ -382,12 +320,9 @@ series26 =
             opfere selbst
             gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges do
               beimAngriff WennNichtAbgewehrtWird $ ziehe 1
-            pure ()
           zahle (1 + 3 Tod) do
             opfere selbst
             siehHandkartenAnUndEntferneEineAusDemSpiel
-            pure ()
-          pure ()
       }
   , Card
       { name = "Magiestein für Gabe und Habe"
@@ -397,13 +332,10 @@ series26 =
           zahle (2 + 2 Licht) do
             opfere selbst
             heile 2
-            pure ()
           zahle (3 + 2 Wind) do
             opfere selbst
             anzahlVon (alle $ eigene <> karten <> aufDerHand) \kartenAufDerHand ->
               anzahlSchicksalsmächte Du \schicksalsmächte ->
                 ziehe $ schicksalsmächte - kartenAufDerHand
-            pure ()
-          pure ()
       }
   ]
