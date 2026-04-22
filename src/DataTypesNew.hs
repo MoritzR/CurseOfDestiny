@@ -130,14 +130,14 @@ data TriggerInstruction next
   | Doppelzerstörung next
   | Lebensentzug next
   | KannNichtAbwehren next
-  deriving Functor
+  deriving (Functor, Foldable)
 
 data InstructionWhenViewingDeck next
   = ZeigeVorUndNimmAufDieHand Ziel next
   | ZeigeVorUndWirfAb Ziel next
   | LegeRestUnterDasDeck next
   | WähleVomDeck [InstructionWhenViewingDeckF ()] next
-  deriving Functor
+  deriving (Functor, Foldable)
 
 data Instruction next
   = Ziehe Anzahl next
@@ -168,6 +168,7 @@ data Instruction next
   | AnzahlSchicksalsMächte SpielerZiel (Anzahl -> CardEffect) next
 
 deriving instance Functor Instruction
+deriving instance Foldable Instruction
 
 type TriggerInstructionF = Free TriggerInstruction
 type Trigger = TriggerInstructionF ()
