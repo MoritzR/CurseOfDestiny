@@ -54,7 +54,7 @@ describeTriggerInstruction = \case
     ["Lebensentzug"] <> next
   BeimAngriff phase effect next ->
     let describePhase = \case
-          ZuBeginn -> "amgreift"
+          ZuBeginn -> "angreift"
           WennNichtAbgewehrtWird -> "angreift und nicht abgewehrt wird"
      in ["Wenn diese Karte " <> describePhase phase <> ": " <> describeEffectInline effect] <> next
 
@@ -62,7 +62,7 @@ describeEffect :: CardEffect -> String
 describeEffect = unlines . describeEffectLines
 
 describeEffectInline :: CardEffect -> String
-describeEffectInline = intercalate ", " . describeEffectLines
+describeEffectInline = unwords . describeEffectLines
 
 describeEffectLines :: CardEffect -> [String]
 describeEffectLines = iter describeInstructionStep . fmap (const [])
@@ -70,61 +70,61 @@ describeEffectLines = iter describeInstructionStep . fmap (const [])
 describeInstruction :: Instruction next -> String
 describeInstruction = \case
   Ziehe n _ ->
-    "ziehe " <> show n <> plural " Karte" n
+    "Ziehe " <> show n <> plural " Karte" n <> "."
   Erhöhe wert ziel dauer höhe _ ->
-    describeZiel ziel <> " erhöht " <> possessive describeWert wert <> " " <> describeDauer dauer <> " um " <> show höhe
+    describeZiel ziel <> " erhöht " <> possessive describeWert wert <> " " <> describeDauer dauer <> " um " <> show höhe <> "."
   Vision n _ ->
     "Vision " <> show n
   Prisma effectForX _ ->
     let effect = describeEffectInline $ effectForX $ PlaceHolder "X"
      in "Prisma - " <> effect <> " (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)"
   Spende n element _ ->
-    "spende " <> show n <> " " <> show element
+    "Spende " <> show n <> " " <> show element
   WähleAus options _ _ ->
-    "wähle " <> intercalate ", " (map show options)
+    "Wähle " <> intercalate ", " (map show options)
   WähleEffekt aktionen _ ->
-    "wähle aus:\n - " <> intercalate "\n - " (describeInstructionF <$> aktionen)
+    "Wähle aus:\n - " <> intercalate "\n - " (describeInstructionF <$> aktionen)
   Opfere ziel _ ->
-    "opfere " <> describeZiel ziel
+    "Opfere " <> describeZiel ziel <> "."
   Heile n _ ->
-    "erhalte " <> show n <> " Schicksalsmacht"
+    "Erhalte " <> show n <> " Schicksalsmacht."
   GibAufDieHandZurück ziel _ ->
-    "gib " <> describeZiel ziel <> " auf die Hand des Besitzers zurück"
+    "Gib " <> describeZiel ziel <> " auf die Hand des Besitzers zurück."
   Zerstöre ziel _ ->
-    "zerstöre " <> describeZiel ziel
+    "Zerstöre " <> describeZiel ziel
   Verringere wert ziel dauer höhe _ ->
     describeZiel ziel <> " verringert " <> possessive describeWert wert <> " " <> describeDauer dauer <> " um " <> show höhe
   VerringereUndZerstöre ziel dauer höhe _ ->
     describeZiel ziel <> " verringert " <> possessive describeWert Stärke <> " " <> describeDauer dauer <> " um " <> show höhe <> ", wird sie dadurch 0, zerstöre es"
   NimmAufDieHand ziel _ ->
-    "nimm " <> describeZiel ziel <> " auf deine Hand"
+    "Nimm " <> describeZiel ziel <> " auf deine Hand."
   ZeigeObenVomDeck n lesbarerWert effectForX _ ->
     let effect = describeEffectInline $ effectForX $ PlaceHolder "X"
-     in "zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
+     in "Zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
   BringeInsSpiel card _ ->
-    "bringe " <> card.name <> " ins Spiel"
+    "Bringe " <> card.name <> " ins Spiel."
   BringeInsSpielAusZiel ziel _ ->
-    "bringe ins Spiel: " <> describeZiel ziel
+    "Bringe ins Spiel: " <> describeZiel ziel
   WirfAb anzahl spendet _ -> "wirf " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
   LegeVomDeckAufDenFriedhof anzahl spendet _ ->
-    "lege " <> show anzahl <> " Karten vom Deck auf den Friedhof." <> describeSpendet spendet
+    "Lege " <> show anzahl <> " Karten vom Deck auf den Friedhof." <> describeSpendet spendet
   GibFähigkeit ziel dauer triggerInstrs _ ->
-    describeZiel ziel <> " erhält " <> describeGrantedTrigger triggerInstrs <> " " <> describeDauer dauer
+    describeZiel ziel <> " erhält " <> describeDauer dauer <> " " <> describeGrantedTrigger triggerInstrs
   EinSpielerOpfertEinWesen _ ->
-    "ein Spieler opfert ein Wesen"
+    "Ein Spieler opfert ein Wesen."
   SiehHandkartenAnUndEntferneEineAusDemSpiel _ ->
-    "sieh Handkarten an und entferne eine davon aus dem Spiel"
+    "Sieh Handkarten an und entferne eine davon aus dem Spiel."
   AnzahlVon ziel effectForX _ ->
-    "X ist die Anzahl von " <> describeZiel ziel <> ". " <> describeEffectInline (effectForX $ PlaceHolder "X")
+    describeEffectInline (effectForX $ PlaceHolder "X") <> " X ist die Anzahl von " <> describeZiel ziel <> "."
   AnzahlSchicksalsMächte spielerZiel effectForS _ ->
     let describeSpielerZiel = \case
           Du -> "deiner"
           Gegner -> "der gegnerischen"
-     in "S ist die Anzahl " <> describeSpielerZiel spielerZiel <> " Schicksalsmächte. " <> describeEffectInline (effectForS $ PlaceHolder "S")
+     in describeEffectInline (effectForS $ PlaceHolder "S") <> " S ist die Anzahl " <> describeSpielerZiel spielerZiel <> " Schicksalsmächte."
   SchaueObenVomDeck anzahl next _ ->
     "Schaue dir die obersten " <> show anzahl <> " Karten deines Decks an. " <> describeWhenViewingDeckEffect next
   BringeKopieInsSpiel ziel _ ->
-    "Wähle " <> describeZiel ziel <> " und bringe eine Kopie ins Spiel"
+    "Wähle " <> describeZiel ziel <> " und bringe eine Kopie ins Spiel."
 
 describeInstructionStep :: Instruction [String] -> [String]
 describeInstructionStep instruction = describeInstruction instruction : fold instruction
