@@ -33,6 +33,3 @@ legeRestUnterDeck = legeRestUnterDasDeck
 
 zeigeVorUndNimmtAufDieHand :: Ziel -> InstructionWhenViewingDeckF ()
 zeigeVorUndNimmtAufDieHand = zeigeVorUndNimmAufDieHand
-
-anzahlSchicksalsmächte :: SpielerZiel -> (Anzahl -> InstructionF ()) -> InstructionF ()
-anzahlSchicksalsmächte = anzahlSchicksalsMächte

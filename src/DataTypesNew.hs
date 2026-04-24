@@ -159,16 +159,15 @@ data Instruction next
   | BringeInsSpielAusZiel Ziel next
   | GibFähigkeit Ziel Dauer (TriggerInstructionF ()) next
   | EinSpielerOpfertEinWesen next
-  | AnzahlVon Ziel (Anzahl -> CardEffect) next
+  | AnzahlVon Ziel (Anzahl -> next)
   | WirfAb Anzahl SpendetOderSpendetNicht next
   | LegeVomDeckAufDenFriedhof Anzahl SpendetOderSpendetNicht next
   | SchaueObenVomDeck Anzahl (InstructionWhenViewingDeckF ()) next
   | SiehHandkartenAnUndEntferneEineAusDemSpiel next
   | BringeKopieInsSpiel Ziel next
-  | AnzahlSchicksalsMächte SpielerZiel (Anzahl -> CardEffect) next
+  | AnzahlSchicksalsmächte SpielerZiel (Anzahl -> next)
 
 deriving instance Functor Instruction
-deriving instance Foldable Instruction
 
 type TriggerInstructionF = Free TriggerInstruction
 type Trigger = TriggerInstructionF ()

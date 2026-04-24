@@ -199,14 +199,14 @@ series26 =
       , trigger = do
           zahle (2 Neutral + 1 Licht) do
             opfere selbst
-            anzahlVon (alle $ eigene <> wesen <> aufDemFeld) heile
+            heile =<< anzahlVon (alle $ eigene <> wesen <> aufDemFeld)
           zahle (2 Neutral + 1 Wald) do
             schaueObenVomDeck 5 do
               zeigeVorUndNimmtAufDieHand (ein wesen)
               legeRestUnterDeck
           zahle (4 Neutral + 1 Wasser) do
             opfere selbst
-            anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
+            ziehe =<< anzahlVon (alle $ eigene <> wesen <> aufDemFeld)
       }
   , Card
       { name = "Magiestein der Wasserkraft"
@@ -306,7 +306,7 @@ series26 =
       , trigger = do
           zahle (3 + 1 Wald) do
             opfere selbst
-            anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
+            ziehe =<< anzahlVon (alle $ eigene <> wesen <> aufDemFeld)
           zahle (4 + 1 Licht) do
             opfere selbst
             bringeKopieInsSpiel (ein $ eigene <> wesen <> aufDemFeld)
@@ -334,8 +334,8 @@ series26 =
             heile 2
           zahle (3 + 2 Wind) do
             opfere selbst
-            anzahlVon (alle $ eigene <> karten <> aufDerHand) \kartenAufDerHand ->
-              anzahlSchicksalsmächte Du \schicksalsmächte ->
-                ziehe $ schicksalsmächte - kartenAufDerHand
+            kartenAufDerHand <- anzahlVon (alle $ eigene <> karten <> aufDerHand)
+            schicksalsmächte <- anzahlSchicksalsmächte Du
+            ziehe $ schicksalsmächte - kartenAufDerHand
       }
   ]

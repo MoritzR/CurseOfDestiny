@@ -12,7 +12,6 @@ module Interpreter.Descriptor (
 
 import Cards (series26)
 import Control.Monad.Free (iter)
-import Data.Foldable (fold)
 import Data.List (intercalate)
 import DataTypesNew
 
@@ -114,20 +113,34 @@ describeInstruction = \case
     "Ein Spieler opfert ein Wesen."
   SiehHandkartenAnUndEntferneEineAusDemSpiel _ ->
     "Sieh Handkarten an und entferne eine davon aus dem Spiel."
-  AnzahlVon ziel effectForX _ ->
-    describeEffectInline (effectForX $ PlaceHolder "X") <> " X ist die Anzahl von " <> describeZiel ziel <> "."
-  AnzahlSchicksalsMächte spielerZiel effectForS _ ->
+  AnzahlVon ziel _ ->
+    "X ist die Anzahl von " <> describeZiel ziel <> "."
+  AnzahlSchicksalsmächte spielerZiel _ ->
     let describeSpielerZiel = \case
           Du -> "deiner"
           Gegner -> "der gegnerischen"
-     in describeEffectInline (effectForS $ PlaceHolder "S") <> " S ist die Anzahl " <> describeSpielerZiel spielerZiel <> " Schicksalsmächte."
+     in "S ist die Anzahl " <> describeSpielerZiel spielerZiel <> " Schicksalsmächte."
   SchaueObenVomDeck anzahl next _ ->
     "Schaue dir die obersten " <> show anzahl <> " Karten deines Decks an. " <> describeWhenViewingDeckEffect next
   BringeKopieInsSpiel ziel _ ->
     "Wähle " <> describeZiel ziel <> " und bringe eine Kopie ins Spiel."
 
 describeInstructionStep :: Instruction [String] -> [String]
-describeInstructionStep instruction = describeInstruction instruction : fold instruction
+describeInstructionStep = \case
+  -- matching constructors to reorder instruction description. E.g. instead of:
+  -- "X is the number of creatures. S is the number of HP. Draw S - X cards."
+  -- it displays
+  -- "Draw S - X cards. X is the number of creatures. S is the number of HP.
+  AnzahlVon ziel nextForX -> describeAnzahlVon ziel nextForX
+  AnzahlSchicksalsmächte spielerZiel nextForS -> describeAnzahlSchicksalsmächte spielerZiel nextForS
+  instruction -> describeInstruction instruction : continueInstruction instruction
+
+describeAnzahlVon ziel nextForX = [intercalate ", " (nextForX $ PlaceHolder "X") <> " X ist die Anzahl von " <> describeZiel ziel <> "."]
+describeAnzahlSchicksalsmächte spielerZiel nextForS =
+  let describeSpielerZiel = \case
+        Du -> "deiner"
+        Gegner -> "der gegnerischen"
+   in [intercalate ", " (nextForS $ PlaceHolder "S") <> " S ist die Anzahl " <> describeSpielerZiel spielerZiel <> " Schicksalsmächte."]
 
 describeInstructionF :: InstructionF () -> String
 describeInstructionF = intercalate ", " . describeEffectLines
@@ -150,7 +163,8 @@ describeWhenViewingDeckInstruction = \case
     "wähle aus:\n - " <> intercalate "\n - " (describeWhenViewingDeckEffect <$> aktionen)
 
 describeWhenViewingDeckStep :: InstructionWhenViewingDeck [String] -> [String]
-describeWhenViewingDeckStep instruction = describeWhenViewingDeckInstruction instruction : fold instruction
+describeWhenViewingDeckStep instruction =
+  describeWhenViewingDeckInstruction instruction : continueWhenViewingDeck instruction
 
 describeSpendet :: SpendetOderSpendetNicht -> String
 describeSpendet SpendetNicht = " Sie spenden keine Schicksalspunkte"
@@ -197,3 +211,39 @@ plural word n
 
 possessive :: (a -> String) -> a -> String
 possessive render value = "seine " <> render value
+
+continueWhenViewingDeck :: InstructionWhenViewingDeck [String] -> [String]
+continueWhenViewingDeck = \case
+  ZeigeVorUndNimmAufDieHand _ next -> next
+  ZeigeVorUndWirfAb _ next -> next
+  LegeRestUnterDasDeck next -> next
+  WähleVomDeck _ next -> next
+
+continueInstruction :: Instruction [String] -> [String]
+continueInstruction = \case
+  Ziehe _ next -> next
+  Erhöhe _ _ _ _ next -> next
+  Vision _ next -> next
+  Prisma _ next -> next
+  Spende _ _ next -> next
+  WähleAus _ _ next -> next
+  WähleEffekt _ next -> next
+  Opfere _ next -> next
+  Heile _ next -> next
+  GibAufDieHandZurück _ next -> next
+  Zerstöre _ next -> next
+  Verringere _ _ _ _ next -> next
+  VerringereUndZerstöre _ _ _ next -> next
+  NimmAufDieHand _ next -> next
+  ZeigeObenVomDeck _ _ _ next -> next
+  BringeInsSpiel _ next -> next
+  BringeInsSpielAusZiel _ next -> next
+  GibFähigkeit _ _ _ next -> next
+  EinSpielerOpfertEinWesen next -> next
+  AnzahlVon _ next -> next $ PlaceHolder "X"
+  WirfAb _ _ next -> next
+  LegeVomDeckAufDenFriedhof _ _ next -> next
+  SchaueObenVomDeck _ _ next -> next
+  SiehHandkartenAnUndEntferneEineAusDemSpiel next -> next
+  BringeKopieInsSpiel _ next -> next
+  AnzahlSchicksalsmächte _ next -> next $ PlaceHolder "S"
