@@ -154,7 +154,7 @@ data Instruction next
   | Verringere Wert Ziel Dauer Höhe next
   | VerringereUndZerstöre Ziel Dauer Höhe next
   | NimmAufDieHand Ziel next
-  | ZeigeObenVomDeck Anzahl LesbarerWert (Höhe -> CardEffect) next
+  | ZeigeObenVomDeck Anzahl LesbarerWert (Höhe -> next)
   | BringeInsSpiel Card next
   | BringeInsSpielAusZiel Ziel next
   | GibFähigkeit Ziel Dauer (TriggerInstructionF ()) next

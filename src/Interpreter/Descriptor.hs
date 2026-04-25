@@ -97,9 +97,8 @@ describeInstruction = \case
     describeZiel ziel <> " verringert " <> possessive describeWert Stärke <> " " <> describeDauer dauer <> " um " <> show höhe <> ", wird sie dadurch 0, zerstöre es"
   NimmAufDieHand ziel _ ->
     "Nimm " <> describeZiel ziel <> " auf deine Hand."
-  ZeigeObenVomDeck n lesbarerWert effectForX _ ->
-    let effect = describeEffectInline $ effectForX $ PlaceHolder "X"
-     in "Zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
+  ZeigeObenVomDeck n lesbarerWert _ ->
+    "Zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks."
   BringeInsSpiel card _ ->
     "Bringe " <> card.name <> " ins Spiel."
   BringeInsSpielAusZiel ziel _ ->
@@ -132,10 +131,13 @@ describeInstructionStep = \case
   -- it displays
   -- "Draw S - X cards. X is the number of creatures. S is the number of HP.
   AnzahlVon ziel nextForX -> describeAnzahlVon ziel nextForX
+  ZeigeObenVomDeck n lesbarerWert nextForX -> describeZeigeObenVomDeck n lesbarerWert nextForX
   AnzahlSchicksalsmächte spielerZiel nextForS -> describeAnzahlSchicksalsmächte spielerZiel nextForS
   instruction -> describeInstruction instruction : continueInstruction instruction
 
 describeAnzahlVon ziel nextForX = [intercalate ", " (nextForX $ PlaceHolder "X") <> " X ist die Anzahl von " <> describeZiel ziel <> "."]
+describeZeigeObenVomDeck n lesbarerWert nextForX =
+  ["Zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> intercalate ", " (nextForX $ PlaceHolder "X") <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"]
 describeAnzahlSchicksalsmächte spielerZiel nextForS =
   let describeSpielerZiel = \case
         Du -> "deiner"
@@ -235,7 +237,7 @@ continueInstruction = \case
   Verringere _ _ _ _ next -> next
   VerringereUndZerstöre _ _ _ next -> next
   NimmAufDieHand _ next -> next
-  ZeigeObenVomDeck _ _ _ next -> next
+  ZeigeObenVomDeck _ _ next -> next $ PlaceHolder "X"
   BringeInsSpiel _ next -> next
   BringeInsSpielAusZiel _ next -> next
   GibFähigkeit _ _ _ next -> next
