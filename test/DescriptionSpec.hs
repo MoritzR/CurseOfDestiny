@@ -3,7 +3,7 @@ module DescriptionSpec where
 
 import Test.Hspec
 import Cards (series26)
-import DataTypesNew (Card)
+import DataTypes (Card)
 import Test.Hspec.Golden (golden)
 import Interpreter.Descriptor (describeCard)
 import Data.List (intercalate)

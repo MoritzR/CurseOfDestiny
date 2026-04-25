@@ -59,14 +59,11 @@ common common
 library
   import: common
   exposed-modules:
-      Actions
       Cards
       DataTypes
-      DataTypesNew
       CardEffect
       Trigger
       Element
-      Decks
       Target
       EffectfulLens
       Game
@@ -107,7 +104,6 @@ test-suite cod-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      GameActionParserSpec
       DescriptionSpec
       Paths_cod
   hs-source-dirs:

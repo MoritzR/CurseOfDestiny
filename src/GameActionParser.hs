@@ -1,4 +1,4 @@
-module GameActionParser (parseGameAction) where
+module GameActionParser (parseGameAction, GameAction) where
 
 import Data.Char (isDigit)
 import Data.Maybe (listToMaybe)
@@ -11,6 +11,16 @@ import Text.ParserCombinators.ReadP (
   satisfy,
   string,
  )
+
+data GameAction
+  = Play Card
+  | PlayFromHand Int
+  | AnnounceAttack Int Int -- Attack Target Source
+  | AnnounceDirectAttack Int -- Attack Source
+  | ActivateFromField Int
+  | Pass
+  | EndRound
+  deriving (Eq, Show)
 
 parseGameAction :: String -> Maybe GameAction
 parseGameAction = listToMaybe . map fst . readP_to_S gameAction

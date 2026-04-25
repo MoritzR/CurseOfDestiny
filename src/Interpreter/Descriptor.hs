@@ -14,7 +14,7 @@ import Cards (series26)
 import Control.Monad.Free (iter)
 import Data.Foldable (fold)
 import Data.List (intercalate)
-import DataTypesNew
+import DataTypes
 
 testRenderCard :: String
 testRenderCard = intercalate "\n\n" $ describeCard <$> series26

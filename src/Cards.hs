@@ -1,7 +1,7 @@
 module Cards where
 
 import CardEffect
-import DataTypesNew
+import DataTypes
 import Target
 import Trigger
 
@@ -15,7 +15,6 @@ schirmBestie =
     }
 
 -- series
-
 series26 =
   [ Card
       { name = "Edors Konstruct"

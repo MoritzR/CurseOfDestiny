@@ -1,140 +1,224 @@
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE NoFieldSelectors #-}
 
 module DataTypes where
 
-import Control.Lens (Lens', (^.), _1, _2)
-import Data.Generics.Labels ()
-import Effectful (Eff, (:>))
-import Effectful.State.Static.Local (State)
-import GHC.Generics (Generic)
-import GameEffects (ChoiceInput, Log)
+import Control.Monad.Free (Free)
 
-type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
+pattern X :: Element -> Kosten
+pattern X element = Kosten [VariableElementKosten element]
 
-type Game es a = HasStateIO es => Eff es a
+data ElementKosten = ElementKosten Anzahl Element | VariableElementKosten Element | Nichts
+data Element
+  = Neutral
+  | Feuer
+  | Wald
+  | Wasser
+  | Wind
+  | Licht
+  | Tod
+  | Doppel Element Element
+  deriving Eq
 
-data Action
-  = AddToField Card
-  | DiscardFromHand Card
-  | EndTurn
-  | Choose [Action]
-  | Destroy CardLens Card
-  | DestroyOne CardLens
-  | Draw PlayerLens
-  | DirectAttack Card PlayerLens
-  | Attack Card Card -- Attack Target Source
+instance Show Element where
+  show = \case
+    Neutral -> "⏺"
+    Feuer -> "🔥"
+    Wald -> "🌳"
+    Wasser -> "💧"
+    Wind -> "⚡"
+    Licht -> "🌞"
+    Tod -> "💀"
+    Doppel a b -> show a <> "/" <> show b
 
-instance Show Action where
-  show (AddToField c) = "AddToField " ++ show c
-  show (DiscardFromHand c) = "DiscardFromHand " ++ show c
-  show EndTurn = "EndTurn"
-  show (Choose actions) = "Choose " ++ show actions
-  show (Destroy _ c) = "Destroy " ++ show c
-  show (DestroyOne _) = "DestroyOne"
-  show (Draw _) = "Draw"
-  show (Attack c1 c2) = "Attack " ++ show c1 ++ " " ++ show c2
-  show (DirectAttack c _) = "DirectAttack from  " ++ show c
+newtype Kosten = Kosten [ElementKosten]
 
-instance Eq Action where
-  -- At the moment, there is no need to differentiate Actions
-  _ == _ = True
+data CardType
+  = Allmagie
+  | Gegenmagie
+  | Magie
+  | MagieDauerhaft
+  | Wesen Wesenstyp Int
 
-type CardLens = Lens' GameState [Card]
+data Wesenstyp
+  = Konstrukt
+  | Magier
+  | Krieger
+  | Bestie
 
-type PlayerLens = Lens' GameState Player
-
-type Players = (Player, Player)
-
-newtype GameState = GameState
-  { players :: Players
+data Card = Card
+  { name :: String
+  , cost :: Kosten
+  , cardType :: CardType
+  , trigger :: Trigger
   }
-  deriving (Show, Eq, Generic)
+instance Show Card where
+  show = (.name)
+instance Eq Card where
+  a == b = a.name == b.name
+
+data SpendetOderSpendetNicht = Spendet | SpendetNicht
+
+data SpielerZiel = Du | Gegner
+
+data Anzahl
+  = PlaceHolder String
+  | Actual Int
+  | Mul Anzahl Anzahl
+  | Add Anzahl Anzahl
+  | Minus Anzahl Anzahl
+  | Neg Anzahl
+  deriving Eq
+
+instance Show Anzahl where
+  show = \case
+    Actual i -> show i
+    PlaceHolder s -> s
+    Mul (PlaceHolder _) 1000 -> "X000"
+    Mul a b -> show a <> " * " <> show b
+    Minus a b -> show a <> " - " <> show b
+    Add a b -> show a <> " + " <> show b
+    Neg a -> "-" <> show a
+
+instance Num Anzahl where
+  fromInteger = Actual . fromIntegral
+  (*) = Mul
+  (+) = Add
+  (-) = Minus
+  negate = Neg
+  abs = Actual . abs . anzahlToInt
+  signum = error "unused"
+
+anzahlToInt :: Anzahl -> Int
+anzahlToInt = \case
+  Actual i -> i
+  PlaceHolder _ -> 0
+  Mul a b -> anzahlToInt a * anzahlToInt b
+  Add a b -> anzahlToInt a + anzahlToInt b
+  Minus a b -> anzahlToInt a - anzahlToInt b
+  Neg a -> negate $ anzahlToInt a
+
+type Höhe = Anzahl
+data Dauer = BisZumEndeDesZuges | Dauerhaft
+data LesbarerWert = LesbarKosten
+data Ort = Friedhof
+data Wert = Stärke
+
+data AngriffsPhase
+  = ZuBeginn
+  | WennNichtAbgewehrtWird
+
+data Aura
+
+data Ziel = Ziel {anzahl :: ZielAnzahl, ziel :: EinZiel}
+data ZielAnzahl = Ein | Eine | Alle | Undefiniert
+
+data EinZiel = EinZiel {description :: String, filter :: Card -> Bool}
+
+instance Show EinZiel where
+  show = (.description)
+
+instance Semigroup EinZiel where
+  a <> b = EinZiel (a.description <> " " <> b.description) $ \card -> a.filter card && b.filter card
+
+data TriggerInstruction next
+  = AmEndeDerRunde CardEffect next
+  | AmBeginnDerRunde CardEffect next
+  | Zahle Kosten CardEffect next
+  | ZahleText String CardEffect next
+  | WennGespielt CardEffect next
+  | WennAufDemFeld Aura next
+  | EinmalProRunde CardEffect next
+  | BeimAngriff AngriffsPhase CardEffect next
+  | Blockierung next
+  | Doppelzerstörung next
+  | Lebensentzug next
+  | KannNichtAbwehren next
+  deriving (Functor, Foldable)
+
+data InstructionWhenViewingDeck next
+  = ZeigeVorUndNimmAufDieHand Ziel next
+  | ZeigeVorUndWirfAb Ziel next
+  | LegeRestUnterDasDeck next
+  | WähleVomDeck [InstructionWhenViewingDeckF ()] next
+  deriving (Functor, Foldable)
+
+data Instruction next
+  = Ziehe Anzahl next
+  | Erhöhe Wert Ziel Dauer Höhe next
+  | Vision Anzahl next
+  | Prisma (Anzahl -> CardEffect) next
+  | Spende Anzahl Element next
+  | forall a. Wählbar a => WähleAus [a] (a -> CardEffect) next
+  | WähleEffekt [CardEffect] next
+  | Opfere Ziel next
+  | Heile Anzahl next
+  | GibAufDieHandZurück Ziel next
+  | Zerstöre Ziel next
+  | Verringere Wert Ziel Dauer Höhe next
+  | VerringereUndZerstöre Ziel Dauer Höhe next
+  | NimmAufDieHand Ziel next
+  | ZeigeObenVomDeck Anzahl LesbarerWert (Höhe -> CardEffect) next
+  | BringeInsSpiel Card next
+  | BringeInsSpielAusZiel Ziel next
+  | GibFähigkeit Ziel Dauer (TriggerInstructionF ()) next
+  | EinSpielerOpfertEinWesen next
+  | AnzahlVon Ziel (Anzahl -> CardEffect) next
+  | WirfAb Anzahl SpendetOderSpendetNicht next
+  | LegeVomDeckAufDenFriedhof Anzahl SpendetOderSpendetNicht next
+  | SchaueObenVomDeck Anzahl (InstructionWhenViewingDeckF ()) next
+  | SiehHandkartenAnUndEntferneEineAusDemSpiel next
+  | BringeKopieInsSpiel Ziel next
+  | AnzahlSchicksalsMächte SpielerZiel (Anzahl -> CardEffect) next
+
+deriving instance Functor Instruction
+deriving instance Foldable Instruction
+
+type TriggerInstructionF = Free TriggerInstruction
+type Trigger = TriggerInstructionF ()
+
+type InstructionWhenViewingDeckF = Free InstructionWhenViewingDeck
+
+type InstructionF = Free Instruction
+type CardEffect = InstructionF ()
+
+class Show a => Wählbar a where
+  wahlmöglichkeiten :: [a]
+
+instance Wählbar Element where
+  wahlmöglichkeiten = [Neutral, Feuer, Wald, Wasser, Wind, Licht, Tod]
+
+instance Num (Element -> Kosten) where
+  fromInteger n e = Kosten [ElementKosten (fromInteger n) e]
+  (+) = error "not used"
+  (*) = error "not used"
+  abs = error "not used"
+  negate = error "not used"
+  signum = error "not used"
+
+instance Num Kosten where
+  fromInteger n = Kosten [ElementKosten (fromInteger n) Neutral]
+  (Kosten xs) + (Kosten ys) = Kosten $ xs ++ ys
+  (*) = error "not used"
+  abs = error "not used"
+  negate = error "not used"
+  signum = error "not used"
+
+data Schicksalswesen
+data Modification
 
 data Player = Player
   { name :: String
-  , deck :: [Card]
-  , hand :: [Card]
-  , field :: [Card]
-  , playerCreature :: PlayerCreature
+  , schicksalswesen :: Schicksalswesen
   }
-  deriving (Show, Generic)
-
-instance Eq Player where
-  (==) = mapEq name
-
-data PlayerCreature = PlayerCreature
-  { playerCreatureId :: String
-  , hp :: Int
+data CardInPlay = CardInPlay
+  { id :: String
+  , card :: Card
+  , modifications :: [Modification]
   }
-  deriving (Show, Generic)
 
-instance Eq PlayerCreature where
-  (==) = mapEq playerCreatureId
-
-data GameAction
-  = Play Card
-  | PlayFromHand Int
-  | AnnounceAttack Int Int -- Attack Target Source
-  | AnnounceDirectAttack Int -- Attack Source
-  | ActivateFromField Int
-  | Pass
-  | EndRound
-  deriving (Eq, Show)
-
-data Card = Card
-  { cardType :: CardType
-  , cardId :: String
-  , cardName :: String
-  , effects :: CardEffects
+data GameState = GameState
+  { players :: (Player, Player)
+  , cardsInPlay :: [CardInPlay]
   }
-  deriving Generic
-
-instance Show Card where
-  show c = cardName c ++ " (" ++ show (cardType c) ++ ")"
-
-instance Eq Card where
-  (==) = mapEq cardId
-
-mapEq :: (Eq a, Eq b) => (b -> a) -> (b -> b -> Bool)
-mapEq f e1 e2 = f e1 == f e2
-
-data CardType
-  = Spell
-  | Creature Int
-  deriving Eq
-
-instance Show CardType where
-  show Spell = "S,"
-  show (Creature power) = "C[" ++ show power ++ "],"
-
-activePlayer :: Lens' GameState Player
-activePlayer = #players . _1
-
-enemyPlayer :: Lens' GameState Player
-enemyPlayer = #players . _2
-
-playerHp :: Lens' Player Int
-playerHp = #playerCreature . #hp
-
-newtype Aura = IncreaseAttack Int
-  deriving Show
-
-data CardEffects = CardEffects
-  { onPlay :: [Action]
-  , onTurnEnd :: [Action]
-  , onActivate :: [Action]
-  , whileOnField :: [Aura]
-  }
-  deriving Generic
-
-instance Semigroup CardEffects where
-  a <> b =
-    CardEffects
-      { onPlay = onPlay a <> onPlay b
-      , onTurnEnd = onTurnEnd a <> onTurnEnd b
-      , onActivate = onActivate a <> onActivate b
-      , whileOnField = whileOnField a <> whileOnField b
-      }
-
-instance Monoid CardEffects where
-  mempty = CardEffects{onPlay = [], onTurnEnd = [], onActivate = [], whileOnField = []}

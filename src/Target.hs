@@ -4,7 +4,7 @@
 
 module Target where
 
-import DataTypesNew (Card (..), CardType (..), EinZiel (..), Ziel (..), ZielAnzahl (..))
+import DataTypes (Card (..), CardType (..), EinZiel (..), Ziel (..), ZielAnzahl (..))
 import Element (gesamtKosten)
 
 oder :: EinZiel -> EinZiel -> EinZiel
