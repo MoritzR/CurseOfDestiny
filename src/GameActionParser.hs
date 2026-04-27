@@ -1,4 +1,4 @@
-module GameActionParser (parseGameAction, GameAction) where
+module GameActionParser (parseGameAction, GameAction (..)) where
 
 import Data.Char (isDigit)
 import Data.Maybe (listToMaybe)

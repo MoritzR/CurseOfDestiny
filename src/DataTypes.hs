@@ -40,12 +40,14 @@ data CardType
   | Magie
   | MagieDauerhaft
   | Wesen Wesenstyp Int
+  deriving (Eq, Show)
 
 data Wesenstyp
   = Konstrukt
   | Magier
   | Krieger
   | Bestie
+  deriving (Eq, Show)
 
 data Card = Card
   { name :: String
@@ -61,6 +63,7 @@ instance Eq Card where
 data SpendetOderSpendetNicht = Spendet | SpendetNicht
 
 data SpielerZiel = Du | Gegner
+  deriving (Eq, Show)
 
 data Anzahl
   = PlaceHolder String
@@ -101,13 +104,17 @@ anzahlToInt = \case
 
 type Höhe = Anzahl
 data Dauer = BisZumEndeDesZuges | Dauerhaft
+  deriving (Eq, Show)
 data LesbarerWert = LesbarKosten
+  deriving (Eq, Show)
 data Ort = Friedhof
 data Wert = Stärke
+  deriving (Eq, Show)
 
 data AngriffsPhase
   = ZuBeginn
   | WennNichtAbgewehrtWird
+  deriving (Eq, Show)
 
 data Aura
 
@@ -205,20 +212,39 @@ instance Num Kosten where
   negate = error "not used"
   signum = error "not used"
 
-data Schicksalswesen
+data Schicksalswesen = PlatzhalterSchicksalswesen
+  deriving (Eq, Show)
+
 data Modification
+  = StärkeModifikation Dauer Int
+  | FähigkeitsModifikation Dauer
+  deriving (Eq, Show)
+
+data PlayerId = Player1 | Player2
+  deriving (Eq, Show)
 
 data Player = Player
   { name :: String
   , schicksalswesen :: Schicksalswesen
+  , deck :: [Card]
+  , hand :: [Card]
+  , graveyard :: [Card]
+  , schicksalsmacht :: Int
   }
+  deriving (Eq, Show)
+
 data CardInPlay = CardInPlay
   { id :: String
+  , owner :: PlayerId
   , card :: Card
   , modifications :: [Modification]
   }
+  deriving (Eq, Show)
 
 data GameState = GameState
   { players :: (Player, Player)
   , cardsInPlay :: [CardInPlay]
+  , currentPlayer :: PlayerId
+  , nextCardId :: Int
   }
+  deriving (Eq, Show)
