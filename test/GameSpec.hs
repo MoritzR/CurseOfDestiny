@@ -21,7 +21,7 @@ spec = do
 
     it "buffs a played creature when a spell is played afterwards" do
       state <- runGameActions 1 initialGameState [PlayFromHand 0, PlayFromHand 0]
-      let ownField = cardsForPlayer Player1 state.cardsInPlay
+      let ownField = cardsForPlayer Player1 state
           (player1, _) = state.players
       length ownField `shouldBe` 1
       fmap (.name) player1.graveyard `shouldBe` ["Energieladung"]
@@ -33,7 +33,7 @@ spec = do
     it "can activate a permanent card effect that sacrifices itself and buffs a creature" do
       let state = withPlayer1Hand ["Edors Konstruct", "Magiestein der Erdkraft"] initialGameState
       finalState <- runGameActions 1 state [PlayFromHand 0, PlayFromHand 0, ActivateFromField 1]
-      let ownField = cardsForPlayer Player1 finalState.cardsInPlay
+      let ownField = cardsForPlayer Player1 finalState
           (player1, _) = finalState.players
       length ownField `shouldBe` 1
       fmap (.card.name) ownField `shouldBe` ["Edors Konstruct"]
@@ -48,10 +48,9 @@ withPlayer1Hand cardNames state =
       chosenCards = map lookupCard cardNames
    in state
         { players =
-            ( player1{hand = chosenCards, deck = []}
-            , player2{hand = [], deck = []}
+            ( player1{hand = chosenCards, deck = [], field = []}
+            , player2{hand = [], deck = [], field = []}
             )
-        , cardsInPlay = []
         }
 
 lookupCard :: String -> Card

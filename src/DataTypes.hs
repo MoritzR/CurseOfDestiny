@@ -225,9 +225,11 @@ data PlayerId = Player1 | Player2
 
 data Player = Player
   { name :: String
+  , playerId :: PlayerId
   , schicksalswesen :: Schicksalswesen
   , deck :: [Card]
   , hand :: [Card]
+  , field :: [CardInPlay]
   , graveyard :: [Card]
   , schicksalsmacht :: Int
   }
@@ -242,9 +244,7 @@ data CardInPlay = CardInPlay
   deriving (Eq, Show)
 
 data GameState = GameState
-  { players :: (Player, Player)
-  , cardsInPlay :: [CardInPlay]
-  , currentPlayer :: PlayerId
+  { players :: (Player, Player) -- current player is the first of this tuple
   , nextCardId :: Int
   }
   deriving (Eq, Show)
