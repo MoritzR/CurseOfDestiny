@@ -24,7 +24,7 @@ spec = do
       let ownField = cardsForPlayer Player1 state
           (player1, _) = state.players
       length ownField `shouldBe` 1
-      fmap (.name) player1.graveyard `shouldBe` ["Energieladung"]
+      fmap (.card.name) player1.graveyard `shouldBe` ["Energieladung"]
       fmap (.card.name) ownField `shouldBe` ["Edors Konstruct"]
       case ownField of
         [cardInPlay] -> creatureStrength cardInPlay `shouldBe` 3000
@@ -40,18 +40,22 @@ spec = do
       case ownField of
         [cardInPlay] -> creatureStrength cardInPlay `shouldBe` 4000
         _ -> expectationFailure "expected exactly one card on the field"
-      fmap (.name) player1.graveyard `shouldBe` ["Magiestein der Erdkraft"]
+      fmap (.card.name) player1.graveyard `shouldBe` ["Magiestein der Erdkraft"]
 
 withPlayer1Hand :: [String] -> GameState -> GameState
 withPlayer1Hand cardNames state =
   let (player1, player2) = state.players
-      chosenCards = map lookupCard cardNames
+      chosenCards = zipWith (cardInPlayFor Player1) [1000 ..] $ map lookupCard cardNames
    in state
         { players =
             ( player1{hand = chosenCards, deck = [], field = []}
             , player2{hand = [], deck = [], field = []}
             )
         }
+
+cardInPlayFor :: PlayerId -> Int -> Card -> CardInPlay
+cardInPlayFor owner idx card =
+  CardInPlay{id = show idx, owner = owner, card = card, modifications = []}
 
 lookupCard :: String -> Card
 lookupCard cardName =

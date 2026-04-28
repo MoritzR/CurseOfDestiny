@@ -226,10 +226,10 @@ data Player = Player
   { name :: String
   , playerId :: PlayerId
   , schicksalswesen :: Schicksalswesen
-  , deck :: [Card]
-  , hand :: [Card]
+  , deck :: [CardInPlay]
+  , hand :: [CardInPlay]
   , field :: [CardInPlay]
-  , graveyard :: [Card]
+  , graveyard :: [CardInPlay]
   , schicksalsmacht :: Int
   }
   deriving (Eq, Show)

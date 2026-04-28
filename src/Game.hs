@@ -20,8 +20,8 @@ import Prelude hiding (log)
 
 data LocatedCard
   = FieldCard CardInPlay
-  | HandCard PlayerId Int Card
-  | GraveyardCard PlayerId Int Card
+  | HandCard PlayerId Int CardInPlay
+  | GraveyardCard PlayerId Int CardInPlay
   deriving (Eq, Show)
 
 createPlayer :: PlayerId -> String -> Player
@@ -30,7 +30,7 @@ createPlayer pid playerName =
     { name = playerName
     , playerId = pid
     , schicksalswesen = PlatzhalterSchicksalswesen
-    , deck = series26
+    , deck = []
     , hand = []
     , field = []
     , graveyard = []
@@ -40,10 +40,7 @@ createPlayer pid playerName =
 initialGameState :: GameState
 initialGameState =
   drawOpeningHands $
-    GameState
-      { players = (createPlayer Player1 "player1", createPlayer Player2 "player2")
-      , nextCardId = 1
-      }
+    createInitialState
 
 playGame :: HasStateIO r => [GameAction] -> Eff r ()
 playGame = mapM_ resolveAction
@@ -64,6 +61,12 @@ gameOver = Gio.logLn' "k bye"
 
 type Game es a = HasStateIO es => Eff es a
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
+
+getGameState :: State GameState :> es => Eff es GameState
+getGameState = get
+
+getsGame :: State GameState :> es => (GameState -> a) -> Eff es a
+getsGame = gets
 
 currentPlayer :: GameState -> Player
 currentPlayer = fst . (.players)
@@ -127,13 +130,12 @@ playCardFromHand index = do
     Nothing ->
       Gio.logLn' "Keine Karte auf diesem Hand-Slot."
     Just card -> do
-      maybeSource <- case card.cardType of
-        Wesen _ _ -> Just <$> putCardOnField activePlayer card
-        MagieDauerhaft -> Just <$> putCardOnField activePlayer card
+      maybeSource <- case card.card.cardType of
+        Wesen _ _ -> Just <$> moveCardToField activePlayer card
+        MagieDauerhaft -> Just <$> moveCardToField activePlayer card
         _ -> pure Nothing
-      forM_ maybeSource do
-        runOnPlayTrigger card.trigger
-      case card.cardType of
+      runOnPlayTrigger card.card.trigger maybeSource
+      case card.card.cardType of
         Allmagie -> addToGraveyard activePlayer card
         Magie -> addToGraveyard activePlayer card
         Gegenmagie -> addToGraveyard activePlayer card
@@ -170,14 +172,14 @@ endRound = do
       }
   Gio.logLn' "Runde beendet."
 
-runOnPlayTrigger :: HasStateIO r => Trigger -> CardInPlay -> Eff r ()
-runOnPlayTrigger trigger source =
-  iterM (\instruction -> runPlayTriggerInstruction source instruction *> sequence_ instruction) trigger
+runOnPlayTrigger :: HasStateIO r => Trigger -> Maybe CardInPlay -> Eff r ()
+runOnPlayTrigger trigger maybeSource =
+  iterM (\instruction -> runPlayTriggerInstruction maybeSource instruction *> sequence_ instruction) trigger
 
-runPlayTriggerInstruction :: HasStateIO r => CardInPlay -> TriggerInstruction (Eff r ()) -> Eff r ()
-runPlayTriggerInstruction source = \case
+runPlayTriggerInstruction :: HasStateIO r => Maybe CardInPlay -> TriggerInstruction (Eff r ()) -> Eff r ()
+runPlayTriggerInstruction maybeSource = \case
   WennGespielt effect _ ->
-    runEffect (Just source.id) effect
+    runEffect ((.id) <$> maybeSource) effect
   _ ->
     pure ()
 
@@ -250,7 +252,7 @@ runEffect maybeSourceId = \case
       runEffect maybeSourceId next
     BringeInsSpiel card next -> do
       activePlayer <- gets currentPlayerId
-      _ <- putCardOnField activePlayer card
+      _ <- putNewCardOnField activePlayer card
       runEffect maybeSourceId next
     BringeInsSpielAusZiel ziel next -> do
       bringTargetIntoPlay maybeSourceId ziel
@@ -322,7 +324,7 @@ bringTargetIntoPlay maybeSourceId ziel = do
     (target : _) -> do
       activePlayer <- gets currentPlayerId
       maybeCard <- removeLocatedCard target
-      maybe (pure ()) (void . putCardOnField activePlayer) maybeCard
+      maybe (pure ()) (void . moveCardToField activePlayer) maybeCard
 
 copyTargetIntoPlay :: HasStateIO r => Maybe String -> Ziel -> Eff r ()
 copyTargetIntoPlay maybeSourceId ziel = do
@@ -330,7 +332,7 @@ copyTargetIntoPlay maybeSourceId ziel = do
   case targets of
     FieldCard fieldCard : _ -> do
       activePlayer <- gets currentPlayerId
-      void $ putCardOnField activePlayer fieldCard.card
+      void $ putNewCardOnField activePlayer fieldCard.card
     _ -> pure ()
 
 addAbilityToTargets :: HasStateIO r => Maybe String -> Ziel -> Dauer -> Eff r ()
@@ -351,7 +353,7 @@ readTopOfDeckValue n LesbarKosten = do
   activePlayer <- gets currentPlayerId
   player <- gets (playerById activePlayer)
   let topCards = take n player.deck
-  pure $ Actual $ sum (gesamtKosten . (.cost) <$> topCards)
+  pure $ Actual $ sum (gesamtKosten . (.card.cost) <$> topCards)
 
 readSchicksalsmächte :: HasStateIO r => SpielerZiel -> Eff r Anzahl
 readSchicksalsmächte spielerZiel = do
@@ -392,7 +394,7 @@ inspectTopOfDeck n instructions = do
   remainingCards <- runViewedInstructions activePlayer viewedCards instructions
   modifyPlayer activePlayer \current -> current{deck = remainingCards <> current.deck}
 
-runViewedInstructions :: HasStateIO r => PlayerId -> [Card] -> InstructionWhenViewingDeckF () -> Eff r [Card]
+runViewedInstructions :: HasStateIO r => PlayerId -> [CardInPlay] -> InstructionWhenViewingDeckF () -> Eff r [CardInPlay]
 runViewedInstructions _ viewedCards (Pure ()) = pure viewedCards
 runViewedInstructions playerId viewedCards (Free instruction) = case instruction of
   ZeigeVorUndNimmAufDieHand ziel next -> do
@@ -411,21 +413,21 @@ runViewedInstructions playerId viewedCards (Free instruction) = case instruction
       Just picked -> runViewedInstructions playerId viewedCards (options !! (picked - 1))
     runViewedInstructions playerId afterChoice next
 
-moveViewedCard :: HasStateIO r => [Card] -> Ziel -> (Card -> Eff r ()) -> Eff r [Card]
+moveViewedCard :: HasStateIO r => [CardInPlay] -> Ziel -> (CardInPlay -> Eff r ()) -> Eff r [CardInPlay]
 moveViewedCard viewedCards ziel onMove = do
   let options = filter (matchesViewedCard ziel) viewedCards
   case options of
     [] -> pure viewedCards
     [singleCard] -> do
       onMove singleCard
-      pure $ removeFirstByName singleCard.name viewedCards
+      pure $ removeFirstById singleCard.id viewedCards
     _ -> do
       choice <- Gio.chooseOne options
       case choice of
         Nothing -> pure viewedCards
         Just card -> do
           onMove card
-          pure $ removeFirstByName card.name viewedCards
+          pure $ removeFirstById card.id viewedCards
 
 selectTargets :: HasStateIO r => Maybe String -> Ziel -> Eff r [LocatedCard]
 selectTargets maybeSourceId ziel = do
@@ -484,6 +486,9 @@ typeMatches desc card
   | "Karte" `isInfixOf` desc || "Karten" `isInfixOf` desc = True
   | otherwise = True
 
+typeMatchesInPlay :: String -> CardInPlay -> Bool
+typeMatchesInPlay desc = typeMatches desc . (.card)
+
 costMatches :: String -> Card -> Bool
 costMatches desc card = case parseMaxCost desc of
   Nothing -> True
@@ -533,8 +538,8 @@ locatedCardOwner = \case
 locatedCardCard :: LocatedCard -> Card
 locatedCardCard = \case
   FieldCard cardInPlay -> cardInPlay.card
-  HandCard _ _ card -> card
-  GraveyardCard _ _ card -> card
+  HandCard _ _ card -> card.card
+  GraveyardCard _ _ card -> card.card
 
 fieldCardsForTarget :: GameState -> [LocatedCard]
 fieldCardsForTarget state = FieldCard <$> allFieldCards state
@@ -559,7 +564,7 @@ destroyLocatedCard :: HasStateIO r => LocatedCard -> Eff r ()
 destroyLocatedCard = \case
   FieldCard cardInPlay -> do
     removed <- removeFieldCard cardInPlay.id
-    maybe (pure ()) (\removedCard -> addToGraveyard removedCard.owner removedCard.card) removed
+    maybe (pure ()) (\removedCard -> addToGraveyard removedCard.owner removedCard) removed
   HandCard owner index _ -> do
     removed <- removeFromHand owner index
     maybe (pure ()) (addToGraveyard owner) removed
@@ -573,7 +578,7 @@ returnLocatedCardToHand :: HasStateIO r => LocatedCard -> Eff r ()
 returnLocatedCardToHand = \case
   FieldCard cardInPlay -> do
     removed <- removeFieldCard cardInPlay.id
-    maybe (pure ()) (\removedCard -> addToHand removedCard.owner removedCard.card) removed
+    maybe (pure ()) (\removedCard -> addToHand removedCard.owner removedCard) removed
   HandCard _ _ _ -> pure ()
   GraveyardCard owner index _ -> do
     removed <- removeFromGraveyard owner index
@@ -585,18 +590,28 @@ takeLocatedCardToCurrentHand locatedCard = do
   removed <- removeLocatedCard locatedCard
   maybe (pure ()) (addToHand activePlayer) removed
 
-removeLocatedCard :: HasStateIO r => LocatedCard -> Eff r (Maybe Card)
+removeLocatedCard :: HasStateIO r => LocatedCard -> Eff r (Maybe CardInPlay)
 removeLocatedCard = \case
-  FieldCard cardInPlay -> fmap (fmap (.card)) (removeFieldCard cardInPlay.id)
+  FieldCard cardInPlay -> removeFieldCard cardInPlay.id
   HandCard owner index _ -> removeFromHand owner index
   GraveyardCard owner index _ -> removeFromGraveyard owner index
 
-putCardOnField :: HasStateIO r => PlayerId -> Card -> Eff r CardInPlay
-putCardOnField owner card = do
-  (state :: GameState) <- get
-  let cardId = show state.nextCardId
-      cardInPlay = CardInPlay{id = cardId, owner = owner, card = card, modifications = []}
-  modify \current -> modifyPlayerPure owner (\player -> player{field = player.field <> [cardInPlay]}) current{nextCardId = current.nextCardId + 1}
+putNewCardOnField :: HasStateIO r => PlayerId -> Card -> Eff r CardInPlay
+putNewCardOnField owner card = do
+  newCard <- createCardInPlay owner card
+  moveCardToField owner newCard
+
+moveCardToField :: HasStateIO r => PlayerId -> CardInPlay -> Eff r CardInPlay
+moveCardToField owner cardInPlay = do
+  let movedCard = cardInPlay{owner = owner}
+  modifyPlayer owner \player -> player{field = player.field <> [movedCard]}
+  pure movedCard
+
+createCardInPlay :: HasStateIO r => PlayerId -> Card -> Eff r CardInPlay
+createCardInPlay owner card = do
+  state <- getGameState
+  let cardInPlay = CardInPlay{id = show state.nextCardId, owner = owner, card = card, modifications = []}
+  modify \current -> current{nextCardId = current.nextCardId + 1}
   pure cardInPlay
 
 modifyFieldCard :: HasStateIO r => String -> (CardInPlay -> CardInPlay) -> Eff r ()
@@ -614,7 +629,7 @@ removeFieldCard cardId = do
       current
   pure maybeCard
 
-removeFromHand :: HasStateIO r => PlayerId -> Int -> Eff r (Maybe Card)
+removeFromHand :: HasStateIO r => PlayerId -> Int -> Eff r (Maybe CardInPlay)
 removeFromHand owner index = do
   player <- gets (playerById owner)
   case removeAt index player.hand of
@@ -623,7 +638,7 @@ removeFromHand owner index = do
       modifyPlayer owner \current -> current{hand = remainingHand}
       pure $ Just card
 
-removeFromGraveyard :: HasStateIO r => PlayerId -> Int -> Eff r (Maybe Card)
+removeFromGraveyard :: HasStateIO r => PlayerId -> Int -> Eff r (Maybe CardInPlay)
 removeFromGraveyard owner index = do
   player <- gets (playerById owner)
   case removeAt index player.graveyard of
@@ -632,10 +647,10 @@ removeFromGraveyard owner index = do
       modifyPlayer owner \current -> current{graveyard = remainingGraveyard}
       pure $ Just card
 
-addToHand :: HasStateIO r => PlayerId -> Card -> Eff r ()
+addToHand :: HasStateIO r => PlayerId -> CardInPlay -> Eff r ()
 addToHand owner card = modifyPlayer owner \player -> player{hand = player.hand <> [card]}
 
-addToGraveyard :: HasStateIO r => PlayerId -> Card -> Eff r ()
+addToGraveyard :: HasStateIO r => PlayerId -> CardInPlay -> Eff r ()
 addToGraveyard owner card = modifyPlayer owner \player -> player{graveyard = player.graveyard <> [card]}
 
 drawCardsForCurrentPlayer :: HasStateIO r => Int -> Eff r ()
@@ -650,6 +665,18 @@ drawCardsForCurrentPlayer n = do
 
 drawOpeningHands :: GameState -> GameState
 drawOpeningHands = drawCardsPure Player2 5 . drawCardsPure Player1 5
+
+createInitialState :: GameState
+createInitialState =
+  let deck1 = zipWith (\n card -> CardInPlay{id = show n, owner = Player1, card = card, modifications = []}) [1 ..] series26
+      deck2 = zipWith (\n card -> CardInPlay{id = show n, owner = Player2, card = card, modifications = []}) [1 + length series26 ..] series26
+   in GameState
+        { players =
+            ( (createPlayer Player1 "player1"){deck = deck1}
+            , (createPlayer Player2 "player2"){deck = deck2}
+            )
+        , nextCardId = 1 + 2 * length series26
+        }
 
 drawCardsPure :: PlayerId -> Int -> GameState -> GameState
 drawCardsPure owner n state =
@@ -750,13 +777,13 @@ readMaybeInt value = case reads value of
   [(number, "")] -> Just number
   _ -> Nothing
 
-removeFirstByName :: String -> [Card] -> [Card]
-removeFirstByName nameToRemove = go
+removeFirstById :: String -> [CardInPlay] -> [CardInPlay]
+removeFirstById idToRemove = go
  where
   go [] = []
   go (card : rest)
-    | card.name == nameToRemove = rest
+    | card.id == idToRemove = rest
     | otherwise = card : go rest
 
-matchesViewedCard :: Ziel -> Card -> Bool
-matchesViewedCard ziel = typeMatches ziel.ziel.description
+matchesViewedCard :: Ziel -> CardInPlay -> Bool
+matchesViewedCard ziel = typeMatchesInPlay ziel.ziel.description
