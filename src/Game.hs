@@ -15,8 +15,8 @@ import Element (gesamtKosten)
 import GameActionParser (GameAction (..), parseGameAction)
 import GameEffects (ChoiceInput, CommandInput, Log, ignoreLog, readCommand, runChoiceInputConst)
 import GameIO qualified as Gio
-import Prelude hiding (log)
 import Target (ein, wesen)
+import Prelude hiding (log)
 
 data LocatedCard
   = FieldCard CardInPlay
@@ -594,7 +594,7 @@ putCardOnField :: HasStateIO r => PlayerId -> Card -> Eff r CardInPlay
 putCardOnField owner card = do
   (state :: GameState) <- get
   let cardId = show state.nextCardId
-      cardInPlay = CardInPlay{ id = cardId, owner = owner, card = card, modifications = [] }
+      cardInPlay = CardInPlay{id = cardId, owner = owner, card = card, modifications = []}
   modify \current -> modifyPlayerPure owner (\player -> player{field = player.field <> [cardInPlay]}) current{nextCardId = current.nextCardId + 1}
   pure cardInPlay
 
@@ -659,7 +659,8 @@ drawOnePure owner state = case (playerById owner state).deck of
   [] -> Nothing
   card : restDeck ->
     Just $
-      modifyPlayerPure owner
+      modifyPlayerPure
+        owner
         (\player -> player{deck = restDeck, hand = player.hand <> [card]})
         state
 
