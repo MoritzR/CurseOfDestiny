@@ -5,7 +5,7 @@ module Game where
 
 import Cards (series26)
 import Control.Monad (forM_, replicateM_, void)
-import Control.Monad.Free (Free (..))
+import Control.Monad.Free (Free (..), iterM)
 import Data.List (find, isInfixOf)
 import Data.Maybe (maybeToList)
 import DataTypes
@@ -170,20 +170,15 @@ endRound = do
   Gio.logLn' "Runde beendet."
 
 runOnPlayTrigger :: HasStateIO r => Maybe CardInPlay -> Trigger -> Eff r ()
-runOnPlayTrigger maybeSource = \case
-  Pure () -> pure ()
-  Free instruction -> case instruction of
-    WennGespielt effect next -> runEffect ((.id) <$> maybeSource) effect >> runOnPlayTrigger maybeSource next
-    AmEndeDerRunde _ next -> runOnPlayTrigger maybeSource next
-    AmBeginnDerRunde _ next -> runOnPlayTrigger maybeSource next
-    Zahle _ _ next -> runOnPlayTrigger maybeSource next
-    WennAufDemFeld _ next -> runOnPlayTrigger maybeSource next
-    EinmalProRunde _ next -> runOnPlayTrigger maybeSource next
-    BeimAngriff _ _ next -> runOnPlayTrigger maybeSource next
-    Blockierung next -> runOnPlayTrigger maybeSource next
-    Doppelzerstörung next -> runOnPlayTrigger maybeSource next
-    Lebensentzug next -> runOnPlayTrigger maybeSource next
-    KannNichtAbwehren next -> runOnPlayTrigger maybeSource next
+runOnPlayTrigger maybeSource =
+  iterM \instruction -> runPlayTriggerInstruction maybeSource instruction *> sequence_ instruction
+
+runPlayTriggerInstruction :: HasStateIO r => Maybe CardInPlay -> TriggerInstruction (Eff r ()) -> Eff r ()
+runPlayTriggerInstruction maybeSource = \case
+  WennGespielt effect _ ->
+    runEffect ((.id) <$> maybeSource) effect
+  _ ->
+    pure ()
 
 collectActivations :: Trigger -> [CardEffect]
 collectActivations = \case
