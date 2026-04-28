@@ -76,21 +76,20 @@ currentPlayerId = (.playerId) . currentPlayer
 
 gameLoop :: (CommandInput :> es, HasStateIO es) => Eff es ()
 gameLoop = do
-  activePlayer <- gets currentPlayerId
-  active <- gets (playerById activePlayer)
-  opponent <- gets (playerById $ otherPlayer activePlayer)
+  activePlayer <- gets currentPlayer
+  opponent <- gets opponentPlayer
 
-  Gio.logLn' $ "Am Zug: " <> active.name
+  Gio.logLn' $ "Am Zug: " <> activePlayer.name
   Gio.logLn' $ "Gegnerische Schicksalsmacht: " <> show opponent.schicksalsmacht
   Gio.logLn' "Enemy field:"
-  logField (otherPlayer activePlayer)
+  logField opponent
 
-  Gio.logLn' $ "Deine Schicksalsmacht: " <> show active.schicksalsmacht
+  Gio.logLn' $ "Deine Schicksalsmacht: " <> show activePlayer.schicksalsmacht
   Gio.logLn' "Your field:"
   logField activePlayer
 
   Gio.logLn' "Player Hand:"
-  logHand active
+  logHand activePlayer
 
   Gio.log' "Select action (pass/end/p/c/a/d): "
   inp <- readCommand
@@ -716,12 +715,11 @@ findFieldCardById cardId state = FieldCard <$> findRawFieldCardById cardId state
 cardsForPlayer :: PlayerId -> GameState -> [CardInPlay]
 cardsForPlayer owner state = (playerById owner state).field
 
-logField :: HasStateIO r => PlayerId -> Eff r ()
+logField :: HasStateIO r => Player -> Eff r ()
 logField owner = do
-  field <- gets \state -> (playerById owner state).field
-  if null field
+  if null owner.field
     then Gio.logLn' "  (empty)"
-    else Gio.displayEnumeratedItems $ renderFieldCard <$> field
+    else Gio.displayEnumeratedItems $ renderFieldCard <$> owner.field
 
 logHand :: HasStateIO r => Player -> Eff r ()
 logHand player =
