@@ -97,7 +97,7 @@ gameLoop = do
     then gameOver
     else do
       case parseGameAction inp of
-        Nothing -> Gio.logLn' "Ungueltige Eingabe."
+        Nothing -> Gio.logLn' "Ungültige Eingabe."
         Just action -> playGame [action]
       gameLoop
 
