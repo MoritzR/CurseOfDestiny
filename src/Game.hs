@@ -131,7 +131,8 @@ playCardFromHand index = do
         Wesen _ _ -> Just <$> putCardOnField activePlayer card
         MagieDauerhaft -> Just <$> putCardOnField activePlayer card
         _ -> pure Nothing
-      runOnPlayTrigger maybeSource card.trigger
+      forM_ maybeSource do
+        runOnPlayTrigger card.trigger
       case card.cardType of
         Allmagie -> addToGraveyard activePlayer card
         Magie -> addToGraveyard activePlayer card
@@ -169,14 +170,14 @@ endRound = do
       }
   Gio.logLn' "Runde beendet."
 
-runOnPlayTrigger :: HasStateIO r => Maybe CardInPlay -> Trigger -> Eff r ()
-runOnPlayTrigger maybeSource =
-  iterM \instruction -> runPlayTriggerInstruction maybeSource instruction *> sequence_ instruction
+runOnPlayTrigger :: HasStateIO r => Trigger -> CardInPlay -> Eff r ()
+runOnPlayTrigger trigger source =
+  iterM (\instruction -> runPlayTriggerInstruction source instruction *> sequence_ instruction) trigger
 
-runPlayTriggerInstruction :: HasStateIO r => Maybe CardInPlay -> TriggerInstruction (Eff r ()) -> Eff r ()
-runPlayTriggerInstruction maybeSource = \case
+runPlayTriggerInstruction :: HasStateIO r => CardInPlay -> TriggerInstruction (Eff r ()) -> Eff r ()
+runPlayTriggerInstruction source = \case
   WennGespielt effect _ ->
-    runEffect ((.id) <$> maybeSource) effect
+    runEffect (Just source.id) effect
   _ ->
     pure ()
 
