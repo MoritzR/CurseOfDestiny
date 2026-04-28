@@ -184,7 +184,6 @@ runOnPlayTrigger maybeSource = \case
     AmEndeDerRunde _ next -> runOnPlayTrigger maybeSource next
     AmBeginnDerRunde _ next -> runOnPlayTrigger maybeSource next
     Zahle _ _ next -> runOnPlayTrigger maybeSource next
-    ZahleText _ _ next -> runOnPlayTrigger maybeSource next
     WennAufDemFeld _ next -> runOnPlayTrigger maybeSource next
     EinmalProRunde _ next -> runOnPlayTrigger maybeSource next
     BeimAngriff _ _ next -> runOnPlayTrigger maybeSource next
@@ -198,7 +197,6 @@ collectActivations = \case
   Pure () -> []
   Free instruction -> case instruction of
     Zahle _ effect next -> effect : collectActivations next
-    ZahleText _ effect next -> effect : collectActivations next
     EinmalProRunde effect next -> effect : collectActivations next
     AmEndeDerRunde _ next -> collectActivations next
     AmBeginnDerRunde _ next -> collectActivations next

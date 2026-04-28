@@ -36,8 +36,6 @@ describeTriggerInstruction = \case
     ["Am Beginn der Runde: " <> describeEffectInline effect] <> next
   Zahle kosten effect next ->
     [describeKosten kosten <> ": " <> describeEffectInline effect] <> next
-  ZahleText text effect next ->
-    [text <> ": " <> describeEffectInline effect] <> next
   WennGespielt effect next ->
     ["Wenn diese Karte gespielt wird: " <> describeEffectInline effect] <> next
   WennAufDemFeld _ next ->

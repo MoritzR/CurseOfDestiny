@@ -133,7 +133,6 @@ data TriggerInstruction next
   = AmEndeDerRunde CardEffect next
   | AmBeginnDerRunde CardEffect next
   | Zahle Kosten CardEffect next
-  | ZahleText String CardEffect next
   | WennGespielt CardEffect next
   | WennAufDemFeld Aura next
   | EinmalProRunde CardEffect next
