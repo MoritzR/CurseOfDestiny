@@ -668,8 +668,8 @@ drawOpeningHands = drawCardsPure Player2 5 . drawCardsPure Player1 5
 
 createInitialState :: GameState
 createInitialState =
-  let deck1 = zipWith (\n card -> CardInPlay{id = show n, owner = Player1, card = card, modifications = []}) [1 ..] series26
-      deck2 = zipWith (\n card -> CardInPlay{id = show n, owner = Player2, card = card, modifications = []}) [1 + length series26 ..] series26
+  let deck1 = zipWith (\n card -> CardInPlay{id = "player1-" <> show (n :: Int), owner = Player1, card = card, modifications = []}) [1 ..] series26
+      deck2 = zipWith (\n card -> CardInPlay{id = "player2-" <> show (n :: Int), owner = Player2, card = card, modifications = []}) [1 ..] series26
    in GameState
         { players =
             ( (createPlayer Player1 "player1"){deck = deck1}
