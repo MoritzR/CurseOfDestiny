@@ -38,9 +38,18 @@ createPlayer pid playerName =
     }
 
 initialGameState :: GameState
-initialGameState =
-  drawOpeningHands $
-    createInitialState
+initialGameState = drawOpeningHands initialState
+ where
+  deck1 = zipWith (\n card -> CardInPlay{id = CardId n, owner = Player1, card = card, modifications = []}) [1 ..] series26
+  deck2 = zipWith (\n card -> CardInPlay{id = CardId n, owner = Player2, card = card, modifications = []}) [(last deck1).id.get + 1 ..] series26
+  initialState =
+    GameState
+      { players =
+          ( (createPlayer Player1 "player1"){deck = deck1}
+          , (createPlayer Player2 "player2"){deck = deck2}
+          )
+      , nextCardId = (last deck2).id.get
+      }
 
 playGame :: HasStateIO r => [GameAction] -> Eff r ()
 playGame = mapM_ resolveAction
@@ -665,18 +674,6 @@ drawCardsForCurrentPlayer n = do
 
 drawOpeningHands :: GameState -> GameState
 drawOpeningHands = drawCardsPure Player2 5 . drawCardsPure Player1 5
-
-createInitialState :: GameState
-createInitialState =
-  let deck1 = zipWith (\n card -> CardInPlay{id = CardId n, owner = Player1, card = card, modifications = []}) [1 ..] series26
-      deck2 = zipWith (\n card -> CardInPlay{id = CardId n, owner = Player2, card = card, modifications = []}) [(last deck1).id.get + 1 ..] series26
-   in GameState
-        { players =
-            ( (createPlayer Player1 "player1"){deck = deck1}
-            , (createPlayer Player2 "player2"){deck = deck2}
-            )
-        , nextCardId = (last deck2).id.get
-        }
 
 drawCardsPure :: PlayerId -> Int -> GameState -> GameState
 drawCardsPure owner n state =
