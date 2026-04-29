@@ -55,6 +55,8 @@ common common
       BlockArguments
       DuplicateRecordFields
       OverloadedLabels
+      NoFieldSelectors
+      OverloadedRecordDot
 
 library
   import: common
@@ -69,6 +71,7 @@ library
       Game
       GameActionParser
       GameEffects
+      GameState
       GameIO
       Interpreter.Descriptor
   other-modules:

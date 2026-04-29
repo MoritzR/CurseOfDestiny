@@ -7,6 +7,7 @@ import Data.List (find)
 import DataTypes
 import Game
 import GameActionParser (GameAction (..))
+import GameState (initialGameState)
 import Test.Hspec
 import GameEffects ( ignoreLog, runChoiceInputConst )
 import Effectful.State.Static.Local (execState)
@@ -17,14 +18,14 @@ spec :: Spec
 spec = do
   describe "Game state transitions" $ do
     it "starts with an opening hand drawn from the deck" do
-      let (player1, player2) = initialGameState.players
+      let (player1, player2) = (drawOpeningHands initialGameState).players
       length player1.hand `shouldBe` 5
       length player2.hand `shouldBe` 5
       length player1.deck `shouldBe` length series26 - 5
       length player2.deck `shouldBe` length series26 - 5
 
     it "buffs a played creature when a spell is played afterwards" do
-      state <- runGameActions 1 initialGameState [PlayFromHand 0, PlayFromHand 0]
+      state <- runGameActions 1 (drawOpeningHands initialGameState) [PlayFromHand 0, PlayFromHand 0]
       let ownField = cardsForPlayer Player1 state
           (player1, _) = state.players
       length ownField `shouldBe` 1
@@ -35,7 +36,7 @@ spec = do
         _ -> expectationFailure "expected exactly one card on the field"
 
     it "can activate a permanent card effect that sacrifices itself and buffs a creature" do
-      let state = withPlayer1Hand ["Edors Konstruct", "Magiestein der Erdkraft"] initialGameState
+      let state = withPlayer1Hand ["Edors Konstruct", "Magiestein der Erdkraft"] (drawOpeningHands initialGameState)
       finalState <- runGameActions 1 state [PlayFromHand 0, PlayFromHand 0, ActivateFromField 1]
       let ownField = cardsForPlayer Player1 finalState
           (player1, _) = finalState.players

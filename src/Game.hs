@@ -1,21 +1,19 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Game where
 
-import Cards (series26)
 import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), iterM)
-import Data.Function ((&))
 import Data.List (find, isInfixOf)
 import Data.Maybe (maybeToList)
 import DataTypes
-import Effectful (Eff, IOE, runEff, (:>))
-import Effectful.State.Static.Local (State, evalState, execState, get, gets, modify)
+import Effectful (Eff, IOE, (:>))
+import Effectful.State.Static.Local (State, evalState, get, gets, modify)
 import Element (gesamtKosten)
 import GameActionParser (GameAction (..), parseGameAction)
-import GameEffects (ChoiceInput, CommandInput, Log, ignoreLog, readCommand, runChoiceInputConst)
+import GameEffects (ChoiceInput, CommandInput, Log, readCommand)
 import GameIO qualified as Gio
+import GameState (currentPlayer, getGameState, initialGameState, opponentPlayer)
 import Target (ein, wesen)
 import Prelude hiding (log)
 
@@ -25,33 +23,6 @@ data LocatedCard
   | GraveyardCard PlayerId Int CardInPlay
   deriving (Eq, Show)
 
-createPlayer :: PlayerId -> String -> Player
-createPlayer pid playerName =
-  Player
-    { name = playerName
-    , playerId = pid
-    , schicksalswesen = PlatzhalterSchicksalswesen
-    , deck = []
-    , hand = []
-    , field = []
-    , graveyard = []
-    , schicksalsmacht = 0
-    }
-
-initialGameState :: GameState
-initialGameState = drawOpeningHands initialState
- where
-  deck1 = zipWith (\n card -> CardInPlay{id = CardId n, owner = Player1, card = card, modifications = []}) [1 ..] series26
-  deck2 = zipWith (\n card -> CardInPlay{id = CardId n, owner = Player2, card = card, modifications = []}) [(last deck1).id.get + 1 ..] series26
-  initialState =
-    GameState
-      { players =
-          ( (createPlayer Player1 "player1"){deck = deck1}
-          , (createPlayer Player2 "player2"){deck = deck2}
-          )
-      , nextCardId = (last deck2).id.get
-      }
-
 playGame :: HasStateIO r => [GameAction] -> Eff r ()
 playGame = mapM_ resolveAction
 
@@ -60,18 +31,6 @@ creatureStrength cardInPlay = baseStrength cardInPlay.card + sum (strengthDelta 
 
 type Game es a = HasStateIO es => Eff es a
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
-
-getGameState :: State GameState :> es => Eff es GameState
-getGameState = get
-
-getsGame :: State GameState :> es => (GameState -> a) -> Eff es a
-getsGame = gets
-
-currentPlayer :: GameState -> Player
-currentPlayer = fst . (.players)
-
-opponentPlayer :: GameState -> Player
-opponentPlayer = snd . (.players)
 
 gameLoop :: (CommandInput :> es, HasStateIO es) => Eff es ()
 gameLoop = do
@@ -103,7 +62,7 @@ gameLoop = do
   gameOver = Gio.logLn' "k bye"
 
 startGame :: (IOE :> es, CommandInput :> es, ChoiceInput :> es, Log :> es) => Eff es ()
-startGame = evalState initialGameState gameLoop
+startGame = evalState (drawOpeningHands initialGameState) gameLoop
 
 resolveAction :: HasStateIO r => GameAction -> Eff r ()
 resolveAction = \case
