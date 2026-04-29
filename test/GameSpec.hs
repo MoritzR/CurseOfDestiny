@@ -8,6 +8,10 @@ import DataTypes
 import Game
 import GameActionParser (GameAction (..))
 import Test.Hspec
+import GameEffects ( ignoreLog, runChoiceInputConst )
+import Effectful.State.Static.Local (execState)
+import Effectful (runEff)
+import Data.Function ((&))
 
 spec :: Spec
 spec = do
@@ -62,3 +66,12 @@ lookupCard cardName =
   case find ((== cardName) . (.name)) series26 of
     Just card -> card
     Nothing -> error $ "unknown card: " <> cardName
+
+runGameActions :: Int -> GameState -> [GameAction] -> IO GameState
+runGameActions firstChoice gameState actions =
+  playGame actions
+    & ignoreLog
+    & runChoiceInputConst firstChoice
+    & execState gameState
+    & runEff
+

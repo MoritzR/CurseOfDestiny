@@ -6,6 +6,7 @@ module Game where
 import Cards (series26)
 import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), iterM)
+import Data.Function ((&))
 import Data.List (find, isInfixOf)
 import Data.Maybe (maybeToList)
 import DataTypes
@@ -53,14 +54,6 @@ initialGameState = drawOpeningHands initialState
 
 playGame :: HasStateIO r => [GameAction] -> Eff r ()
 playGame = mapM_ resolveAction
-
-runGameActions :: Int -> GameState -> [GameAction] -> IO GameState
-runGameActions firstChoice gameState actions =
-  runEff $
-    execState gameState $
-      runChoiceInputConst firstChoice $
-        ignoreLog $
-          playGame actions
 
 creatureStrength :: CardInPlay -> Int
 creatureStrength cardInPlay = baseStrength cardInPlay.card + sum (strengthDelta <$> cardInPlay.modifications)
