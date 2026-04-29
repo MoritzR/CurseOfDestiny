@@ -5,7 +5,7 @@ module Game where
 import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), iterM)
 import Data.List (find, isInfixOf)
-import Data.Maybe (maybeToList)
+import Data.Maybe (listToMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, IOE, (:>))
 import Effectful.State.Static.Local (State, evalState, get, gets, modify)
@@ -87,11 +87,11 @@ playCardFromHand index = do
     Nothing ->
       Gio.logLn' "Keine Karte auf diesem Hand-Slot."
     Just card -> do
-      maybeSource <- case card.card.cardType of
-        Wesen _ _ -> Just <$> moveCardToField activePlayer card
-        MagieDauerhaft -> Just <$> moveCardToField activePlayer card
-        _ -> pure Nothing
-      runOnPlayTrigger card.card.trigger maybeSource
+      case card.card.cardType of
+        Wesen _ _ -> void $ moveCardToField activePlayer card
+        MagieDauerhaft -> void $ moveCardToField activePlayer card
+        _ -> pure ()
+      runOnPlayTrigger card.card.trigger card
       case card.card.cardType of
         Allmagie -> addToGraveyard activePlayer.playerId card
         Magie -> addToGraveyard activePlayer.playerId card
@@ -110,11 +110,11 @@ activateCardOnField index = do
         [] ->
           Gio.logLn' "Diese Karte hat keine aktivierbaren Effekte."
         [activation] ->
-          runEffect (Just source.id) activation
+          runEffect source.id activation
         _ -> do
           Gio.logLn' "Waehle einen Effekt:"
           choice <- Gio.chooseOne [1 .. length activations]
-          maybe (pure ()) (\picked -> runEffect (Just source.id) (activations !! (picked - 1))) choice
+          maybe (pure ()) (\picked -> runEffect source.id (activations !! (picked - 1))) choice
 
 endRound :: HasStateIO r => Eff r ()
 endRound = do
@@ -128,16 +128,14 @@ endRound = do
       }
   Gio.logLn' "Runde beendet."
 
-runOnPlayTrigger :: HasStateIO r => Trigger -> Maybe CardInPlay -> Eff r ()
+runOnPlayTrigger :: HasStateIO r => Trigger -> CardInPlay -> Eff r ()
 runOnPlayTrigger trigger maybeSource =
   iterM (\instruction -> runPlayTriggerInstruction maybeSource instruction *> sequence_ instruction) trigger
 
-runPlayTriggerInstruction :: HasStateIO r => Maybe CardInPlay -> TriggerInstruction (Eff r ()) -> Eff r ()
-runPlayTriggerInstruction maybeSource = \case
-  WennGespielt effect _ ->
-    runEffect ((.id) <$> maybeSource) effect
-  _ ->
-    pure ()
+runPlayTriggerInstruction :: HasStateIO r => CardInPlay -> TriggerInstruction (Eff r ()) -> Eff r ()
+runPlayTriggerInstruction source = \case
+  WennGespielt effect _ -> runEffect source.id effect
+  _ -> pure ()
 
 collectActivations :: Trigger -> [CardEffect]
 collectActivations = \case
@@ -155,96 +153,96 @@ collectActivations = \case
     Lebensentzug next -> collectActivations next
     KannNichtAbwehren next -> collectActivations next
 
-runEffect :: HasStateIO r => Maybe CardId -> CardEffect -> Eff r ()
-runEffect maybeSourceId = \case
+runEffect :: HasStateIO r => CardId -> CardEffect -> Eff r ()
+runEffect sourceId = \case
   Pure () -> pure ()
   Free instruction -> case instruction of
     Ziehe anzahl next -> do
       drawCardsForCurrentPlayer (anzahlToInt anzahl)
-      runEffect maybeSourceId next
+      runEffect sourceId next
     Erhöhe wert ziel dauer höhe next -> do
-      increaseValue maybeSourceId wert ziel dauer (anzahlToInt höhe)
-      runEffect maybeSourceId next
+      increaseValue sourceId wert ziel dauer (anzahlToInt höhe)
+      runEffect sourceId next
     Vision _ next ->
-      runEffect maybeSourceId next
+      runEffect sourceId next
     Prisma effectForX next -> do
-      runEffect maybeSourceId (effectForX 0)
-      runEffect maybeSourceId next
+      runEffect sourceId (effectForX 0)
+      runEffect sourceId next
     Spende _ _ next ->
-      runEffect maybeSourceId next
+      runEffect sourceId next
     WähleAus options effectForOption next -> do
       choice <- Gio.chooseOne options
-      maybe (pure ()) (runEffect maybeSourceId . effectForOption) choice
-      runEffect maybeSourceId next
+      maybe (pure ()) (runEffect sourceId . effectForOption) choice
+      runEffect sourceId next
     WähleEffekt effects next -> do
       choice <- Gio.chooseOne [1 .. length effects]
-      maybe (pure ()) (\picked -> runEffect maybeSourceId (effects !! (picked - 1))) choice
-      runEffect maybeSourceId next
+      maybe (pure ()) (\picked -> runEffect sourceId (effects !! (picked - 1))) choice
+      runEffect sourceId next
     Opfere ziel next -> do
-      sacrificeTargets maybeSourceId ziel
-      runEffect maybeSourceId next
+      sacrificeTargets sourceId ziel
+      runEffect sourceId next
     Heile anzahl next -> do
       modifyCurrentPlayer \player -> player{schicksalsmacht = player.schicksalsmacht + anzahlToInt anzahl}
-      runEffect maybeSourceId next
+      runEffect sourceId next
     GibAufDieHandZurück ziel next -> do
-      bounceTargets maybeSourceId ziel
-      runEffect maybeSourceId next
+      bounceTargets sourceId ziel
+      runEffect sourceId next
     Zerstöre ziel next -> do
-      destroyTargets maybeSourceId ziel
-      runEffect maybeSourceId next
+      destroyTargets sourceId ziel
+      runEffect sourceId next
     Verringere wert ziel dauer höhe next -> do
-      increaseValue maybeSourceId wert ziel dauer (negate $ anzahlToInt höhe)
-      runEffect maybeSourceId next
+      increaseValue sourceId wert ziel dauer (negate $ anzahlToInt höhe)
+      runEffect sourceId next
     VerringereUndZerstöre ziel dauer höhe next -> do
-      increaseValue maybeSourceId Stärke ziel dauer (negate $ anzahlToInt höhe)
+      increaseValue sourceId Stärke ziel dauer (negate $ anzahlToInt höhe)
       destroyDeadCreatures
-      runEffect maybeSourceId next
+      runEffect sourceId next
     NimmAufDieHand ziel next -> do
-      takeTargetsToHand maybeSourceId ziel
-      runEffect maybeSourceId next
+      takeTargetsToHand sourceId ziel
+      runEffect sourceId next
     ZeigeObenVomDeck anzahl lesbarerWert effectForX next -> do
       value <- readTopOfDeckValue (anzahlToInt anzahl) lesbarerWert
-      runEffect maybeSourceId (effectForX value)
-      runEffect maybeSourceId next
+      runEffect sourceId (effectForX value)
+      runEffect sourceId next
     BringeInsSpiel card next -> do
       activePlayer <- gets currentPlayer
       _ <- putNewCardOnField activePlayer card
-      runEffect maybeSourceId next
+      runEffect sourceId next
     BringeInsSpielAusZiel ziel next -> do
-      bringTargetIntoPlay maybeSourceId ziel
-      runEffect maybeSourceId next
+      bringTargetIntoPlay sourceId ziel
+      runEffect sourceId next
     GibFähigkeit ziel dauer _ next -> do
-      addAbilityToTargets maybeSourceId ziel dauer
-      runEffect maybeSourceId next
+      addAbilityToTargets sourceId ziel dauer
+      runEffect sourceId next
     EinSpielerOpfertEinWesen next -> do
-      sacrificeTargets maybeSourceId (ein wesen)
-      runEffect maybeSourceId next
+      sacrificeTargets sourceId (ein wesen)
+      runEffect sourceId next
     AnzahlVon ziel effectForAmount next -> do
-      amount <- countTargets maybeSourceId ziel
-      runEffect maybeSourceId (effectForAmount amount)
-      runEffect maybeSourceId next
+      amount <- countTargets sourceId ziel
+      runEffect sourceId (effectForAmount amount)
+      runEffect sourceId next
     WirfAb anzahl _ next -> do
       discardFromCurrentHand (anzahlToInt anzahl)
-      runEffect maybeSourceId next
+      runEffect sourceId next
     LegeVomDeckAufDenFriedhof anzahl _ next -> do
       millCurrentDeck (anzahlToInt anzahl)
-      runEffect maybeSourceId next
+      runEffect sourceId next
     SchaueObenVomDeck anzahl instructions next -> do
       inspectTopOfDeck (anzahlToInt anzahl) instructions
-      runEffect maybeSourceId next
+      runEffect sourceId next
     SiehHandkartenAnUndEntferneEineAusDemSpiel next ->
-      runEffect maybeSourceId next
+      runEffect sourceId next
     BringeKopieInsSpiel ziel next -> do
-      copyTargetIntoPlay maybeSourceId ziel
-      runEffect maybeSourceId next
+      copyTargetIntoPlay sourceId ziel
+      runEffect sourceId next
     AnzahlSchicksalsMächte spielerZiel effectForAmount next -> do
       amount <- readSchicksalsmächte spielerZiel
-      runEffect maybeSourceId (effectForAmount amount)
-      runEffect maybeSourceId next
+      runEffect sourceId (effectForAmount amount)
+      runEffect sourceId next
 
-increaseValue :: HasStateIO r => Maybe CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
-increaseValue maybeSourceId Stärke ziel dauer delta = do
-  targets <- selectTargets maybeSourceId ziel
+increaseValue :: HasStateIO r => CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
+increaseValue sourceId Stärke ziel dauer delta = do
+  targets <- selectTargets sourceId ziel
   forM_ targets \case
     FieldCard fieldCard ->
       modifyFieldCard fieldCard.id \cardInPlay ->
@@ -252,29 +250,29 @@ increaseValue maybeSourceId Stärke ziel dauer delta = do
     _ ->
       pure ()
 
-sacrificeTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
-sacrificeTargets maybeSourceId ziel = do
-  targets <- selectTargets maybeSourceId ziel
+sacrificeTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
+sacrificeTargets sourceId ziel = do
+  targets <- selectTargets sourceId ziel
   mapM_ sacrificeLocatedCard targets
 
-destroyTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
-destroyTargets maybeSourceId ziel = do
-  targets <- selectTargets maybeSourceId ziel
+destroyTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
+destroyTargets sourceId ziel = do
+  targets <- selectTargets sourceId ziel
   mapM_ destroyLocatedCard targets
 
-bounceTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
-bounceTargets maybeSourceId ziel = do
-  targets <- selectTargets maybeSourceId ziel
+bounceTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
+bounceTargets sourceId ziel = do
+  targets <- selectTargets sourceId ziel
   mapM_ returnLocatedCardToHand targets
 
-takeTargetsToHand :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
-takeTargetsToHand maybeSourceId ziel = do
-  targets <- selectTargets maybeSourceId ziel
+takeTargetsToHand :: HasStateIO r => CardId -> Ziel -> Eff r ()
+takeTargetsToHand sourceId ziel = do
+  targets <- selectTargets sourceId ziel
   mapM_ takeLocatedCardToCurrentHand targets
 
-bringTargetIntoPlay :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
-bringTargetIntoPlay maybeSourceId ziel = do
-  targets <- selectTargets maybeSourceId ziel
+bringTargetIntoPlay :: HasStateIO r => CardId -> Ziel -> Eff r ()
+bringTargetIntoPlay sourceId ziel = do
+  targets <- selectTargets sourceId ziel
   case targets of
     [] -> pure ()
     (target : _) -> do
@@ -282,18 +280,18 @@ bringTargetIntoPlay maybeSourceId ziel = do
       maybeCard <- removeLocatedCard target
       maybe (pure ()) (void . moveCardToField activePlayer) maybeCard
 
-copyTargetIntoPlay :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
-copyTargetIntoPlay maybeSourceId ziel = do
-  targets <- selectTargets maybeSourceId ziel
+copyTargetIntoPlay :: HasStateIO r => CardId -> Ziel -> Eff r ()
+copyTargetIntoPlay sourceId ziel = do
+  targets <- selectTargets sourceId ziel
   case targets of
     FieldCard fieldCard : _ -> do
       activePlayer <- gets currentPlayer
       void $ putNewCardOnField activePlayer fieldCard.card
     _ -> pure ()
 
-addAbilityToTargets :: HasStateIO r => Maybe CardId -> Ziel -> Dauer -> Eff r ()
-addAbilityToTargets maybeSourceId ziel dauer = do
-  targets <- selectTargets maybeSourceId ziel
+addAbilityToTargets :: HasStateIO r => CardId -> Ziel -> Dauer -> Eff r ()
+addAbilityToTargets sourceId ziel dauer = do
+  targets <- selectTargets sourceId ziel
   forM_ targets \case
     FieldCard fieldCard ->
       modifyFieldCard fieldCard.id \cardInPlay ->
@@ -301,8 +299,8 @@ addAbilityToTargets maybeSourceId ziel dauer = do
     _ ->
       pure ()
 
-countTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r Anzahl
-countTargets maybeSourceId ziel = Actual . length <$> selectableTargets maybeSourceId ziel
+countTargets :: HasStateIO r => CardId -> Ziel -> Eff r Anzahl
+countTargets sourceId ziel = Actual . length <$> selectableTargets sourceId ziel
 
 readTopOfDeckValue :: HasStateIO r => Int -> LesbarerWert -> Eff r Anzahl
 readTopOfDeckValue n LesbarKosten = do
@@ -381,9 +379,9 @@ moveViewedCard viewedCards ziel onMove = do
           onMove card
           pure $ removeFirstById card.id viewedCards
 
-selectTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r [LocatedCard]
-selectTargets maybeSourceId ziel = do
-  choices <- selectableTargets maybeSourceId ziel
+selectTargets :: HasStateIO r => CardId -> Ziel -> Eff r [LocatedCard]
+selectTargets sourceId ziel = do
+  choices <- selectableTargets sourceId ziel
   case ziel.anzahl of
     Alle -> pure choices
     _ -> do
@@ -392,15 +390,15 @@ selectTargets maybeSourceId ziel = do
         [singleChoice] -> pure [singleChoice]
         _ -> maybeToList <$> Gio.chooseOne choices
 
-selectableTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r [LocatedCard]
-selectableTargets maybeSourceId ziel = do
+selectableTargets :: HasStateIO r => CardId -> Ziel -> Eff r [LocatedCard]
+selectableTargets sourceId ziel = do
   state <- get
   let activePlayer = currentPlayer state
       desc = ziel.ziel.description
       candidates = case () of
         _
           | desc == "diese Karte" ->
-              maybe [] (\sourceId -> maybeToList $ findFieldCardById sourceId state) maybeSourceId
+              maybeToList $ findFieldCardById sourceId state
           | "auf dem Friedhof" `isInfixOf` desc ->
               graveyardCardsForTarget activePlayer.playerId state
           | "auf der Hand" `isInfixOf` desc ->
