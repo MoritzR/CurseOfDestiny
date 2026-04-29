@@ -11,7 +11,7 @@ module Interpreter.Game (
 ) where
 
 import Control.Monad (forM_, replicateM_, void)
-import Control.Monad.Free (Free (..), iterM)
+import Control.Monad.Free (Free (..), iterM, foldFree)
 import Data.List (find, isInfixOf)
 import Data.Maybe (maybeToList)
 import DataTypes
@@ -95,92 +95,94 @@ collectActivations = \case
     Lebensentzug next -> collectActivations next
     KannNichtAbwehren next -> collectActivations next
 
+
 runEffect :: HasStateIO r => CardId -> CardEffect -> Eff r ()
-runEffect sourceId = \case
-  Pure () -> pure ()
-  Free instruction -> case instruction of
-    Ziehe anzahl next -> do
-      drawCardsForCurrentPlayer (anzahlToInt anzahl)
-      runEffect sourceId next
-    Erhöhe wert ziel dauer höhe next -> do
-      increaseValue sourceId wert ziel dauer (anzahlToInt höhe)
-      runEffect sourceId next
-    Vision _ next ->
-      runEffect sourceId next
-    Prisma effectForX next -> do
-      runEffect sourceId (effectForX 0)
-      runEffect sourceId next
-    Spende _ _ next ->
-      runEffect sourceId next
-    WähleAus options effectForOption next -> do
-      choice <- Gio.chooseOne options
-      maybe (pure ()) (runEffect sourceId . effectForOption) choice
-      runEffect sourceId next
-    WähleEffekt effects next -> do
-      choice <- Gio.chooseOne [1 .. length effects]
-      maybe (pure ()) (\picked -> runEffect sourceId (effects !! (picked - 1))) choice
-      runEffect sourceId next
-    Opfere ziel next -> do
-      sacrificeTargets sourceId ziel
-      runEffect sourceId next
-    Heile anzahl next -> do
-      modifyCurrentPlayer \player -> player{schicksalsmacht = player.schicksalsmacht + anzahlToInt anzahl}
-      runEffect sourceId next
-    GibAufDieHandZurück ziel next -> do
-      bounceTargets sourceId ziel
-      runEffect sourceId next
-    Zerstöre ziel next -> do
-      destroyTargets sourceId ziel
-      runEffect sourceId next
-    Verringere wert ziel dauer höhe next -> do
-      increaseValue sourceId wert ziel dauer (negate $ anzahlToInt höhe)
-      runEffect sourceId next
-    VerringereUndZerstöre ziel dauer höhe next -> do
-      increaseValue sourceId Stärke ziel dauer (negate $ anzahlToInt höhe)
-      destroyDeadCreatures
-      runEffect sourceId next
-    NimmAufDieHand ziel next -> do
-      takeTargetsToHand sourceId ziel
-      runEffect sourceId next
-    ZeigeObenVomDeck anzahl lesbarerWert effectForX next -> do
-      value <- readTopOfDeckValue (anzahlToInt anzahl) lesbarerWert
-      runEffect sourceId (effectForX value)
-      runEffect sourceId next
-    BringeInsSpiel card next -> do
-      activePlayer <- gets currentPlayer
-      _ <- putNewCardOnField activePlayer card
-      runEffect sourceId next
-    BringeInsSpielAusZiel ziel next -> do
-      bringTargetIntoPlay sourceId ziel
-      runEffect sourceId next
-    GibFähigkeit ziel dauer _ next -> do
-      addAbilityToTargets sourceId ziel dauer
-      runEffect sourceId next
-    EinSpielerOpfertEinWesen next -> do
-      sacrificeTargets sourceId (ein wesen)
-      runEffect sourceId next
-    AnzahlVon ziel effectForAmount next -> do
-      amount <- countTargets sourceId ziel
-      runEffect sourceId (effectForAmount amount)
-      runEffect sourceId next
-    WirfAb anzahl _ next -> do
-      discardFromCurrentHand (anzahlToInt anzahl)
-      runEffect sourceId next
-    LegeVomDeckAufDenFriedhof anzahl _ next -> do
-      millCurrentDeck (anzahlToInt anzahl)
-      runEffect sourceId next
-    SchaueObenVomDeck anzahl instructions next -> do
-      inspectTopOfDeck (anzahlToInt anzahl) instructions
-      runEffect sourceId next
-    SiehHandkartenAnUndEntferneEineAusDemSpiel next ->
-      runEffect sourceId next
-    BringeKopieInsSpiel ziel next -> do
-      copyTargetIntoPlay sourceId ziel
-      runEffect sourceId next
-    AnzahlSchicksalsMächte spielerZiel effectForAmount next -> do
-      amount <- readSchicksalsmächte spielerZiel
-      runEffect sourceId (effectForAmount amount)
-      runEffect sourceId next
+runEffect sourceId = foldFree (runInstruction sourceId)
+
+runInstruction :: HasStateIO r => CardId -> Instruction a -> Eff r a
+runInstruction sourceId = \case
+  Ziehe anzahl next -> do
+    drawCardsForCurrentPlayer (anzahlToInt anzahl)
+    pure next
+  Erhöhe wert ziel dauer höhe next -> do
+    increaseValue sourceId wert ziel dauer (anzahlToInt höhe)
+    pure next
+  Vision _ next ->
+    pure next
+  Prisma effectForX next -> do
+    runEffect sourceId (effectForX 0)
+    pure next
+  Spende _ _ next ->
+    pure next
+  WähleAus options effectForOption next -> do
+    choice <- Gio.chooseOne options
+    maybe (pure ()) (runEffect sourceId . effectForOption) choice
+    pure next
+  WähleEffekt effects next -> do
+    choice <- Gio.chooseOne [1 .. length effects]
+    maybe (pure ()) (\picked -> runEffect sourceId (effects !! (picked - 1))) choice
+    pure next
+  Opfere ziel next -> do
+    sacrificeTargets sourceId ziel
+    pure next
+  Heile anzahl next -> do
+    modifyCurrentPlayer \player -> player{schicksalsmacht = player.schicksalsmacht + anzahlToInt anzahl}
+    pure next
+  GibAufDieHandZurück ziel next -> do
+    bounceTargets sourceId ziel
+    pure next
+  Zerstöre ziel next -> do
+    destroyTargets sourceId ziel
+    pure next
+  Verringere wert ziel dauer höhe next -> do
+    increaseValue sourceId wert ziel dauer (negate $ anzahlToInt höhe)
+    pure next
+  VerringereUndZerstöre ziel dauer höhe next -> do
+    increaseValue sourceId Stärke ziel dauer (negate $ anzahlToInt höhe)
+    destroyDeadCreatures
+    pure next
+  NimmAufDieHand ziel next -> do
+    takeTargetsToHand sourceId ziel
+    pure next
+  ZeigeObenVomDeck anzahl lesbarerWert effectForX next -> do
+    value <- readTopOfDeckValue (anzahlToInt anzahl) lesbarerWert
+    runEffect sourceId (effectForX value)
+    pure next
+  BringeInsSpiel card next -> do
+    activePlayer <- gets currentPlayer
+    _ <- putNewCardOnField activePlayer card
+    pure next
+  BringeInsSpielAusZiel ziel next -> do
+    bringTargetIntoPlay sourceId ziel
+    pure next
+  GibFähigkeit ziel dauer _ next -> do
+    addAbilityToTargets sourceId ziel dauer
+    pure next
+  EinSpielerOpfertEinWesen next -> do
+    sacrificeTargets sourceId (ein wesen)
+    pure next
+  AnzahlVon ziel effectForAmount next -> do
+    amount <- countTargets sourceId ziel
+    runEffect sourceId (effectForAmount amount)
+    pure next
+  WirfAb anzahl _ next -> do
+    discardFromCurrentHand (anzahlToInt anzahl)
+    pure next
+  LegeVomDeckAufDenFriedhof anzahl _ next -> do
+    millCurrentDeck (anzahlToInt anzahl)
+    pure next
+  SchaueObenVomDeck anzahl instructions next -> do
+    inspectTopOfDeck (anzahlToInt anzahl) instructions
+    pure next
+  SiehHandkartenAnUndEntferneEineAusDemSpiel next ->
+    pure next
+  BringeKopieInsSpiel ziel next -> do
+    copyTargetIntoPlay sourceId ziel
+    pure next
+  AnzahlSchicksalsMächte spielerZiel effectForAmount next -> do
+    amount <- readSchicksalsmächte spielerZiel
+    runEffect sourceId (effectForAmount amount)
+    pure next
 
 increaseValue :: HasStateIO r => CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
 increaseValue sourceId Stärke ziel dauer delta = do
