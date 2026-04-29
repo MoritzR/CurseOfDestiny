@@ -42,16 +42,15 @@ playCardFromHand index = do
     Nothing ->
       Gio.logLn' "Keine Karte auf diesem Hand-Slot."
     Just card -> do
-      case card.card.cardType of
-        Wesen _ _ -> void $ moveCardToField activePlayer card
-        MagieDauerhaft -> void $ moveCardToField activePlayer card
-        _ -> pure ()
       runOnPlayTrigger card.card.trigger card
-      case card.card.cardType of
-        Allmagie -> addToGraveyard activePlayer.playerId card
-        Magie -> addToGraveyard activePlayer.playerId card
-        Gegenmagie -> addToGraveyard activePlayer.playerId card
-        _ -> pure ()
+      if isPermanent card.card.cardType
+        then void $ moveCardToField activePlayer card
+        else addToGraveyard activePlayer.playerId card
+
+isPermanent :: CardType -> Bool
+isPermanent = \case
+  Wesen{}; MagieDauerhaft -> True
+  Magie; Allmagie; Gegenmagie -> False
 
 activateCardOnField :: HasStateIO r => Int -> Eff r ()
 activateCardOnField index = do
@@ -394,9 +393,9 @@ parseMaxCost desc =
 
 removeTemporaryModifications :: CardInPlay -> CardInPlay
 removeTemporaryModifications cardInPlay =
-  cardInPlay{modifications = filter isPermanent cardInPlay.modifications}
+  cardInPlay{modifications = filter isPermanentModification cardInPlay.modifications}
  where
-  isPermanent = \case
+  isPermanentModification = \case
     StärkeModifikation Dauerhaft _ -> True
     FähigkeitsModifikation Dauerhaft -> True
     _ -> False
