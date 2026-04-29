@@ -13,8 +13,8 @@ module Interpreter.Game (
 import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
-import Data.List (find, isInfixOf)
-import Data.Maybe (maybeToList)
+import Data.List (isInfixOf)
+import Data.Maybe (listToMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, get, gets, modify)
@@ -27,7 +27,7 @@ import Target (ein, wesen)
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
 
 data LocatedCard
-  = FieldCard CardInPlay
+  = FieldCard PlayerId CardInPlay
   | HandCard PlayerId CardInPlay
   | GraveyardCard PlayerId CardInPlay
   deriving (Eq, Show)
@@ -180,7 +180,7 @@ increaseValue :: HasStateIO r => CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r
 increaseValue sourceId Stärke ziel dauer delta = do
   targets <- selectTargets sourceId ziel
   forM_ targets \case
-    FieldCard fieldCard ->
+    FieldCard _ fieldCard ->
       modifyFieldCard fieldCard.id \cardInPlay ->
         cardInPlay{modifications = cardInPlay.modifications <> [StärkeModifikation dauer delta]}
     _ ->
@@ -220,7 +220,7 @@ copyTargetIntoPlay :: HasStateIO r => CardId -> Ziel -> Eff r ()
 copyTargetIntoPlay sourceId ziel = do
   targets <- selectTargets sourceId ziel
   case targets of
-    FieldCard fieldCard : _ -> do
+    FieldCard _ fieldCard : _ -> do
       activePlayer <- gets currentPlayer
       void $ putNewCardOnField activePlayer fieldCard.card
     _ -> pure ()
@@ -229,7 +229,7 @@ addAbilityToTargets :: HasStateIO r => CardId -> Ziel -> Dauer -> Eff r ()
 addAbilityToTargets sourceId ziel dauer = do
   targets <- selectTargets sourceId ziel
   forM_ targets \case
-    FieldCard fieldCard ->
+    FieldCard _ fieldCard ->
       modifyFieldCard fieldCard.id \cardInPlay ->
         cardInPlay{modifications = cardInPlay.modifications <> [FähigkeitsModifikation dauer]}
     _ ->
@@ -396,8 +396,8 @@ removeTemporaryModifications cardInPlay =
 
 destroyDeadCreatures :: HasStateIO r => Eff r ()
 destroyDeadCreatures = do
-  deadCards <- filter isDeadCreature <$> gets allFieldCards
-  mapM_ destroyLocatedCard (FieldCard <$> deadCards)
+  deadCards <- filter (isDeadCreature . locatedCardInPlay) <$> gets fieldCardsForTarget
+  mapM_ destroyLocatedCard deadCards
 
 isDeadCreature :: CardInPlay -> Bool
 isDeadCreature cardInPlay = case cardInPlay.card.cardType of
@@ -416,25 +416,30 @@ strengthDelta = \case
 
 locatedCardOwner :: LocatedCard -> PlayerId
 locatedCardOwner = \case
-  FieldCard cardInPlay -> cardInPlay.owner
+  FieldCard owner _ -> owner
   HandCard owner _ -> owner
   GraveyardCard owner _ -> owner
 
 locatedCardCard :: LocatedCard -> Card
 locatedCardCard = \case
-  FieldCard cardInPlay -> cardInPlay.card
+  FieldCard _ cardInPlay -> cardInPlay.card
   HandCard _ card -> card.card
   GraveyardCard _ card -> card.card
 
+locatedCardInPlay :: LocatedCard -> CardInPlay
+locatedCardInPlay = \case
+  FieldCard _ cardInPlay -> cardInPlay
+  HandCard _ card -> card
+  GraveyardCard _ card -> card
+
 fieldCardsForTarget :: GameState -> [LocatedCard]
-fieldCardsForTarget state = FieldCard <$> allFieldCards state
+fieldCardsForTarget state = [FieldCard owner card | owner <- [Player1, Player2], card <- (playerById owner state).field]
 
 handCardsForTarget :: PlayerId -> GameState -> [LocatedCard]
 handCardsForTarget activePlayer state =
   [ HandCard owner card
   | owner <- [activePlayer, otherPlayer activePlayer]
-  , let cards = (playerById owner state).hand
-  , card <- cards
+  , card <- (playerById owner state).hand
   ]
 
 graveyardCardsForTarget :: PlayerId -> GameState -> [LocatedCard]
@@ -447,7 +452,7 @@ graveyardCardsForTarget activePlayer state =
 
 destroyLocatedCard :: HasStateIO r => LocatedCard -> Eff r ()
 destroyLocatedCard = \case
-  FieldCard cardInPlay -> do
+  FieldCard _ cardInPlay -> do
     removed <- removeFieldCard cardInPlay.id
     maybe (pure ()) (\removedCard -> addToGraveyard removedCard.owner removedCard) removed
   HandCard owner card -> do
@@ -461,7 +466,7 @@ sacrificeLocatedCard = destroyLocatedCard
 
 returnLocatedCardToHand :: HasStateIO r => LocatedCard -> Eff r ()
 returnLocatedCardToHand = \case
-  FieldCard cardInPlay -> do
+  FieldCard _ cardInPlay -> do
     removed <- removeFieldCard cardInPlay.id
     maybe (pure ()) (\removedCard -> addToHand removedCard.owner removedCard) removed
   HandCard _ _ -> pure ()
@@ -477,7 +482,7 @@ takeLocatedCardToCurrentHand locatedCard = do
 
 removeLocatedCard :: HasStateIO r => LocatedCard -> Eff r (Maybe CardInPlay)
 removeLocatedCard = \case
-  FieldCard cardInPlay -> removeFieldCard cardInPlay.id
+  FieldCard _ cardInPlay -> removeFieldCard cardInPlay.id
   HandCard owner card -> removeFromHandByCardId owner card.id
   GraveyardCard owner card -> removeFromGraveyardByCardId owner card.id
 
@@ -507,12 +512,14 @@ modifyFieldCard cardId update =
 removeFieldCard :: HasStateIO r => CardId -> Eff r (Maybe CardInPlay)
 removeFieldCard cardId = do
   state <- get
-  let maybeCard = findRawFieldCardById cardId state
+  let maybeCard = findFieldCardById cardId state
   modify \current ->
     modifyPlayersPure
       (\player -> player{field = filter (\cardInPlay -> cardInPlay.id /= cardId) player.field})
       current
-  pure maybeCard
+  pure $ case maybeCard of
+    Just (FieldCard _ cardInPlay) -> Just cardInPlay
+    _ -> Nothing
 
 removeFromHand :: HasStateIO r => Player -> Int -> Eff r (Maybe CardInPlay)
 removeFromHand owner index =
@@ -602,20 +609,18 @@ otherPlayer = \case
   Player1 -> Player2
   Player2 -> Player1
 
-allFieldCards :: GameState -> [CardInPlay]
-allFieldCards state =
-  let (player1, player2) = state.players
-   in player1.field <> player2.field
-
 modifyAllFields :: (CardInPlay -> CardInPlay) -> GameState -> GameState
 modifyAllFields update =
   modifyPlayersPure \player -> player{field = fmap update player.field}
 
-findRawFieldCardById :: CardId -> GameState -> Maybe CardInPlay
-findRawFieldCardById cardId state = find (\cardInPlay -> cardInPlay.id == cardId) (allFieldCards state)
-
 findFieldCardById :: CardId -> GameState -> Maybe LocatedCard
-findFieldCardById cardId state = FieldCard <$> findRawFieldCardById cardId state
+findFieldCardById cardId state =
+  listToMaybe
+    [ FieldCard owner card
+    | owner <- [Player1, Player2]
+    , card <- (playerById owner state).field
+    , card.id == cardId
+    ]
 
 cardsForPlayer :: PlayerId -> GameState -> [CardInPlay]
 cardsForPlayer owner state = (playerById owner state).field

@@ -47,6 +47,13 @@ spec = do
         _ -> expectationFailure "expected exactly one card on the field"
       fmap (.card.name) player1.graveyard `shouldBe` ["Magiestein der Erdkraft"]
 
+    it "returns a card on a foreign field to the card owner's hand" do
+      finalState <- runGameActions 1 foreignFieldState [ActivateFromField 1]
+      let (activePlayer, opponentPlayer) = finalState.players
+      fmap (.card.name) activePlayer.field `shouldBe` []
+      fmap (.card.name) activePlayer.graveyard `shouldBe` ["Magiestein der Windkraft"]
+      fmap (.card.name) opponentPlayer.hand `shouldBe` ["Edors Konstruct"]
+
 withPlayer1Hand :: [String] -> GameState -> GameState
 withPlayer1Hand cardNames state =
   let (player1, player2) = state.players
@@ -55,6 +62,18 @@ withPlayer1Hand cardNames state =
         { players =
             ( player1{hand = chosenCards, deck = [], field = []}
             , player2{hand = [], deck = [], field = []}
+            )
+        }
+
+foreignFieldState :: GameState
+foreignFieldState =
+  let creature = cardInPlayFor Player2 1000 (lookupCard "Edors Konstruct")
+      activator = cardInPlayFor Player1 1001 (lookupCard "Magiestein der Windkraft")
+      (player1, player2) = initialGameState.players
+   in initialGameState
+        { players =
+            ( player1{hand = [], deck = [], field = [creature, activator], graveyard = []}
+            , player2{hand = [], deck = [], field = [], graveyard = []}
             )
         }
 
@@ -75,4 +94,3 @@ runGameActions firstChoice gameState actions =
     & runChoiceInputConst firstChoice
     & execState gameState
     & runEff
-
