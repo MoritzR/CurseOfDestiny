@@ -58,9 +58,6 @@ playGame = mapM_ resolveAction
 creatureStrength :: CardInPlay -> Int
 creatureStrength cardInPlay = baseStrength cardInPlay.card + sum (strengthDelta <$> cardInPlay.modifications)
 
-gameOver :: Log :> es => Eff es ()
-gameOver = Gio.logLn' "k bye"
-
 type Game es a = HasStateIO es => Eff es a
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
 
@@ -102,6 +99,8 @@ gameLoop = do
         Nothing -> Gio.logLn' "Ungültige Eingabe."
         Just action -> playGame [action]
       gameLoop
+ where
+  gameOver = Gio.logLn' "k bye"
 
 startGame :: (IOE :> es, CommandInput :> es, ChoiceInput :> es, Log :> es) => Eff es ()
 startGame = evalState initialGameState gameLoop
