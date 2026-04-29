@@ -179,12 +179,9 @@ runInstruction sourceId = \case
 increaseValue :: HasStateIO r => CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
 increaseValue sourceId Stärke ziel dauer delta = do
   targets <- selectTargets sourceId ziel
-  forM_ targets \case
-    LocatedCard{location = Field, cardInPlay = fieldCard} ->
-      modifyFieldCard fieldCard.id \cardInPlay ->
-        cardInPlay{modifications = cardInPlay.modifications <> [StärkeModifikation dauer delta]}
-    _ ->
-      pure ()
+  forM_ targets \locatedCard ->
+    modifyFieldCard locatedCard.cardInPlay.id \cardInPlay ->
+      cardInPlay{modifications = cardInPlay.modifications <> [StärkeModifikation dauer delta]}
 
 sacrificeTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
 sacrificeTargets sourceId ziel = do
@@ -218,22 +215,16 @@ bringTargetIntoPlay sourceId ziel = do
 
 copyTargetIntoPlay :: HasStateIO r => CardId -> Ziel -> Eff r ()
 copyTargetIntoPlay sourceId ziel = do
+  activePlayer <- gets currentPlayer
   targets <- selectTargets sourceId ziel
-  case targets of
-    LocatedCard{location = Field, cardInPlay = fieldCard} : _ -> do
-      activePlayer <- gets currentPlayer
-      void $ putNewCardOnField activePlayer fieldCard.card
-    _ -> pure ()
+  mapM_ (putNewCardOnField activePlayer) (fmap (.cardInPlay.card) targets)
 
 addAbilityToTargets :: HasStateIO r => CardId -> Ziel -> Dauer -> Eff r ()
 addAbilityToTargets sourceId ziel dauer = do
   targets <- selectTargets sourceId ziel
-  forM_ targets \case
-    LocatedCard{location = Field, cardInPlay = fieldCard} ->
-      modifyFieldCard fieldCard.id \cardInPlay ->
-        cardInPlay{modifications = cardInPlay.modifications <> [FähigkeitsModifikation dauer]}
-    _ ->
-      pure ()
+  forM_ targets \locatedCard ->
+    modifyFieldCard locatedCard.cardInPlay.id \cardInPlay ->
+      cardInPlay{modifications = cardInPlay.modifications <> [FähigkeitsModifikation dauer]}
 
 countTargets :: HasStateIO r => CardId -> Ziel -> Eff r Anzahl
 countTargets sourceId ziel = Actual . length <$> selectableTargets sourceId ziel
