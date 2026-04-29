@@ -73,6 +73,7 @@ library
       GameEffects
       GameState
       GameIO
+      Interpreter.Game
       Interpreter.Descriptor
   other-modules:
       Paths_cod
