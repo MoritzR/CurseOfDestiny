@@ -28,8 +28,8 @@ type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
 
 data LocatedCard
   = FieldCard CardInPlay
-  | HandCard PlayerId Int CardInPlay
-  | GraveyardCard PlayerId Int CardInPlay
+  | HandCard PlayerId CardInPlay
+  | GraveyardCard PlayerId CardInPlay
   deriving (Eq, Show)
 
 creatureStrength :: CardInPlay -> Int
@@ -417,32 +417,32 @@ strengthDelta = \case
 locatedCardOwner :: LocatedCard -> PlayerId
 locatedCardOwner = \case
   FieldCard cardInPlay -> cardInPlay.owner
-  HandCard owner _ _ -> owner
-  GraveyardCard owner _ _ -> owner
+  HandCard owner _ -> owner
+  GraveyardCard owner _ -> owner
 
 locatedCardCard :: LocatedCard -> Card
 locatedCardCard = \case
   FieldCard cardInPlay -> cardInPlay.card
-  HandCard _ _ card -> card.card
-  GraveyardCard _ _ card -> card.card
+  HandCard _ card -> card.card
+  GraveyardCard _ card -> card.card
 
 fieldCardsForTarget :: GameState -> [LocatedCard]
 fieldCardsForTarget state = FieldCard <$> allFieldCards state
 
 handCardsForTarget :: PlayerId -> GameState -> [LocatedCard]
 handCardsForTarget activePlayer state =
-  [ HandCard owner index card
+  [ HandCard owner card
   | owner <- [activePlayer, otherPlayer activePlayer]
   , let cards = (playerById owner state).hand
-  , (index, card) <- zip [0 ..] cards
+  , card <- cards
   ]
 
 graveyardCardsForTarget :: PlayerId -> GameState -> [LocatedCard]
 graveyardCardsForTarget activePlayer state =
-  [ GraveyardCard owner index card
+  [ GraveyardCard owner card
   | owner <- [activePlayer, otherPlayer activePlayer]
   , let cards = (playerById owner state).graveyard
-  , (index, card) <- zip [0 ..] cards
+  , card <- cards
   ]
 
 destroyLocatedCard :: HasStateIO r => LocatedCard -> Eff r ()
@@ -450,10 +450,10 @@ destroyLocatedCard = \case
   FieldCard cardInPlay -> do
     removed <- removeFieldCard cardInPlay.id
     maybe (pure ()) (\removedCard -> addToGraveyard removedCard.owner removedCard) removed
-  HandCard owner index _ -> do
-    removed <- removeFromHandById owner index
+  HandCard owner card -> do
+    removed <- removeFromHandByCardId owner card.id
     maybe (pure ()) (addToGraveyard owner) removed
-  GraveyardCard _ _ _ ->
+  GraveyardCard _ _ ->
     pure ()
 
 sacrificeLocatedCard :: HasStateIO r => LocatedCard -> Eff r ()
@@ -464,9 +464,9 @@ returnLocatedCardToHand = \case
   FieldCard cardInPlay -> do
     removed <- removeFieldCard cardInPlay.id
     maybe (pure ()) (\removedCard -> addToHand removedCard.owner removedCard) removed
-  HandCard _ _ _ -> pure ()
-  GraveyardCard owner index _ -> do
-    removed <- removeFromGraveyard owner index
+  HandCard _ _ -> pure ()
+  GraveyardCard owner card -> do
+    removed <- removeFromGraveyardByCardId owner card.id
     maybe (pure ()) (addToHand owner) removed
 
 takeLocatedCardToCurrentHand :: HasStateIO r => LocatedCard -> Eff r ()
@@ -478,8 +478,8 @@ takeLocatedCardToCurrentHand locatedCard = do
 removeLocatedCard :: HasStateIO r => LocatedCard -> Eff r (Maybe CardInPlay)
 removeLocatedCard = \case
   FieldCard cardInPlay -> removeFieldCard cardInPlay.id
-  HandCard owner index _ -> removeFromHandById owner index
-  GraveyardCard owner index _ -> removeFromGraveyard owner index
+  HandCard owner card -> removeFromHandByCardId owner card.id
+  GraveyardCard owner card -> removeFromGraveyardByCardId owner card.id
 
 putNewCardOnField :: HasStateIO r => Player -> Card -> Eff r CardInPlay
 putNewCardOnField owner card = do
@@ -522,15 +522,19 @@ removeFromHand owner index =
       modifyPlayer owner.playerId \current -> current{hand = remainingHand}
       pure $ Just card
 
-removeFromHandById :: HasStateIO r => PlayerId -> Int -> Eff r (Maybe CardInPlay)
-removeFromHandById owner index = do
+removeFromHandByCardId :: HasStateIO r => PlayerId -> CardId -> Eff r (Maybe CardInPlay)
+removeFromHandByCardId owner cardId = do
   player <- gets (playerById owner)
-  removeFromHand player index
+  case removeByCardId cardId player.hand of
+    Nothing -> pure Nothing
+    Just (card, remainingHand) -> do
+      modifyPlayer owner \current -> current{hand = remainingHand}
+      pure $ Just card
 
-removeFromGraveyard :: HasStateIO r => PlayerId -> Int -> Eff r (Maybe CardInPlay)
-removeFromGraveyard owner index = do
+removeFromGraveyardByCardId :: HasStateIO r => PlayerId -> CardId -> Eff r (Maybe CardInPlay)
+removeFromGraveyardByCardId owner cardId = do
   player <- gets (playerById owner)
-  case removeAt index player.graveyard of
+  case removeByCardId cardId player.graveyard of
     Nothing -> pure Nothing
     Just (card, remainingGraveyard) -> do
       modifyPlayer owner \current -> current{graveyard = remainingGraveyard}
@@ -622,6 +626,14 @@ removeAt index values
   | otherwise = case splitAt index values of
       (before, value : after) -> Just (value, before <> after)
       _ -> Nothing
+
+removeByCardId :: CardId -> [CardInPlay] -> Maybe (CardInPlay, [CardInPlay])
+removeByCardId cardId = go []
+ where
+  go _ [] = Nothing
+  go before (card : rest)
+    | card.id == cardId = Just (card, before <> rest)
+    | otherwise = go (before <> [card]) rest
 
 atMay :: [a] -> Int -> Maybe a
 atMay values index
