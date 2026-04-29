@@ -55,7 +55,7 @@ withPlayer1Hand cardNames state =
 
 cardInPlayFor :: PlayerId -> Int -> Card -> CardInPlay
 cardInPlayFor owner idx card =
-  CardInPlay{id = show idx, owner = owner, card = card, modifications = []}
+  CardInPlay{id = CardId idx, owner = owner, card = card, modifications = []}
 
 lookupCard :: String -> Card
 lookupCard cardName =

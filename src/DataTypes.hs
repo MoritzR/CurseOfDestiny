@@ -234,8 +234,10 @@ data Player = Player
   }
   deriving (Eq, Show)
 
+newtype CardId = CardId {get :: Int} deriving (Eq, Show)
+
 data CardInPlay = CardInPlay
-  { id :: String
+  { id :: CardId
   , owner :: PlayerId
   , card :: Card
   , modifications :: [Modification]

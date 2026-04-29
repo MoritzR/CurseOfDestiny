@@ -199,7 +199,7 @@ collectActivations = \case
     Lebensentzug next -> collectActivations next
     KannNichtAbwehren next -> collectActivations next
 
-runEffect :: HasStateIO r => Maybe String -> CardEffect -> Eff r ()
+runEffect :: HasStateIO r => Maybe CardId -> CardEffect -> Eff r ()
 runEffect maybeSourceId = \case
   Pure () -> pure ()
   Free instruction -> case instruction of
@@ -286,7 +286,7 @@ runEffect maybeSourceId = \case
       runEffect maybeSourceId (effectForAmount amount)
       runEffect maybeSourceId next
 
-increaseValue :: HasStateIO r => Maybe String -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
+increaseValue :: HasStateIO r => Maybe CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
 increaseValue maybeSourceId Stärke ziel dauer delta = do
   targets <- selectTargets maybeSourceId ziel
   forM_ targets \case
@@ -296,27 +296,27 @@ increaseValue maybeSourceId Stärke ziel dauer delta = do
     _ ->
       pure ()
 
-sacrificeTargets :: HasStateIO r => Maybe String -> Ziel -> Eff r ()
+sacrificeTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
 sacrificeTargets maybeSourceId ziel = do
   targets <- selectTargets maybeSourceId ziel
   mapM_ sacrificeLocatedCard targets
 
-destroyTargets :: HasStateIO r => Maybe String -> Ziel -> Eff r ()
+destroyTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
 destroyTargets maybeSourceId ziel = do
   targets <- selectTargets maybeSourceId ziel
   mapM_ destroyLocatedCard targets
 
-bounceTargets :: HasStateIO r => Maybe String -> Ziel -> Eff r ()
+bounceTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
 bounceTargets maybeSourceId ziel = do
   targets <- selectTargets maybeSourceId ziel
   mapM_ returnLocatedCardToHand targets
 
-takeTargetsToHand :: HasStateIO r => Maybe String -> Ziel -> Eff r ()
+takeTargetsToHand :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
 takeTargetsToHand maybeSourceId ziel = do
   targets <- selectTargets maybeSourceId ziel
   mapM_ takeLocatedCardToCurrentHand targets
 
-bringTargetIntoPlay :: HasStateIO r => Maybe String -> Ziel -> Eff r ()
+bringTargetIntoPlay :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
 bringTargetIntoPlay maybeSourceId ziel = do
   targets <- selectTargets maybeSourceId ziel
   case targets of
@@ -326,7 +326,7 @@ bringTargetIntoPlay maybeSourceId ziel = do
       maybeCard <- removeLocatedCard target
       maybe (pure ()) (void . moveCardToField activePlayer) maybeCard
 
-copyTargetIntoPlay :: HasStateIO r => Maybe String -> Ziel -> Eff r ()
+copyTargetIntoPlay :: HasStateIO r => Maybe CardId -> Ziel -> Eff r ()
 copyTargetIntoPlay maybeSourceId ziel = do
   targets <- selectTargets maybeSourceId ziel
   case targets of
@@ -335,7 +335,7 @@ copyTargetIntoPlay maybeSourceId ziel = do
       void $ putNewCardOnField activePlayer fieldCard.card
     _ -> pure ()
 
-addAbilityToTargets :: HasStateIO r => Maybe String -> Ziel -> Dauer -> Eff r ()
+addAbilityToTargets :: HasStateIO r => Maybe CardId -> Ziel -> Dauer -> Eff r ()
 addAbilityToTargets maybeSourceId ziel dauer = do
   targets <- selectTargets maybeSourceId ziel
   forM_ targets \case
@@ -345,7 +345,7 @@ addAbilityToTargets maybeSourceId ziel dauer = do
     _ ->
       pure ()
 
-countTargets :: HasStateIO r => Maybe String -> Ziel -> Eff r Anzahl
+countTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r Anzahl
 countTargets maybeSourceId ziel = Actual . length <$> selectableTargets maybeSourceId ziel
 
 readTopOfDeckValue :: HasStateIO r => Int -> LesbarerWert -> Eff r Anzahl
@@ -429,7 +429,7 @@ moveViewedCard viewedCards ziel onMove = do
           onMove card
           pure $ removeFirstById card.id viewedCards
 
-selectTargets :: HasStateIO r => Maybe String -> Ziel -> Eff r [LocatedCard]
+selectTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r [LocatedCard]
 selectTargets maybeSourceId ziel = do
   choices <- selectableTargets maybeSourceId ziel
   case ziel.anzahl of
@@ -440,7 +440,7 @@ selectTargets maybeSourceId ziel = do
         [singleChoice] -> pure [singleChoice]
         _ -> maybeToList <$> Gio.chooseOne choices
 
-selectableTargets :: HasStateIO r => Maybe String -> Ziel -> Eff r [LocatedCard]
+selectableTargets :: HasStateIO r => Maybe CardId -> Ziel -> Eff r [LocatedCard]
 selectableTargets maybeSourceId ziel = do
   state <- get
   let activePlayer = currentPlayerId state
@@ -607,19 +607,19 @@ moveCardToField owner cardInPlay = do
   modifyPlayer owner \player -> player{field = player.field <> [movedCard]}
   pure movedCard
 
-createCardInPlay :: HasStateIO r => PlayerId -> Card -> Eff r CardInPlay
+createCardInPlay :: State GameState :> r => PlayerId -> Card -> Eff r CardInPlay
 createCardInPlay owner card = do
   state <- getGameState
-  let cardInPlay = CardInPlay{id = show state.nextCardId, owner = owner, card = card, modifications = []}
+  let cardInPlay = CardInPlay{id = CardId state.nextCardId, owner = owner, card = card, modifications = []}
   modify \current -> current{nextCardId = current.nextCardId + 1}
   pure cardInPlay
 
-modifyFieldCard :: HasStateIO r => String -> (CardInPlay -> CardInPlay) -> Eff r ()
+modifyFieldCard :: HasStateIO r => CardId -> (CardInPlay -> CardInPlay) -> Eff r ()
 modifyFieldCard cardId update =
   modify \state ->
     modifyAllFields (\cardInPlay -> if cardInPlay.id == cardId then update cardInPlay else cardInPlay) state
 
-removeFieldCard :: HasStateIO r => String -> Eff r (Maybe CardInPlay)
+removeFieldCard :: HasStateIO r => CardId -> Eff r (Maybe CardInPlay)
 removeFieldCard cardId = do
   state <- get
   let maybeCard = findRawFieldCardById cardId state
@@ -668,14 +668,14 @@ drawOpeningHands = drawCardsPure Player2 5 . drawCardsPure Player1 5
 
 createInitialState :: GameState
 createInitialState =
-  let deck1 = zipWith (\n card -> CardInPlay{id = "player1-" <> show (n :: Int), owner = Player1, card = card, modifications = []}) [1 ..] series26
-      deck2 = zipWith (\n card -> CardInPlay{id = "player2-" <> show (n :: Int), owner = Player2, card = card, modifications = []}) [1 ..] series26
+  let deck1 = zipWith (\n card -> CardInPlay{id = CardId n, owner = Player1, card = card, modifications = []}) [1 ..] series26
+      deck2 = zipWith (\n card -> CardInPlay{id = CardId n, owner = Player2, card = card, modifications = []}) [(last deck1).id.get + 1 ..] series26
    in GameState
         { players =
             ( (createPlayer Player1 "player1"){deck = deck1}
             , (createPlayer Player2 "player2"){deck = deck2}
             )
-        , nextCardId = 1 + 2 * length series26
+        , nextCardId = (last deck2).id.get
         }
 
 drawCardsPure :: PlayerId -> Int -> GameState -> GameState
@@ -730,10 +730,10 @@ modifyAllFields :: (CardInPlay -> CardInPlay) -> GameState -> GameState
 modifyAllFields update =
   modifyPlayersPure \player -> player{field = fmap update player.field}
 
-findRawFieldCardById :: String -> GameState -> Maybe CardInPlay
+findRawFieldCardById :: CardId -> GameState -> Maybe CardInPlay
 findRawFieldCardById cardId state = find (\cardInPlay -> cardInPlay.id == cardId) (allFieldCards state)
 
-findFieldCardById :: String -> GameState -> Maybe LocatedCard
+findFieldCardById :: CardId -> GameState -> Maybe LocatedCard
 findFieldCardById cardId state = FieldCard <$> findRawFieldCardById cardId state
 
 cardsForPlayer :: PlayerId -> GameState -> [CardInPlay]
@@ -777,7 +777,7 @@ readMaybeInt value = case reads value of
   [(number, "")] -> Just number
   _ -> Nothing
 
-removeFirstById :: String -> [CardInPlay] -> [CardInPlay]
+removeFirstById :: CardId -> [CardInPlay] -> [CardInPlay]
 removeFirstById idToRemove = go
  where
   go [] = []
