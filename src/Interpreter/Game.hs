@@ -11,7 +11,8 @@ module Interpreter.Game (
 ) where
 
 import Control.Monad (forM_, replicateM_, void)
-import Control.Monad.Free (Free (..), iterM, foldFree)
+import Control.Monad.Free (Free (..), foldFree, iter, iterM)
+import Data.Foldable (fold)
 import Data.List (find, isInfixOf)
 import Data.Maybe (maybeToList)
 import DataTypes
@@ -80,21 +81,12 @@ runPlayTriggerInstruction source = \case
   _ -> pure ()
 
 collectActivations :: Trigger -> [CardEffect]
-collectActivations = \case
-  Pure () -> []
-  Free instruction -> case instruction of
-    Zahle _ effect next -> effect : collectActivations next
-    EinmalProRunde effect next -> effect : collectActivations next
-    AmEndeDerRunde _ next -> collectActivations next
-    AmBeginnDerRunde _ next -> collectActivations next
-    WennGespielt _ next -> collectActivations next
-    WennAufDemFeld _ next -> collectActivations next
-    BeimAngriff _ _ next -> collectActivations next
-    Blockierung next -> collectActivations next
-    Doppelzerstörung next -> collectActivations next
-    Lebensentzug next -> collectActivations next
-    KannNichtAbwehren next -> collectActivations next
-
+collectActivations = iter collectActivation . fmap (const [])
+ where
+  collectActivation = \case
+    Zahle _ effect next -> effect : next
+    EinmalProRunde effect next -> effect : next
+    instruction -> fold instruction
 
 runEffect :: HasStateIO r => CardId -> CardEffect -> Eff r ()
 runEffect sourceId = foldFree (runInstruction sourceId)
