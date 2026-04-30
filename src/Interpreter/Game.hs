@@ -177,11 +177,11 @@ runInstruction sourceId = \case
     pure next
 
 increaseValue :: HasStateIO r => CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
-increaseValue sourceId Stärke ziel dauer delta = do
+increaseValue sourceId Stärke ziel dauer höhe = do
   targets <- selectTargets sourceId ziel
-  forM_ targets \locatedCard ->
-    modifyFieldCard locatedCard.cardInPlay.id \cardInPlay ->
-      cardInPlay{modifications = cardInPlay.modifications <> [StärkeModifikation dauer delta]}
+  forM_ targets \target ->
+    modifyFieldCard target.cardInPlay.id \cardInPlay ->
+      cardInPlay{modifications = cardInPlay.modifications <> [StärkeModifikation dauer höhe]}
 
 sacrificeTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
 sacrificeTargets sourceId ziel = do
