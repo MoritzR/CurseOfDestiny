@@ -18,10 +18,14 @@ import Data.Maybe (listToMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, get, gets, modify)
+import EffectfulLens ((++=))
 import Element (gesamtKosten)
 import GameEffects (ChoiceInput, Log)
 import GameIO qualified as Gio
 import GameState (currentPlayer, getGameState, opponentPlayer)
+import Optics (Each (each), Lens', Traversal', noIx, traversalVL, (%))
+import Optics.Label ()
+import Optics.Traversal (both)
 import Target (ein, wesen)
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
@@ -180,8 +184,18 @@ increaseValue :: HasStateIO r => CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r
 increaseValue sourceId Stärke ziel dauer höhe = do
   targets <- selectTargets sourceId ziel
   forM_ targets \target ->
-    modifyFieldCard target.cardInPlay.id \cardInPlay ->
-      cardInPlay{modifications = cardInPlay.modifications <> [StärkeModifikation dauer höhe]}
+    fieldCard target.cardInPlay.id % #modifications ++= [StärkeModifikation dauer höhe]
+
+fieldCard :: CardId -> Traversal' GameState CardInPlay
+fieldCard cardId = #players % both % #field % cardById cardId
+
+cardById :: CardId -> Traversal' [CardInPlay] CardInPlay
+cardById cardId =
+  traversalVL \f ->
+    traverse \cardInPlay ->
+      if cardInPlay.id == cardId
+        then f cardInPlay
+        else pure cardInPlay
 
 sacrificeTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
 sacrificeTargets sourceId ziel = do

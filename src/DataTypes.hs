@@ -5,6 +5,7 @@
 module DataTypes where
 
 import Control.Monad.Free (Free)
+import GHC.Generics (Generic)
 
 pattern X :: Element -> Kosten
 pattern X element = Kosten [VariableElementKosten element]
@@ -232,7 +233,7 @@ data Player = Player
   , graveyard :: [CardInPlay]
   , schicksalsmacht :: Int
   }
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
 newtype CardId = CardId {get :: Int} deriving (Eq, Show)
 
@@ -242,10 +243,10 @@ data CardInPlay = CardInPlay
   , card :: Card
   , modifications :: [Modification]
   }
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
 data GameState = GameState
   { players :: (Player, Player) -- current player is the first of this tuple
   , nextCardId :: Int
   }
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
