@@ -506,17 +506,15 @@ createCardInPlay owner card = do
 
 modifyFieldCard :: HasStateIO r => CardId -> (CardInPlay -> CardInPlay) -> Eff r ()
 modifyFieldCard cardId update =
-  modify \state ->
-    modifyAllFields (\cardInPlay -> if cardInPlay.id == cardId then update cardInPlay else cardInPlay) state
+  modify $ modifyAllFields (\cardInPlay -> if cardInPlay.id == cardId then update cardInPlay else cardInPlay)
 
 removeFieldCard :: HasStateIO r => CardId -> Eff r (Maybe CardInPlay)
 removeFieldCard cardId = do
   state <- get
   let maybeCard = findFieldCardById cardId state
-  modify \current ->
+  modify $
     modifyPlayersPure
       (\player -> player{field = filter (\cardInPlay -> cardInPlay.id /= cardId) player.field})
-      current
   pure $ case maybeCard of
     Just locatedCard -> Just locatedCard.cardInPlay
     _ -> Nothing
