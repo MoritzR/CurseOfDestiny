@@ -85,8 +85,6 @@ library
       base >=4.7 && <5
     , effectful ^>=2.6.1.0
     , free ^>=5.2
-    , generic-lens
-    , lens
     , optics
 
 executable cod-exe
@@ -101,8 +99,6 @@ executable cod-exe
       base >=4.7 && <5
     , cod
     , effectful
-    , generic-lens
-    , lens
 
 test-suite cod-test
   import: common
@@ -118,8 +114,6 @@ test-suite cod-test
       base >=4.7 && <5
     , cod
     , effectful
-    , generic-lens
     , hspec ^>=2.11
     , hspec-golden ^>=0.2.2.0
-    , lens
   build-tool-depends: hspec-discover:hspec-discover == 2.*
