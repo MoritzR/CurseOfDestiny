@@ -183,17 +183,16 @@ runInstruction sourceId = \case
 increaseValue :: HasStateIO r => CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
 increaseValue sourceId Stärke ziel dauer höhe = do
   targets <- selectTargets sourceId ziel
-  forM_ targets \target ->
-    fieldCard target.cardInPlay.id % #modifications ++= [StärkeModifikation dauer höhe]
+  fieldCards targets % #modifications ++= [StärkeModifikation dauer höhe]
 
-fieldCard :: CardId -> Traversal' GameState CardInPlay
-fieldCard cardId = #players % both % #field % cardById cardId
+fieldCards :: [LocatedCard] -> Traversal' GameState CardInPlay
+fieldCards locatedCards = #players % both % #field % cardsById (fmap (.cardInPlay.id) locatedCards)
 
-cardById :: CardId -> Traversal' [CardInPlay] CardInPlay
-cardById cardId =
+cardsById :: [CardId] -> Traversal' [CardInPlay] CardInPlay
+cardsById cardIds =
   traversalVL \f ->
     traverse \cardInPlay ->
-      if cardInPlay.id == cardId
+      if cardInPlay.id `elem` cardIds
         then f cardInPlay
         else pure cardInPlay
 
