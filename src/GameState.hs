@@ -2,8 +2,8 @@ module GameState where
 
 import Cards (series26)
 import DataTypes
-import Effectful (Eff, IOE, runEff, (:>))
-import Effectful.State.Static.Local (State, evalState, execState, get, gets, modify)
+import Effectful (Eff, (:>))
+import Effectful.State.Static.Local (State, get, gets)
 
 createPlayer :: PlayerId -> String -> Player
 createPlayer pid playerName =
