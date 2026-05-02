@@ -100,8 +100,5 @@ creatureStrength = GameInterpreter.creatureStrength
 drawOpeningHands :: GameState -> GameState
 drawOpeningHands = GameInterpreter.drawOpeningHands
 
-cardsForPlayer :: PlayerId -> GameState -> [CardInPlay]
-cardsForPlayer = GameInterpreter.cardsForPlayer
-
 removeTemporaryModifications :: CardInPlay -> CardInPlay
 removeTemporaryModifications = GameInterpreter.removeTemporaryModifications

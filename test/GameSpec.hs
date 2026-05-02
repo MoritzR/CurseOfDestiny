@@ -8,7 +8,7 @@ import Data.List (find)
 import DataTypes
 import Game
 import GameActionParser (GameAction (..))
-import GameState (initialGameState)
+import GameState (initialGameState, playerById)
 import Test.Hspec
 import GameEffects ( ignoreLog, runChoiceInputConst )
 import Effectful.State.Static.Local (execState)
@@ -129,6 +129,9 @@ lookupCard cardName =
   case find ((== cardName) . (.name)) series26 of
     Just card -> card
     Nothing -> error $ "unknown card: " <> cardName
+
+cardsForPlayer :: PlayerId -> GameState -> [CardInPlay]
+cardsForPlayer owner state = (playerById owner state).field
 
 runGameActions :: Int -> GameState -> [GameAction] -> IO GameState
 runGameActions firstChoice gameState actions =

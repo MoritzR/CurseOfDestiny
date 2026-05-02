@@ -7,7 +7,6 @@ module Interpreter.Game (
   runEffect,
   removeTemporaryModifications,
   drawOpeningHands,
-  cardsForPlayer,
 ) where
 
 import Control.Monad (forM_, replicateM_, void)
@@ -502,9 +501,6 @@ modifyPlayerPure owner update state = case state.players of
   (player1, player2) -> case owner of
     Player1 -> state{players = (update player1, player2)}
     Player2 -> state{players = (player1, update player2)}
-
-cardsForPlayer :: PlayerId -> GameState -> [CardInPlay]
-cardsForPlayer owner state = (playerById owner state).field
 
 removeAt :: Int -> [a] -> Maybe (a, [a])
 removeAt index values
