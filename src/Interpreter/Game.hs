@@ -13,6 +13,8 @@ module Interpreter.Game (
 import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
+import Data.Function ((&))
+import Data.Functor ((<&>))
 import Data.List (isInfixOf)
 import Data.Maybe (fromMaybe, listToMaybe, maybeToList)
 import DataTypes
@@ -23,9 +25,10 @@ import Element (gesamtKosten)
 import GameEffects (ChoiceInput, Log)
 import GameIO qualified as Gio
 import GameState (currentPlayer, getGameState, opponentPlayer)
-import Optics (Traversal', traversalVL, (%))
+import Optics (AffineTraversal', Each (each), Lens', Traversal', both, noIx, (%))
+import Optics.AffineTraversal (unsafeFiltered)
 import Optics.Label ()
-import Optics.Traversal (both)
+import Optics.Traversal (adjoin, traversed)
 import Target (ein, wesen)
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
@@ -183,18 +186,18 @@ runInstruction sourceId = \case
 increaseValue :: HasStateIO r => CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
 increaseValue sourceId Stärke ziel dauer höhe = do
   targets <- selectTargets sourceId ziel
-  fieldCards targets % #modifications ++= [StärkeModifikation dauer höhe]
+  allCards % targeted targets % #modifications ++= [StärkeModifikation dauer höhe]
 
-fieldCards :: [LocatedCard] -> Traversal' GameState CardInPlay
-fieldCards locatedCards = #players % both % #field % cardsById (fmap (.cardInPlay.id) locatedCards)
+targeted :: [LocatedCard] -> AffineTraversal' CardInPlay CardInPlay
+targeted targets = unsafeFiltered (\card -> card.id `elem` fmap (.cardInPlay.id) targets)
 
-cardsById :: [CardId] -> Traversal' [CardInPlay] CardInPlay
-cardsById cardIds =
-  traversalVL \f ->
-    traverse \cardInPlay ->
-      if cardInPlay.id `elem` cardIds
-        then f cardInPlay
-        else pure cardInPlay
+allCards :: Traversal' GameState CardInPlay
+allCards = #players % both % playerCards
+ where
+  playerCards =
+    [#field, #deck, #hand, #graveyard]
+      <&> (% traversed)
+      & foldr1 adjoin
 
 sacrificeTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
 sacrificeTargets sourceId ziel = do
