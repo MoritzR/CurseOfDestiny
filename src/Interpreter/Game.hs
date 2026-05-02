@@ -13,22 +13,19 @@ module Interpreter.Game (
 import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
-import Data.Function ((&))
-import Data.Functor ((<&>))
 import Data.List (isInfixOf)
-import Data.Maybe (fromMaybe, listToMaybe, maybeToList)
+import Data.Maybe (fromMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, (:>))
-import Effectful.State.Static.Local (State, get, gets, modify)
+import Effectful.State.Static.Local (State, gets, modify)
 import EffectfulLens ((++=))
 import Element (gesamtKosten)
 import GameEffects (ChoiceInput, Log)
 import GameIO qualified as Gio
 import GameState (currentPlayer, getGameState, opponentPlayer)
-import Optics (AffineTraversal', Traversal', both, (%))
+import Optics (AffineTraversal', (%))
 import Optics.AffineTraversal (unsafeFiltered)
 import Optics.Label ()
-import Optics.Traversal (adjoin, traversed)
 import Target (ein, ownerOfTriggeringCard, wesen)
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
@@ -384,12 +381,6 @@ takeLocatedCardToCurrentHand card = do
   removed <- removeCards [card.id]
   forM_ removed $ addToHand triggeringPlayer
 
-removeLocatedCard :: HasStateIO r => LocatedCard -> Eff r (Maybe CardInPlay)
-removeLocatedCard = \case
-  LocatedCard{location = Field, cardInPlay} -> removeFieldCard cardInPlay.id
-  LocatedCard{location = Hand, locationOwner = owner, cardInPlay = card} -> removeFromHandByCardId owner card.id
-  LocatedCard{location = Graveyard, locationOwner = owner, cardInPlay = card} -> removeFromGraveyardByCardId owner card.id
-
 putNewCardOnField :: HasStateIO r => Player -> Card -> Eff r CardInPlay
 putNewCardOnField owner card = do
   newCard <- createCardInPlay owner.playerId card
@@ -407,17 +398,6 @@ createCardInPlay owner card = do
   let cardInPlay = CardInPlay{id = CardId state.nextCardId, owner = owner, card = card, modifications = []}
   modify \current -> current{nextCardId = current.nextCardId + 1}
   pure cardInPlay
-
-removeFieldCard :: HasStateIO r => CardId -> Eff r (Maybe CardInPlay)
-removeFieldCard cardId = do
-  state <- get
-  let maybeCard = findFieldCardById cardId state
-  modify $
-    modifyPlayersPure
-      (\player -> player{field = filter (\cardInPlay -> cardInPlay.id /= cardId) player.field})
-  pure $ case maybeCard of
-    Just locatedCard -> Just locatedCard.cardInPlay
-    _ -> Nothing
 
 removeCards :: HasStateIO r => [CardId] -> Eff r [CardInPlay]
 removeCards cardIds = do
@@ -456,24 +436,6 @@ removeFromHand owner index =
     Nothing -> pure Nothing
     Just (card, remainingHand) -> do
       modifyPlayer owner.playerId \current -> current{hand = remainingHand}
-      pure $ Just card
-
-removeFromHandByCardId :: HasStateIO r => PlayerId -> CardId -> Eff r (Maybe CardInPlay)
-removeFromHandByCardId owner cardId = do
-  player <- gets (playerById owner)
-  case removeByCardId cardId player.hand of
-    Nothing -> pure Nothing
-    Just (card, remainingHand) -> do
-      modifyPlayer owner \current -> current{hand = remainingHand}
-      pure $ Just card
-
-removeFromGraveyardByCardId :: HasStateIO r => PlayerId -> CardId -> Eff r (Maybe CardInPlay)
-removeFromGraveyardByCardId owner cardId = do
-  player <- gets (playerById owner)
-  case removeByCardId cardId player.graveyard of
-    Nothing -> pure Nothing
-    Just (card, remainingGraveyard) -> do
-      modifyPlayer owner \current -> current{graveyard = remainingGraveyard}
       pure $ Just card
 
 addToHand :: HasStateIO r => PlayerId -> CardInPlay -> Eff r ()
@@ -515,10 +477,6 @@ playerById owner state = case state.players of
     Player1 -> player1
     Player2 -> player2
 
-modifyPlayersPure :: (Player -> Player) -> GameState -> GameState
-modifyPlayersPure update state = case state.players of
-  (player1, player2) -> state{players = (update player1, update player2)}
-
 modifyPlayer :: HasStateIO r => PlayerId -> (Player -> Player) -> Eff r ()
 modifyPlayer owner update = modify (modifyPlayerPure owner update)
 
@@ -533,20 +491,6 @@ modifyPlayerPure owner update state = case state.players of
     Player1 -> state{players = (update player1, player2)}
     Player2 -> state{players = (player1, update player2)}
 
-otherPlayer :: PlayerId -> PlayerId
-otherPlayer = \case
-  Player1 -> Player2
-  Player2 -> Player1
-
-findFieldCardById :: CardId -> GameState -> Maybe LocatedCard
-findFieldCardById cardId state =
-  listToMaybe
-    [ LocatedCard{locationOwner = owner, cardInPlay = card, location = Field}
-    | owner <- [Player1, Player2]
-    , card <- (playerById owner state).field
-    , card.id == cardId
-    ]
-
 cardsForPlayer :: PlayerId -> GameState -> [CardInPlay]
 cardsForPlayer owner state = (playerById owner state).field
 
@@ -557,25 +501,12 @@ removeAt index values
       (before, value : after) -> Just (value, before <> after)
       _ -> Nothing
 
-removeByCardId :: CardId -> [CardInPlay] -> Maybe (CardInPlay, [CardInPlay])
-removeByCardId cardId = go []
- where
-  go _ [] = Nothing
-  go before (card : rest)
-    | card.id == cardId = Just (card, before <> rest)
-    | otherwise = go (before <> [card]) rest
-
 atMay :: [a] -> Int -> Maybe a
 atMay values index
   | index < 0 = Nothing
   | otherwise = case drop index values of
       value : _ -> Just value
       [] -> Nothing
-
-readMaybeInt :: String -> Maybe Int
-readMaybeInt value = case reads value of
-  [(number, "")] -> Just number
-  _ -> Nothing
 
 removeFirstById :: CardId -> [CardInPlay] -> [CardInPlay]
 removeFirstById idToRemove = go
