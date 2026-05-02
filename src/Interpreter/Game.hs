@@ -25,7 +25,7 @@ import Element (gesamtKosten)
 import GameEffects (ChoiceInput, Log)
 import GameIO qualified as Gio
 import GameState (currentPlayer, getGameState, opponentPlayer)
-import Optics (AffineTraversal', Each (each), Lens', Traversal', both, noIx, (%))
+import Optics (AffineTraversal', Traversal', both, (%))
 import Optics.AffineTraversal (unsafeFiltered)
 import Optics.Label ()
 import Optics.Traversal (adjoin, traversed)
@@ -222,12 +222,10 @@ takeTargetsToHand sourceId ziel = do
 bringTargetIntoPlay :: HasStateIO r => CardId -> Ziel -> Eff r ()
 bringTargetIntoPlay sourceId ziel = do
   targets <- selectTargets sourceId ziel
-  case targets of
-    [] -> pure ()
-    (target : _) -> do
-      activePlayer <- gets currentPlayer
-      maybeCard <- removeLocatedCard target
-      maybe (pure ()) (void . addCardToField activePlayer) maybeCard
+  activePlayer <- gets currentPlayer
+  forM_ targets \target -> do
+    maybeCard <- removeLocatedCard target
+    mapM_ (addCardToField activePlayer) maybeCard
 
 copyTargetIntoPlay :: HasStateIO r => CardId -> Ziel -> Eff r ()
 copyTargetIntoPlay sourceId ziel = do
