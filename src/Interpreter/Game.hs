@@ -47,7 +47,7 @@ playCardFromHand index = do
     Nothing ->
       Gio.logLn' "Keine Karte auf diesem Hand-Slot."
     Just card -> do
-      runOnPlayTrigger card.card.trigger card
+      runOnPlayTrigger card
       if isPermanent card.card.cardType
         then void $ addCardToField activePlayer card
         else addToGraveyard activePlayer.playerId [card]
@@ -64,7 +64,7 @@ activateCardOnField index = do
     Nothing ->
       Gio.logLn' "Keine Karte auf diesem Feld-Slot."
     Just source -> do
-      let activations = collectActivations source.card.trigger
+      let activations = collectActivations $ effectiveTrigger source
       case activations of
         [] ->
           Gio.logLn' "Diese Karte hat keine aktivierbaren Effekte."
@@ -75,9 +75,9 @@ activateCardOnField index = do
           choice <- Gio.chooseOne [1 .. length activations]
           maybe (pure ()) (\picked -> runEffect source.id (activations !! (picked - 1))) choice
 
-runOnPlayTrigger :: HasStateIO r => Trigger -> CardInPlay -> Eff r ()
-runOnPlayTrigger trigger source =
-  iterM (\instruction -> runPlayTriggerInstruction source instruction *> sequence_ instruction) trigger
+runOnPlayTrigger :: HasStateIO r => CardInPlay -> Eff r ()
+runOnPlayTrigger source =
+  iterM (\instruction -> runPlayTriggerInstruction source instruction *> sequence_ instruction) (effectiveTrigger source)
 
 runPlayTriggerInstruction :: HasStateIO r => CardInPlay -> TriggerInstruction (Eff r ()) -> Eff r ()
 runPlayTriggerInstruction source = \case
@@ -151,9 +151,8 @@ runInstruction sourceId = \case
   BringeInsSpielAusZiel ziel next -> do
     bringTargetIntoPlay sourceId ziel
     pure next
-  GibFähigkeit ziel dauer _ next -> do
-    -- TODO implement properly adding the effect
-    addAbilityToTargets sourceId ziel dauer
+  GibFähigkeit ziel dauer triggerInstrs next -> do
+    addAbilityToTargets sourceId ziel dauer triggerInstrs
     pure next
   EinSpielerOpfertEinWesen next -> do
     sacrificeTargets sourceId (ein wesen)
@@ -223,10 +222,10 @@ copyTargetIntoPlay sourceId ziel = do
   targets <- selectTargets sourceId ziel
   mapM_ (putNewCardOnField activePlayer) (fmap (.card) targets)
 
-addAbilityToTargets :: HasStateIO r => CardId -> Ziel -> Dauer -> Eff r ()
-addAbilityToTargets sourceId ziel dauer = do
+addAbilityToTargets :: HasStateIO r => CardId -> Ziel -> Dauer -> Trigger -> Eff r ()
+addAbilityToTargets sourceId ziel dauer triggerInstrs = do
   targets <- selectTargets sourceId ziel
-  allCards % targeted targets % #modifications ++= [FähigkeitsModifikation dauer]
+  allCards % targeted targets % #modifications ++= [FähigkeitsModifikation dauer triggerInstrs]
 
 countTargets :: HasStateIO r => CardId -> Ziel -> Eff r Anzahl
 countTargets sourceId ziel = Actual . length <$> selectableTargets sourceId ziel.ziel
@@ -335,7 +334,7 @@ removeTemporaryModifications cardInPlay =
  where
   isPermanentModification = \case
     StärkeModifikation Dauerhaft _ -> True
-    FähigkeitsModifikation Dauerhaft -> True
+    FähigkeitsModifikation Dauerhaft _ -> True
     _ -> False
 
 destroyDeadCreatures :: HasStateIO r => Eff r ()
@@ -358,7 +357,14 @@ baseStrength card = case card.cardType of
 strengthDelta :: Modification -> Int
 strengthDelta = \case
   StärkeModifikation _ delta -> delta
-  FähigkeitsModifikation _ -> 0
+  FähigkeitsModifikation _ _ -> 0
+
+effectiveTrigger :: CardInPlay -> Trigger
+effectiveTrigger cardInPlay =
+  cardInPlay.card.trigger >> grantedTrigger
+ where
+  grantedTrigger =
+    foldr (>>) (pure ()) [trigger | FähigkeitsModifikation _ trigger <- cardInPlay.modifications]
 
 fieldCardsForTarget :: GameState -> [LocatedCard]
 fieldCardsForTarget state =

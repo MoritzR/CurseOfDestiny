@@ -3,6 +3,7 @@
 module GameSpec where
 
 import Cards (series26)
+import CardEffect
 import Data.List (find)
 import DataTypes
 import Game
@@ -13,6 +14,8 @@ import GameEffects ( ignoreLog, runChoiceInputConst )
 import Effectful.State.Static.Local (execState)
 import Effectful (runEff)
 import Data.Function ((&))
+import Target
+import Trigger
 
 spec :: Spec
 spec = do
@@ -54,6 +57,13 @@ spec = do
       fmap (.card.name) activePlayer.graveyard `shouldBe` ["Magiestein der Windkraft"]
       fmap (.card.name) opponentPlayer.hand `shouldBe` ["Edors Konstruct"]
 
+    it "can activate a granted ability from GibFähigkeit" do
+      finalState <- runGameActions 1 grantedAbilityState [PlayFromHand 0, PlayFromHand 0, ActivateFromField 0]
+      let (player1, _) = finalState.players
+      fmap (.card.name) player1.field `shouldBe` ["Schüler der Aktivierung"]
+      fmap (.card.name) player1.graveyard `shouldBe` ["Lehrmeister der Aktivierung"]
+      fmap (.card.name) player1.hand `shouldBe` ["Energieladung"]
+
 withPlayer1Hand :: [String] -> GameState -> GameState
 withPlayer1Hand cardNames state =
   let (player1, player2) = state.players
@@ -76,6 +86,39 @@ foreignFieldState =
             , player2{hand = [], deck = [], field = [], graveyard = []}
             )
         }
+
+grantedAbilityState :: GameState
+grantedAbilityState =
+  let creature = cardInPlayFor Player1 1000 schülerDerAktivierung
+      granter = cardInPlayFor Player1 1001 lehrmeisterDerAktivierung
+      drawCard = cardInPlayFor Player1 1002 (lookupCard "Energieladung")
+      (player1, player2) = initialGameState.players
+   in initialGameState
+        { players =
+            ( player1{hand = [creature, granter], deck = [drawCard], field = [], graveyard = []}
+            , player2{hand = [], deck = [], field = [], graveyard = []}
+            )
+        }
+
+schülerDerAktivierung :: Card
+schülerDerAktivierung =
+  Card
+    { name = "Schüler der Aktivierung"
+    , cardType = Wesen Magier 1000
+    , cost = 1
+    , trigger = keinEffekt
+    }
+
+lehrmeisterDerAktivierung :: Card
+lehrmeisterDerAktivierung =
+  Card
+    { name = "Lehrmeister der Aktivierung"
+    , cardType = Allmagie
+    , cost = 1
+    , trigger = wennGespielt do
+        gibFähigkeit (ein $ wesen <> aufDemFeld) Dauerhaft do
+          einmalProRunde $ ziehe 1
+    }
 
 cardInPlayFor :: PlayerId -> Int -> Card -> CardInPlay
 cardInPlayFor owner idx card =

@@ -7,9 +7,9 @@ module DataTypes where
 import Control.Monad.Free (Free)
 import Data.Function ((&))
 import Data.Functor ((<&>))
+import Data.List (intersect)
 import GHC.Generics (Generic)
 import Optics (Traversal', adjoin, both, traversed, (%))
-import Data.List (intersect)
 
 pattern X :: Element -> Kosten
 pattern X element = Kosten [VariableElementKosten element]
@@ -223,8 +223,19 @@ data Schicksalswesen = PlatzhalterSchicksalswesen
 
 data Modification
   = StärkeModifikation Dauer Int
-  | FähigkeitsModifikation Dauer
-  deriving (Eq, Show)
+  | FähigkeitsModifikation Dauer Trigger
+
+instance Eq Modification where
+  StärkeModifikation dauer delta == StärkeModifikation otherDauer otherDelta =
+    dauer == otherDauer && delta == otherDelta
+  FähigkeitsModifikation dauer _ == FähigkeitsModifikation otherDauer _ =
+    dauer == otherDauer
+  _ == _ = False
+
+instance Show Modification where
+  show = \case
+    StärkeModifikation dauer delta -> "StärkeModifikation " <> show dauer <> " " <> show delta
+    FähigkeitsModifikation dauer _ -> "FähigkeitsModifikation " <> show dauer
 
 data PlayerId = Player1 | Player2
   deriving (Eq, Show)
