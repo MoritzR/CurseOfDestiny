@@ -317,7 +317,6 @@ selectTargets sourceId ziel = do
     Alle; Undefiniert -> pure choices
     Ein; Eine -> case choices of
       [] -> pure []
-      [singleChoice] -> pure [singleChoice]
       _ -> maybeToList <$> chooseTargetFor triggeringPlayer choices
 
 chooseTargetFor :: (Log :> es, ChoiceInput :> es, Show a) => PlayerId -> [a] -> Eff es (Maybe a)

@@ -6,7 +6,6 @@ module Target where
 
 import Control.Applicative ((<|>))
 import Data.Function ((&))
-import Data.List (union)
 import Data.Maybe (fromMaybe)
 import DataTypes
 import Element (gesamtKosten)
@@ -16,7 +15,7 @@ import Optics.Traversal (both)
 oder :: EinZiel -> EinZiel -> EinZiel
 oder a b =
   EinZiel (a.description <> " oder " <> b.description) $
-    \state sourceId -> a.candidates state sourceId `union` b.candidates state sourceId
+    \state sourceId -> a.candidates state sourceId <> b.candidates state sourceId
 
 karte :: EinZiel
 karte = EinZiel "Karte" \state _ -> state ^.. allCards

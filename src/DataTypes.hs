@@ -9,6 +9,7 @@ import Data.Function ((&))
 import Data.Functor ((<&>))
 import GHC.Generics (Generic)
 import Optics (Traversal', adjoin, both, traversed, (%))
+import Data.List (intersect)
 
 pattern X :: Element -> Kosten
 pattern X element = Kosten [VariableElementKosten element]
@@ -132,8 +133,8 @@ instance Show EinZiel where
 
 instance Semigroup EinZiel where
   a <> b =
-    EinZiel (a.description <> " " <> b.description) $ \gameState sourceId ->
-      a.candidates gameState sourceId <> b.candidates gameState sourceId
+    EinZiel (a.description <> " " <> b.description) $ \state sourceId ->
+      a.candidates state sourceId `intersect` b.candidates state sourceId
 
 data TriggerInstruction next
   = AmEndeDerRunde CardEffect next
