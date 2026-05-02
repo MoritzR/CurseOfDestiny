@@ -311,12 +311,19 @@ moveViewedCard viewedCards ziel onMove = do
 selectTargets :: HasStateIO r => CardId -> Ziel -> Eff r [CardInPlay]
 selectTargets sourceId ziel = do
   choices <- selectableTargets sourceId ziel.ziel
+  state <- getGameState
+  let triggeringPlayer = ownerOfTriggeringCard state sourceId
   case ziel.anzahl of
-    Alle -> pure choices
-    _ -> case choices of
+    Alle; Undefiniert -> pure choices
+    Ein; Eine -> case choices of
       [] -> pure []
       [singleChoice] -> pure [singleChoice]
-      _ -> maybeToList <$> Gio.chooseOne choices
+      _ -> maybeToList <$> chooseTargetFor triggeringPlayer choices
+
+chooseTargetFor :: (Log :> es, ChoiceInput :> es, Show a) => PlayerId -> [a] -> Eff es (Maybe a)
+chooseTargetFor playerId choices = do
+  Gio.logLn' $ show playerId <> " needs to choose."
+  Gio.chooseOne choices
 
 selectableTargets :: HasStateIO r => CardId -> EinZiel -> Eff r [CardInPlay]
 selectableTargets sourceId ziel = do
