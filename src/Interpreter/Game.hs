@@ -49,7 +49,7 @@ playCardFromHand index = do
     Just card -> do
       runOnPlayTrigger card.card.trigger card
       if isPermanent card.card.cardType
-        then void $ moveCardToField activePlayer card
+        then void $ addCardToField activePlayer card
         else addToGraveyard activePlayer.playerId card
 
 isPermanent :: CardType -> Bool
@@ -225,7 +225,7 @@ bringTargetIntoPlay sourceId ziel = do
     (target : _) -> do
       activePlayer <- gets currentPlayer
       maybeCard <- removeLocatedCard target
-      maybe (pure ()) (void . moveCardToField activePlayer) maybeCard
+      maybe (pure ()) (void . addCardToField activePlayer) maybeCard
 
 copyTargetIntoPlay :: HasStateIO r => CardId -> Ziel -> Eff r ()
 copyTargetIntoPlay sourceId ziel = do
@@ -489,10 +489,10 @@ removeLocatedCard = \case
 putNewCardOnField :: HasStateIO r => Player -> Card -> Eff r CardInPlay
 putNewCardOnField owner card = do
   newCard <- createCardInPlay owner.playerId card
-  moveCardToField owner newCard
+  addCardToField owner newCard
 
-moveCardToField :: HasStateIO r => Player -> CardInPlay -> Eff r CardInPlay
-moveCardToField owner cardInPlay = do
+addCardToField :: HasStateIO r => Player -> CardInPlay -> Eff r CardInPlay
+addCardToField owner cardInPlay = do
   let movedCard = cardInPlay{owner = owner.playerId}
   modifyPlayer owner.playerId \player -> player{field = player.field <> [movedCard]}
   pure movedCard
