@@ -14,7 +14,7 @@ import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
 import Data.List (isInfixOf)
-import Data.Maybe (listToMaybe, maybeToList)
+import Data.Maybe (listToMaybe, maybeToList, fromMaybe)
 import DataTypes
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, get, gets, modify)
@@ -23,7 +23,7 @@ import Element (gesamtKosten)
 import GameEffects (ChoiceInput, Log)
 import GameIO qualified as Gio
 import GameState (currentPlayer, getGameState, opponentPlayer)
-import Optics (Each (each), Lens', Traversal', noIx, traversalVL, (%))
+import Optics (Traversal', traversalVL, (%))
 import Optics.Label ()
 import Optics.Traversal (both)
 import Target (ein, wesen)
@@ -566,7 +566,7 @@ drawOpeningHands = drawCardsPure Player2 5 . drawCardsPure Player1 5
 
 drawCardsPure :: PlayerId -> Int -> GameState -> GameState
 drawCardsPure owner n state =
-  foldr (\_ current -> maybe current id $ drawOnePure owner current) state [1 .. n]
+  foldr (\_ current -> fromMaybe current $ drawOnePure owner current) state [1 .. n]
 
 drawOnePure :: PlayerId -> GameState -> Maybe GameState
 drawOnePure owner state = case (playerById owner state).deck of
