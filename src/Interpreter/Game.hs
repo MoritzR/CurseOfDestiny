@@ -29,7 +29,7 @@ import Optics (AffineTraversal', Traversal', both, (%))
 import Optics.AffineTraversal (unsafeFiltered)
 import Optics.Label ()
 import Optics.Traversal (adjoin, traversed)
-import Target (ein, wesen)
+import Target (ein, ownerOfTriggeringCard, wesen)
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
 
@@ -53,7 +53,7 @@ playCardFromHand index = do
       runOnPlayTrigger card.card.trigger card
       if isPermanent card.card.cardType
         then void $ addCardToField activePlayer card
-        else addToGraveyard activePlayer.playerId card
+        else addToGraveyard activePlayer.playerId [card]
 
 isPermanent :: CardType -> Bool
 isPermanent = \case
@@ -189,16 +189,8 @@ increaseValue sourceId Stärke ziel dauer höhe = do
   targets <- selectTargets sourceId ziel
   allCards % targeted targets % #modifications ++= [StärkeModifikation dauer höhe]
 
-targeted :: [LocatedCard] -> AffineTraversal' CardInPlay CardInPlay
-targeted targets = unsafeFiltered (\card -> card.id `elem` fmap (.cardInPlay.id) targets)
-
-allCards :: Traversal' GameState CardInPlay
-allCards = #players % both % playerCards
- where
-  playerCards =
-    [#field, #deck, #hand, #graveyard]
-      <&> (% traversed)
-      & foldr1 adjoin
+targeted :: [CardInPlay] -> AffineTraversal' CardInPlay CardInPlay
+targeted targets = unsafeFiltered (\card -> card.id `elem` fmap (.id) targets)
 
 sacrificeTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
 sacrificeTargets sourceId ziel = do
@@ -213,7 +205,7 @@ destroyTargets sourceId ziel = do
 bounceTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
 bounceTargets sourceId ziel = do
   targets <- selectTargets sourceId ziel
-  mapM_ returnLocatedCardToHand targets
+  mapM_ returnCardToHand targets
 
 takeTargetsToHand :: HasStateIO r => CardId -> Ziel -> Eff r ()
 takeTargetsToHand sourceId ziel = do
@@ -225,14 +217,14 @@ bringTargetIntoPlay sourceId ziel = do
   targets <- selectTargets sourceId ziel
   activePlayer <- gets currentPlayer
   forM_ targets \target -> do
-    maybeCard <- removeLocatedCard target
+    maybeCard <- removeCards [target.id]
     mapM_ (addCardToField activePlayer) maybeCard
 
 copyTargetIntoPlay :: HasStateIO r => CardId -> Ziel -> Eff r ()
 copyTargetIntoPlay sourceId ziel = do
   activePlayer <- gets currentPlayer
   targets <- selectTargets sourceId ziel
-  mapM_ (putNewCardOnField activePlayer) (fmap (.cardInPlay.card) targets)
+  mapM_ (putNewCardOnField activePlayer) (fmap (.card) targets)
 
 addAbilityToTargets :: HasStateIO r => CardId -> Ziel -> Dauer -> Eff r ()
 addAbilityToTargets sourceId ziel dauer = do
@@ -240,7 +232,7 @@ addAbilityToTargets sourceId ziel dauer = do
   allCards % targeted targets % #modifications ++= [FähigkeitsModifikation dauer]
 
 countTargets :: HasStateIO r => CardId -> Ziel -> Eff r Anzahl
-countTargets sourceId ziel = Actual . length <$> selectableTargets sourceId ziel
+countTargets sourceId ziel = Actual . length <$> selectableTargets sourceId ziel.ziel
 
 readTopOfDeckValue :: HasStateIO r => Int -> LesbarerWert -> Eff r Anzahl
 readTopOfDeckValue n LesbarKosten = do
@@ -267,7 +259,7 @@ discardFromCurrentHand n = replicateM_ n do
         Nothing -> pure ()
         Just (pickedIndex, _) -> do
           maybeCard <- removeFromHand activePlayer (pickedIndex - 1)
-          maybe (pure ()) (addToGraveyard activePlayer.playerId) maybeCard
+          addToGraveyard activePlayer.playerId (maybeToList maybeCard)
 
 millCurrentDeck :: HasStateIO r => Int -> Eff r ()
 millCurrentDeck n = do
@@ -319,9 +311,9 @@ moveViewedCard viewedCards ziel onMove = do
           onMove card
           pure $ removeFirstById card.id viewedCards
 
-selectTargets :: HasStateIO r => CardId -> Ziel -> Eff r [LocatedCard]
+selectTargets :: HasStateIO r => CardId -> Ziel -> Eff r [CardInPlay]
 selectTargets sourceId ziel = do
-  choices <- selectableTargets sourceId ziel
+  choices <- selectableTargets sourceId ziel.ziel
   case ziel.anzahl of
     Alle -> pure choices
     _ -> case choices of
@@ -329,65 +321,10 @@ selectTargets sourceId ziel = do
       [singleChoice] -> pure [singleChoice]
       _ -> maybeToList <$> Gio.chooseOne choices
 
-selectableTargets :: HasStateIO r => CardId -> Ziel -> Eff r [LocatedCard]
+selectableTargets :: HasStateIO r => CardId -> EinZiel -> Eff r [CardInPlay]
 selectableTargets sourceId ziel = do
-  state <- get
-  let activePlayer = currentPlayer state
-      desc = ziel.ziel.description
-      candidates = case () of
-        _
-          | desc == "diese Karte" ->
-              maybeToList $ findFieldCardById sourceId state
-          | "auf dem Friedhof" `isInfixOf` desc ->
-              graveyardCardsForTarget activePlayer.playerId state
-          | "auf der Hand" `isInfixOf` desc ->
-              handCardsForTarget activePlayer.playerId state
-          | otherwise ->
-              fieldCardsForTarget state
-  pure $ filter (matchesTarget activePlayer.playerId desc) candidates
-
-matchesTarget :: PlayerId -> String -> LocatedCard -> Bool
-matchesTarget activePlayer desc locatedCard =
-  ownerMatches activePlayer desc locatedCard
-    && typeMatches desc locatedCard.cardInPlay.card
-    && costMatches desc locatedCard.cardInPlay.card
-
-ownerMatches :: PlayerId -> String -> LocatedCard -> Bool
-ownerMatches activePlayer desc locatedCard
-  | any (`isInfixOf` desc) ["eigene", "eigenes"] = locatedCard.locationOwner == activePlayer
-  | "gegnerisches" `isInfixOf` desc = locatedCard.locationOwner == otherPlayer activePlayer
-  | otherwise = True
-
-typeMatches :: String -> Card -> Bool
-typeMatches desc card
-  | "Gegenmagie" `isInfixOf` desc = case card.cardType of
-      Gegenmagie -> True
-      _ -> False
-  | "Magie" `isInfixOf` desc = case card.cardType of
-      Allmagie -> True
-      Gegenmagie -> True
-      Magie -> True
-      MagieDauerhaft -> True
-      _ -> False
-  | "Wesen" `isInfixOf` desc = case card.cardType of
-      Wesen _ _ -> True
-      _ -> False
-  | "Karte" `isInfixOf` desc || "Karten" `isInfixOf` desc = True
-  | otherwise = True
-
-typeMatchesInPlay :: String -> CardInPlay -> Bool
-typeMatchesInPlay desc = typeMatches desc . (.card)
-
-costMatches :: String -> Card -> Bool
-costMatches desc card = case parseMaxCost desc of
-  Nothing -> True
-  Just maxCost -> gesamtKosten card.cost <= maxCost
-
-parseMaxCost :: String -> Maybe Int
-parseMaxCost desc =
-  case words desc of
-    ["mit", "kosten", "von", number, "oder", "weniger"] -> readMaybeInt number
-    _ -> Nothing
+  state <- getGameState
+  pure $ ziel.candidates state sourceId
 
 removeTemporaryModifications :: CardInPlay -> CardInPlay
 removeTemporaryModifications cardInPlay =
@@ -400,7 +337,9 @@ removeTemporaryModifications cardInPlay =
 
 destroyDeadCreatures :: HasStateIO r => Eff r ()
 destroyDeadCreatures = do
-  deadCards <- filter (isDeadCreature . (.cardInPlay)) <$> gets fieldCardsForTarget
+  fieldCards <- gets fieldCardsForTarget
+  let fieldCardsInPlay = fmap (.cardInPlay) fieldCards
+  let deadCards = filter isDeadCreature fieldCardsInPlay
   mapM_ destroyLocatedCard deadCards
 
 isDeadCreature :: CardInPlay -> Bool
@@ -425,50 +364,25 @@ fieldCardsForTarget state =
   , card <- (playerById owner state).field
   ]
 
-handCardsForTarget :: PlayerId -> GameState -> [LocatedCard]
-handCardsForTarget activePlayer state =
-  [ LocatedCard{locationOwner = owner, cardInPlay = card, location = Hand}
-  | owner <- [activePlayer, otherPlayer activePlayer]
-  , card <- (playerById owner state).hand
-  ]
+destroyLocatedCard :: HasStateIO r => CardInPlay -> Eff r ()
+destroyLocatedCard card = do
+  removedCards <- removeCards [card.id]
+  addToGraveyard card.owner removedCards
 
-graveyardCardsForTarget :: PlayerId -> GameState -> [LocatedCard]
-graveyardCardsForTarget activePlayer state =
-  [ LocatedCard{locationOwner = owner, cardInPlay = card, location = Graveyard}
-  | owner <- [activePlayer, otherPlayer activePlayer]
-  , let cards = (playerById owner state).graveyard
-  , card <- cards
-  ]
-
-destroyLocatedCard :: HasStateIO r => LocatedCard -> Eff r ()
-destroyLocatedCard = \case
-  LocatedCard{location = Field, cardInPlay} -> do
-    removed <- removeFieldCard cardInPlay.id
-    maybe (pure ()) (\removedCard -> addToGraveyard removedCard.owner removedCard) removed
-  LocatedCard{location = Hand, locationOwner = owner, cardInPlay = card} -> do
-    removed <- removeFromHandByCardId owner card.id
-    maybe (pure ()) (addToGraveyard owner) removed
-  LocatedCard{location = Graveyard} ->
-    pure ()
-
-sacrificeLocatedCard :: HasStateIO r => LocatedCard -> Eff r ()
+sacrificeLocatedCard :: HasStateIO r => CardInPlay -> Eff r ()
 sacrificeLocatedCard = destroyLocatedCard
 
-returnLocatedCardToHand :: HasStateIO r => LocatedCard -> Eff r ()
-returnLocatedCardToHand = \case
-  LocatedCard{location = Field, cardInPlay} -> do
-    removed <- removeFieldCard cardInPlay.id
-    maybe (pure ()) (\removedCard -> addToHand removedCard.owner removedCard) removed
-  LocatedCard{location = Hand} -> pure ()
-  LocatedCard{location = Graveyard, locationOwner = owner, cardInPlay = card} -> do
-    removed <- removeFromGraveyardByCardId owner card.id
-    maybe (pure ()) (addToHand owner) removed
+returnCardToHand :: HasStateIO r => CardInPlay -> Eff r ()
+returnCardToHand card = do
+  removedCards <- removeCards [card.id]
+  forM_ removedCards $ const $ addToHand card.owner card
 
-takeLocatedCardToCurrentHand :: HasStateIO r => LocatedCard -> Eff r ()
-takeLocatedCardToCurrentHand locatedCard = do
-  activePlayer <- gets currentPlayer
-  removed <- removeLocatedCard locatedCard
-  maybe (pure ()) (addToHand activePlayer.playerId) removed
+takeLocatedCardToCurrentHand :: HasStateIO r => CardInPlay -> Eff r ()
+takeLocatedCardToCurrentHand card = do
+  state <- getGameState
+  let triggeringPlayer = ownerOfTriggeringCard state card.id
+  removed <- removeCards [card.id]
+  forM_ removed $ addToHand triggeringPlayer
 
 removeLocatedCard :: HasStateIO r => LocatedCard -> Eff r (Maybe CardInPlay)
 removeLocatedCard = \case
@@ -505,6 +419,37 @@ removeFieldCard cardId = do
     Just locatedCard -> Just locatedCard.cardInPlay
     _ -> Nothing
 
+removeCards :: HasStateIO r => [CardId] -> Eff r [CardInPlay]
+removeCards cardIds = do
+  state <- getGameState
+  let (player1, player2) = state.players
+      (removedFromPlayer1, updatedPlayer1) = removeCardsFromPlayer cardIds player1
+      (removedFromPlayer2, updatedPlayer2) = removeCardsFromPlayer cardIds player2
+  modify \current -> current{players = (updatedPlayer1, updatedPlayer2)}
+  pure $ removedFromPlayer1 <> removedFromPlayer2
+
+removeCardsFromPlayer :: [CardId] -> Player -> ([CardInPlay], Player)
+removeCardsFromPlayer cardIds player =
+  let (removedFromField, remainingField) = partitionCards cardIds player.field
+      (removedFromDeck, remainingDeck) = partitionCards cardIds player.deck
+      (removedFromHand, remainingHand) = partitionCards cardIds player.hand
+      (removedFromGraveyard, remainingGraveyard) = partitionCards cardIds player.graveyard
+   in ( removedFromField <> removedFromDeck <> removedFromHand <> removedFromGraveyard
+      , player
+          { field = remainingField
+          , deck = remainingDeck
+          , hand = remainingHand
+          , graveyard = remainingGraveyard
+          }
+      )
+
+partitionCards :: [CardId] -> [CardInPlay] -> ([CardInPlay], [CardInPlay])
+partitionCards cardIds = foldr step ([], [])
+ where
+  step cardInPlay (removed, kept)
+    | cardInPlay.id `elem` cardIds = (cardInPlay : removed, kept)
+    | otherwise = (removed, cardInPlay : kept)
+
 removeFromHand :: HasStateIO r => Player -> Int -> Eff r (Maybe CardInPlay)
 removeFromHand owner index =
   case removeAt index owner.hand of
@@ -534,8 +479,8 @@ removeFromGraveyardByCardId owner cardId = do
 addToHand :: HasStateIO r => PlayerId -> CardInPlay -> Eff r ()
 addToHand owner card = modifyPlayer owner \player -> player{hand = player.hand <> [card]}
 
-addToGraveyard :: HasStateIO r => PlayerId -> CardInPlay -> Eff r ()
-addToGraveyard owner card = modifyPlayer owner \player -> player{graveyard = player.graveyard <> [card]}
+addToGraveyard :: HasStateIO r => PlayerId -> [CardInPlay] -> Eff r ()
+addToGraveyard owner cards = modifyPlayer owner \player -> player{graveyard = player.graveyard <> cards}
 
 drawCardsForCurrentPlayer :: HasStateIO r => Int -> Eff r ()
 drawCardsForCurrentPlayer n = do
@@ -641,4 +586,28 @@ removeFirstById idToRemove = go
     | otherwise = card : go rest
 
 matchesViewedCard :: Ziel -> CardInPlay -> Bool
-matchesViewedCard ziel = typeMatchesInPlay ziel.ziel.description
+matchesViewedCard ziel cardInPlay =
+  viewedTypeMatches ziel.ziel.description cardInPlay.card
+    && viewedCostMatches ziel.ziel.description cardInPlay.card
+
+viewedTypeMatches :: String -> Card -> Bool
+viewedTypeMatches desc card
+  | "Gegenmagie" `isInfixOf` desc = case card.cardType of
+      Gegenmagie -> True
+      _ -> False
+  | "Magie" `isInfixOf` desc = case card.cardType of
+      Allmagie -> True
+      Gegenmagie -> True
+      Magie -> True
+      MagieDauerhaft -> True
+      _ -> False
+  | "Wesen" `isInfixOf` desc = case card.cardType of
+      Wesen _ _ -> True
+      _ -> False
+  | "Karte" `isInfixOf` desc || "Karten" `isInfixOf` desc = True
+  | otherwise = True
+
+viewedCostMatches :: String -> Card -> Bool
+viewedCostMatches desc card = case words desc of
+  ["mit", "kosten", "von", number, "oder", "weniger"] -> gesamtKosten card.cost <= read number
+  _ -> True

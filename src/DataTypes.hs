@@ -5,7 +5,10 @@
 module DataTypes where
 
 import Control.Monad.Free (Free)
+import Data.Function ((&))
+import Data.Functor ((<&>))
 import GHC.Generics (Generic)
+import Optics (Traversal', adjoin, both, traversed, (%))
 
 pattern X :: Element -> Kosten
 pattern X element = Kosten [VariableElementKosten element]
@@ -122,13 +125,15 @@ data Aura
 data Ziel = Ziel {anzahl :: ZielAnzahl, ziel :: EinZiel}
 data ZielAnzahl = Ein | Eine | Alle | Undefiniert
 
-data EinZiel = EinZiel {description :: String, filter :: Card -> Bool}
+data EinZiel = EinZiel {description :: String, candidates :: GameState -> CardId -> [CardInPlay]}
 
 instance Show EinZiel where
   show = (.description)
 
 instance Semigroup EinZiel where
-  a <> b = EinZiel (a.description <> " " <> b.description) $ \card -> a.filter card && b.filter card
+  a <> b =
+    EinZiel (a.description <> " " <> b.description) $ \gameState sourceId ->
+      a.candidates gameState sourceId <> b.candidates gameState sourceId
 
 data TriggerInstruction next
   = AmEndeDerRunde CardEffect next
@@ -243,7 +248,9 @@ data CardInPlay = CardInPlay
   , card :: Card
   , modifications :: [Modification]
   }
-  deriving (Eq, Show, Generic)
+  deriving (Show, Generic)
+instance Eq CardInPlay where
+  a == b = a.id == b.id
 
 data GameState = GameState
   { players :: (Player, Player)
@@ -251,3 +258,11 @@ data GameState = GameState
   , nextCardId :: Int
   }
   deriving (Eq, Show, Generic)
+
+allCards :: Traversal' GameState CardInPlay
+allCards = #players % both % playerCards
+ where
+  playerCards =
+    [#field, #deck, #hand, #graveyard]
+      <&> (% traversed)
+      & foldr1 adjoin
