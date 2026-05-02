@@ -349,13 +349,13 @@ selectableTargets sourceId ziel = do
 matchesTarget :: PlayerId -> String -> LocatedCard -> Bool
 matchesTarget activePlayer desc locatedCard =
   ownerMatches activePlayer desc locatedCard
-    && typeMatches desc (locatedCardCard locatedCard)
-    && costMatches desc (locatedCardCard locatedCard)
+    && typeMatches desc locatedCard.cardInPlay.card
+    && costMatches desc locatedCard.cardInPlay.card
 
 ownerMatches :: PlayerId -> String -> LocatedCard -> Bool
 ownerMatches activePlayer desc locatedCard
-  | any (`isInfixOf` desc) ["eigene", "eigenes"] = locatedCardOwner locatedCard == activePlayer
-  | "gegnerisches" `isInfixOf` desc = locatedCardOwner locatedCard == otherPlayer activePlayer
+  | any (`isInfixOf` desc) ["eigene", "eigenes"] = locatedCard.locationOwner == activePlayer
+  | "gegnerisches" `isInfixOf` desc = locatedCard.locationOwner == otherPlayer activePlayer
   | otherwise = True
 
 typeMatches :: String -> Card -> Bool
@@ -400,7 +400,7 @@ removeTemporaryModifications cardInPlay =
 
 destroyDeadCreatures :: HasStateIO r => Eff r ()
 destroyDeadCreatures = do
-  deadCards <- filter (isDeadCreature . locatedCardInPlay) <$> gets fieldCardsForTarget
+  deadCards <- filter (isDeadCreature . (.cardInPlay)) <$> gets fieldCardsForTarget
   mapM_ destroyLocatedCard deadCards
 
 isDeadCreature :: CardInPlay -> Bool
@@ -417,15 +417,6 @@ strengthDelta :: Modification -> Int
 strengthDelta = \case
   StärkeModifikation _ delta -> delta
   FähigkeitsModifikation _ -> 0
-
-locatedCardOwner :: LocatedCard -> PlayerId
-locatedCardOwner = (.locationOwner)
-
-locatedCardCard :: LocatedCard -> Card
-locatedCardCard = (.cardInPlay.card)
-
-locatedCardInPlay :: LocatedCard -> CardInPlay
-locatedCardInPlay = (.cardInPlay)
 
 fieldCardsForTarget :: GameState -> [LocatedCard]
 fieldCardsForTarget state =
