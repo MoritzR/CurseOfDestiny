@@ -246,7 +246,8 @@ data CardInPlay = CardInPlay
   deriving (Eq, Show, Generic)
 
 data GameState = GameState
-  { players :: (Player, Player) -- current player is the first of this tuple
+  { players :: (Player, Player)
+  , currentPlayer :: PlayerId
   , nextCardId :: Int
   }
   deriving (Eq, Show, Generic)

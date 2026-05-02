@@ -14,7 +14,7 @@ import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
 import Data.List (isInfixOf)
-import Data.Maybe (listToMaybe, maybeToList, fromMaybe)
+import Data.Maybe (fromMaybe, listToMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, get, gets, modify)

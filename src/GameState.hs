@@ -29,6 +29,7 @@ initialGameState = initialState
           ( (createPlayer Player1 "player1"){deck = deck1}
           , (createPlayer Player2 "player2"){deck = deck2}
           )
+      , currentPlayer = Player1
       , nextCardId = (last deck2).id.get
       }
 
@@ -39,7 +40,18 @@ getsGame :: State GameState :> es => (GameState -> a) -> Eff es a
 getsGame = gets
 
 currentPlayer :: GameState -> Player
-currentPlayer = fst . (.players)
+currentPlayer state = playerById state.currentPlayer state
 
 opponentPlayer :: GameState -> Player
-opponentPlayer = snd . (.players)
+opponentPlayer state = playerById (otherPlayerId state.currentPlayer) state
+
+playerById :: PlayerId -> GameState -> Player
+playerById playerId state = case state.players of
+  (player1, player2) -> case playerId of
+    Player1 -> player1
+    Player2 -> player2
+
+otherPlayerId :: PlayerId -> PlayerId
+otherPlayerId = \case
+  Player1 -> Player2
+  Player2 -> Player1

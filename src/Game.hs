@@ -8,7 +8,7 @@ import Effectful.State.Static.Local (State, evalState, gets, modify)
 import GameActionParser (GameAction (..), parseGameAction)
 import GameEffects (ChoiceInput, CommandInput, Log, readCommand)
 import GameIO qualified as Gio
-import GameState (currentPlayer, initialGameState, opponentPlayer)
+import GameState (currentPlayer, initialGameState, opponentPlayer, otherPlayerId)
 import Interpreter.Game qualified as GameInterpreter
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
@@ -67,10 +67,11 @@ endRound = do
   modify \state ->
     state
       { players =
-          let (active, opponent) = state.players
-           in ( opponent{field = fmap removeTemporaryModifications opponent.field}
-              , active{field = fmap removeTemporaryModifications active.field}
+          let (player1, player2) = state.players
+           in ( player1{field = fmap removeTemporaryModifications player1.field}
+              , player2{field = fmap removeTemporaryModifications player2.field}
               )
+      , currentPlayer = otherPlayerId state.currentPlayer
       }
   Gio.logLn' "Runde beendet."
 
