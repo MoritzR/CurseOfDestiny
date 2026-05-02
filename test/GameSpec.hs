@@ -5,12 +5,13 @@ module GameSpec where
 import Cards (series26)
 import CardEffect
 import Data.List (find)
+import Data.IORef
 import DataTypes
 import Game
 import GameActionParser (GameAction (..))
 import GameState (initialGameState, playerById)
 import Test.Hspec
-import GameEffects ( ignoreLog, runChoiceInputConst )
+import GameEffects ( ignoreLog, runChoiceInputConst, runChoiceInputIO )
 import Effectful.State.Static.Local (execState)
 import Effectful (runEff)
 import Data.Function ((&))
@@ -64,6 +65,70 @@ spec = do
       fmap (.card.name) player1.graveyard `shouldBe` ["Lehrmeister der Aktivierung"]
       fmap (.card.name) player1.hand `shouldBe` ["Energieladung"]
 
+    it "buffs itself when targeting selbst" do
+      finalState <- runGameActions 1 selfBuffState [PlayFromHand 0, ActivateFromField 0]
+      let ownField = cardsForPlayer Player1 finalState
+      fmap (.card.name) ownField `shouldBe` ["Selbststarker Adept"]
+      case ownField of
+        [cardInPlay] -> creatureStrength cardInPlay `shouldBe` 2000
+        _ -> expectationFailure "expected exactly one card on the field"
+
+    it "lets the triggering player choose one target among multiple legal targets" do
+      finalState <- runGameActionsWithChoices [2] chooseEnemyState [PlayFromHand 0]
+      let opponentField = cardsForPlayer Player2 finalState
+          opponent = playerById Player2 finalState
+      fmap (.card.name) opponentField `shouldBe` ["Ziel A"]
+      fmap (.card.name) opponent.graveyard `shouldBe` ["Ziel B"]
+
+    it "does nothing when choosing an invalid target index" do
+      finalState <- runGameActionsWithChoices [99] chooseEnemyState [PlayFromHand 0]
+      let opponentField = cardsForPlayer Player2 finalState
+          opponent = playerById Player2 finalState
+      fmap (.card.name) opponentField `shouldBe` ["Ziel A", "Ziel B"]
+      opponent.graveyard `shouldBe` []
+
+    it "destroys a card on a foreign field to the card owner's graveyard" do
+      finalState <- runGameActions 1 foreignFieldDestroyState [PlayFromHand 0]
+      let activePlayer = playerById Player1 finalState
+          opponentPlayer = playerById Player2 finalState
+      fmap (.card.name) activePlayer.field `shouldBe` []
+      fmap (.card.name) activePlayer.graveyard `shouldBe` ["Feldzerstoerung"]
+      fmap (.card.name) opponentPlayer.graveyard `shouldBe` ["Fremder Krieger"]
+
+    it "takes a cheap creature from the graveyard to the hand" do
+      finalState <- runGameActions 1 graveyardReturnState [PlayFromHand 0]
+      let player1 = playerById Player1 finalState
+      fmap (.card.name) player1.hand `shouldBe` ["Junger Held"]
+      fmap (.card.name) player1.graveyard `shouldBe` ["Uralter Drache", "Grabruf"]
+
+    it "views the top of the deck and puts the rest under the deck" do
+      finalState <- runGameActionsWithChoices [2] deckViewState [PlayFromHand 0]
+      let player1 = playerById Player1 finalState
+      fmap (.card.name) player1.hand `shouldBe` ["Fund B"]
+      fmap (.card.name) player1.deck `shouldBe` ["Fund C", "Fund A"]
+      fmap (.card.name) player1.graveyard `shouldBe` ["Blick in die Zukunft"]
+
+    it "draws cards based on AnzahlVon" do
+      finalState <- runGameActions 1 countDrawState [PlayFromHand 0, PlayFromHand 0, PlayFromHand 0]
+      let player1 = playerById Player1 finalState
+      fmap (.card.name) player1.field `shouldBe` ["Zaehlwesen A", "Zaehlwesen B"]
+      fmap (.card.name) player1.hand `shouldBe` ["Ziehkarte A", "Ziehkarte B"]
+      fmap (.card.name) player1.graveyard `shouldBe` ["Zaehlruf"]
+
+    it "draws cards based on AnzahlSchicksalsmächte" do
+      finalState <- runGameActions 1 fateDrawState [PlayFromHand 0]
+      let player1 = playerById Player1 finalState
+      fmap (.card.name) player1.hand `shouldBe` ["Schicksalszug A", "Schicksalszug B"]
+      fmap (.card.name) player1.graveyard `shouldBe` ["Schicksalsstudie"]
+
+    it "switches the current player and removes temporary buffs on endRound" do
+      finalState <- runGameActions 1 (drawOpeningHands initialGameState) [PlayFromHand 0, PlayFromHand 0, EndRound]
+      let ownField = cardsForPlayer Player1 finalState
+      finalState.currentPlayer `shouldBe` Player2
+      case ownField of
+        [cardInPlay] -> creatureStrength cardInPlay `shouldBe` 1000
+        _ -> expectationFailure "expected exactly one card on the field"
+
 withPlayer1Hand :: [String] -> GameState -> GameState
 withPlayer1Hand cardNames state =
   let (player1, player2) = state.players
@@ -86,6 +151,127 @@ foreignFieldState =
             , player2{hand = [], deck = [], field = [], graveyard = []}
             )
         }
+
+selfBuffState :: GameState
+selfBuffState = withPlayers (createPlayerState Player1 [selbststarkerAdept] [] []) (createPlayerState Player2 [] [] [])
+
+chooseEnemyState :: GameState
+chooseEnemyState =
+  let enemyA = cardInPlayFor Player2 1000 (namedCreature "Ziel A" 1000)
+      enemyB = cardInPlayFor Player2 1001 (namedCreature "Ziel B" 1000)
+   in withPlayers
+        (createPlayerState Player1 [zielwahlZauber] [] [])
+        (createPlayerState Player2 [] [] [enemyA, enemyB])
+
+foreignFieldDestroyState :: GameState
+foreignFieldDestroyState =
+  let foreignCreature = cardInPlayFor Player2 1000 (namedCreature "Fremder Krieger" 1000)
+   in withPlayers
+        (createPlayerState Player1 [feldzerstoerung] [] [foreignCreature])
+        (createPlayerState Player2 [] [] [])
+
+graveyardReturnState :: GameState
+graveyardReturnState =
+  let cheap = cardInPlayFor Player1 1000 (cheapCreature "Junger Held")
+      expensive = cardInPlayFor Player1 1001 expensiveCreature
+   in withPlayers
+        (createPlayerState Player1 [grabruf] [] []){graveyard = [cheap, expensive]}
+        (createPlayerState Player2 [] [] [])
+
+deckViewState :: GameState
+deckViewState =
+  withPlayers
+    (createPlayerState Player1 [blickInDieZukunft] [namedSpell "Fund A", namedSpell "Fund B", namedSpell "Fund C"] [])
+    (createPlayerState Player2 [] [] [])
+
+countDrawState :: GameState
+countDrawState =
+  withPlayers
+    ( createPlayerState
+        Player1
+        [namedCreature "Zaehlwesen A" 1000, namedCreature "Zaehlwesen B" 1000, zaehlruf]
+        [namedSpell "Ziehkarte A", namedSpell "Ziehkarte B"]
+        []
+    )
+    (createPlayerState Player2 [] [] [])
+
+fateDrawState :: GameState
+fateDrawState =
+  let player1 = createPlayerState Player1 [schicksalsstudie] [namedSpell "Schicksalszug A", namedSpell "Schicksalszug B"] []
+      player2 = createPlayerState Player2 [] [] []
+   in withPlayers player1{schicksalsmacht = 2} player2
+
+selbststarkerAdept :: Card
+selbststarkerAdept =
+  Card
+    { name = "Selbststarker Adept"
+    , cardType = Wesen Magier 1000
+    , cost = 1
+    , trigger = einmalProRunde do
+        erhöhe Stärke selbst Dauerhaft 1000
+    }
+
+zielwahlZauber :: Card
+zielwahlZauber =
+  Card
+    { name = "Zielwahlzauber"
+    , cardType = Allmagie
+    , cost = 1
+    , trigger = wennGespielt do
+        zerstöre (ein $ gegnerisches <> wesen)
+    }
+
+feldzerstoerung :: Card
+feldzerstoerung =
+  Card
+    { name = "Feldzerstoerung"
+    , cardType = Allmagie
+    , cost = 1
+    , trigger = wennGespielt do
+        zerstöre (ein $ wesen <> aufDemFeld)
+    }
+
+grabruf :: Card
+grabruf =
+  Card
+    { name = "Grabruf"
+    , cardType = Allmagie
+    , cost = 1
+    , trigger = wennGespielt do
+        nimmAufDieHand (ein $ wesen <> aufDemFriedHof <> kostetMaximal 3)
+    }
+
+blickInDieZukunft :: Card
+blickInDieZukunft =
+  Card
+    { name = "Blick in die Zukunft"
+    , cardType = Allmagie
+    , cost = 1
+    , trigger = wennGespielt do
+        schaueObenVomDeck 2 do
+          zeigeVorUndNimmtAufDieHand (eine karte)
+          legeRestUnterDeck
+    }
+
+zaehlruf :: Card
+zaehlruf =
+  Card
+    { name = "Zaehlruf"
+    , cardType = Allmagie
+    , cost = 1
+    , trigger = wennGespielt do
+        anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
+    }
+
+schicksalsstudie :: Card
+schicksalsstudie =
+  Card
+    { name = "Schicksalsstudie"
+    , cardType = Allmagie
+    , cost = 1
+    , trigger = wennGespielt do
+        anzahlSchicksalsmächte Du ziehe
+    }
 
 grantedAbilityState :: GameState
 grantedAbilityState =
@@ -124,6 +310,60 @@ cardInPlayFor :: PlayerId -> Int -> Card -> CardInPlay
 cardInPlayFor owner idx card =
   CardInPlay{id = CardId idx, owner = owner, card = card, modifications = []}
 
+createPlayerState :: PlayerId -> [Card] -> [Card] -> [CardInPlay] -> Player
+createPlayerState owner handCards deckCards fieldCards =
+  let basePlayer = playerById owner initialGameState
+   in
+    basePlayer
+      { hand = zipWith (cardInPlayFor owner) [2000 ..] handCards
+      , deck = zipWith (cardInPlayFor owner) [3000 ..] deckCards
+      , field = fieldCards
+      , graveyard = []
+      }
+
+withPlayers :: Player -> Player -> GameState
+withPlayers player1 player2 =
+  initialGameState
+    { players = (player1, player2)
+    , currentPlayer = Player1
+    }
+
+namedCreature :: String -> Int -> Card
+namedCreature creatureName strength =
+  Card
+    { name = creatureName
+    , cardType = Wesen Krieger strength
+    , cost = 1
+    , trigger = keinEffekt
+    }
+
+cheapCreature :: String -> Card
+cheapCreature creatureName =
+  Card
+    { name = creatureName
+    , cardType = Wesen Magier 1000
+    , cost = 3
+    , trigger = keinEffekt
+    }
+
+expensiveCreature :: Card
+expensiveCreature =
+  Card
+    { name = "Uralter Drache"
+    , cardType = Wesen Bestie 5000
+    , cost = 5
+    , trigger = keinEffekt
+    }
+
+namedSpell :: String -> Card
+namedSpell spellName =
+  Card
+    { name = spellName
+    , cardType = Allmagie
+    , cost = 1
+    , trigger = keinEffekt
+    }
+
 lookupCard :: String -> Card
 lookupCard cardName =
   case find ((== cardName) . (.name)) series26 of
@@ -138,5 +378,19 @@ runGameActions firstChoice gameState actions =
   playGame actions
     & ignoreLog
     & runChoiceInputConst firstChoice
+    & execState gameState
+    & runEff
+
+runGameActionsWithChoices :: [Int] -> GameState -> [GameAction] -> IO GameState
+runGameActionsWithChoices choices gameState actions = do
+  choicesRef <- newIORef choices
+  let nextChoice = do
+        remainingChoices <- readIORef choicesRef
+        case remainingChoices of
+          [] -> pure 1
+          choice : rest -> writeIORef choicesRef rest >> pure choice
+  playGame actions
+    & ignoreLog
+    & runChoiceInputIO nextChoice
     & execState gameState
     & runEff
