@@ -155,6 +155,7 @@ runInstruction sourceId = \case
     bringTargetIntoPlay sourceId ziel
     pure next
   GibFähigkeit ziel dauer _ next -> do
+    -- TODO implement properly adding the effect
     addAbilityToTargets sourceId ziel dauer
     pure next
   EinSpielerOpfertEinWesen next -> do
@@ -236,9 +237,7 @@ copyTargetIntoPlay sourceId ziel = do
 addAbilityToTargets :: HasStateIO r => CardId -> Ziel -> Dauer -> Eff r ()
 addAbilityToTargets sourceId ziel dauer = do
   targets <- selectTargets sourceId ziel
-  forM_ targets \locatedCard ->
-    modifyFieldCard locatedCard.cardInPlay.id \cardInPlay ->
-      cardInPlay{modifications = cardInPlay.modifications <> [FähigkeitsModifikation dauer]}
+  allCards % targeted targets % #modifications ++= [FähigkeitsModifikation dauer]
 
 countTargets :: HasStateIO r => CardId -> Ziel -> Eff r Anzahl
 countTargets sourceId ziel = Actual . length <$> selectableTargets sourceId ziel
@@ -504,10 +503,6 @@ createCardInPlay owner card = do
   modify \current -> current{nextCardId = current.nextCardId + 1}
   pure cardInPlay
 
-modifyFieldCard :: HasStateIO r => CardId -> (CardInPlay -> CardInPlay) -> Eff r ()
-modifyFieldCard cardId update =
-  modify $ modifyAllFields (\cardInPlay -> if cardInPlay.id == cardId then update cardInPlay else cardInPlay)
-
 removeFieldCard :: HasStateIO r => CardId -> Eff r (Maybe CardInPlay)
 removeFieldCard cardId = do
   state <- get
@@ -606,10 +601,6 @@ otherPlayer :: PlayerId -> PlayerId
 otherPlayer = \case
   Player1 -> Player2
   Player2 -> Player1
-
-modifyAllFields :: (CardInPlay -> CardInPlay) -> GameState -> GameState
-modifyAllFields update =
-  modifyPlayersPure \player -> player{field = fmap update player.field}
 
 findFieldCardById :: CardId -> GameState -> Maybe LocatedCard
 findFieldCardById cardId state =
