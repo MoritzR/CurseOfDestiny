@@ -140,6 +140,15 @@ spec = do
       fmap (.card.name) opponent.deck `shouldBe` ["Flut Ziel B", "Flut Ziel A"]
       fmap (.card.name) player1.graveyard `shouldBe` ["Magiestein für Mut und Flut"]
 
+    it "destroys the weaker creature for Magiestein für Krieg und Sieg" do
+      finalState <- runGameActionsWithChoices [2, 1, 1] kriegUndSiegState [PlayFromHand 0, ActivateFromField 1]
+      let player1 = playerById Player1 finalState
+          player2 = playerById Player2 finalState
+      fmap (.card.name) player1.field `shouldBe` ["Starker Verbündeter"]
+      fmap (.card.name) player2.field `shouldBe` []
+      fmap (.card.name) player1.graveyard `shouldBe` ["Magiestein für Krieg und Sieg"]
+      fmap (.card.name) player2.graveyard `shouldBe` ["Schwacher Gegner"]
+
     it "switches the current player and removes temporary buffs on endRound" do
       finalState <- runGameActions 1 (drawOpeningHands initialGameState) [PlayFromHand 0, PlayFromHand 0, EndRound]
       let ownField = cardsForPlayer Player1 finalState
@@ -235,6 +244,14 @@ mutUndFlutState =
    in withPlayers
         (createPlayerState Player1 [lookupCard "Magiestein für Mut und Flut"] [] [])
         (createPlayerState Player2 [] [] [targetA, targetB])
+
+kriegUndSiegState :: GameState
+kriegUndSiegState =
+  let ownCreature = cardInPlayFor Player1 1000 (namedCreature "Starker Verbündeter" 3000)
+      enemyCreature = cardInPlayFor Player2 1001 (namedCreature "Schwacher Gegner" 1000)
+   in withPlayers
+        (createPlayerState Player1 [lookupCard "Magiestein für Krieg und Sieg"] [] [ownCreature])
+        (createPlayerState Player2 [] [] [enemyCreature])
 
 selbststarkerAdept :: Card
 selbststarkerAdept =

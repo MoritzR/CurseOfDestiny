@@ -12,7 +12,8 @@ module Interpreter.Game (
 import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
-import Data.List (intercalate, isInfixOf)
+import Data.Function ((&))
+import Data.List (intercalate, isInfixOf, sortOn)
 import Data.Maybe (fromMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, (:>))
@@ -529,13 +530,9 @@ destroyWeakerTarget :: HasStateIO r => CardId -> Ziel -> Ziel -> Eff r ()
 destroyWeakerTarget sourceId zielA zielB = do
   targetsA <- selectTargets sourceId zielA
   targetsB <- selectTargets sourceId zielB
-  case (targetsA, targetsB) of
-    ([targetA], [targetB]) ->
-      case compare (creatureStrength targetA) (creatureStrength targetB) of
-        LT -> destroyLocatedCard targetA
-        GT -> destroyLocatedCard targetB
-        EQ -> pure ()
-    _ -> pure ()
+  forM_
+    (targetsA <> targetsB & sortOn creatureStrength & init)
+    destroyLocatedCard
 
 drawCardsForCurrentPlayer :: HasStateIO r => Int -> Eff r ()
 drawCardsForCurrentPlayer n = do
