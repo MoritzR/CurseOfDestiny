@@ -4,6 +4,7 @@ import Cards (series26)
 import DataTypes
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, get, gets)
+import Optics (Lens')
 
 createPlayer :: PlayerId -> String -> Player
 createPlayer pid playerName =
@@ -44,6 +45,12 @@ currentPlayer state = playerById state.currentPlayer state
 
 opponentPlayer :: GameState -> Player
 opponentPlayer state = playerById (otherPlayerId state.currentPlayer) state
+
+currentPlayerL :: Lens' GameState Player
+currentPlayerL = error "TODO implement"
+
+opponentPlayerL :: Lens' GameState Player
+opponentPlayerL = error "TODO implement"
 
 playerById :: PlayerId -> GameState -> Player
 playerById playerId state = case state.players of

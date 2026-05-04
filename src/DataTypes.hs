@@ -124,7 +124,7 @@ data AngriffsPhase
 data Aura
 
 data Ziel = Ziel {anzahl :: ZielAnzahl, ziel :: EinZiel}
-data ZielAnzahl = Ein | Eine | Alle | Undefiniert
+data ZielAnzahl = Ein | Eine | Alle | Undefiniert | BisZu Anzahl
 
 data EinZiel = EinZiel {description :: String, candidates :: GameState -> CardId -> [CardInPlay]}
 
@@ -148,6 +148,7 @@ data TriggerInstruction next
   | Doppelzerstörung next
   | Lebensentzug next
   | KannNichtAbwehren next
+  | Kriegsschrei next
   deriving (Functor, Foldable)
 
 data InstructionWhenViewingDeck next
@@ -165,8 +166,12 @@ data Instruction next
   | Spende Anzahl Element next
   | forall a. Wählbar a => WähleAus [a] (a -> CardEffect) next
   | WähleEffekt [CardEffect] next
+  | WähleZiel Ziel (Ziel -> CardEffect) next
   | Opfere Ziel next
   | Heile Anzahl next
+  | Schade Anzahl next
+  | ZerstöreSchwächeres Ziel Ziel next
+  | GibInsDeck WoInsDeck Ziel next
   | GibAufDieHandZurück Ziel next
   | Zerstöre Ziel next
   | Verringere Wert Ziel Dauer Höhe next
@@ -187,6 +192,8 @@ data Instruction next
 
 deriving instance Functor Instruction
 deriving instance Foldable Instruction
+
+data WoInsDeck = Oben | Unten
 
 type TriggerInstructionF = Free TriggerInstruction
 type Trigger = TriggerInstructionF ()

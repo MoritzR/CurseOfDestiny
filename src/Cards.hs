@@ -337,4 +337,69 @@ series26 =
               anzahlSchicksalsmächte Du \schicksalsmächte ->
                 ziehe $ schicksalsmächte - kartenAufDerHand
       }
+  , Card
+      { name = "Magiestein für Hingabe und Eingabe"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 + 1 Tod) do
+            opfere selbst
+            nimmAufDieHand (ein $ eigenes <> wesen <> aufDemFriedHof)
+          zahle (1 + 1 Wasser) do
+            opfere selbst
+            nimmAufDieHand $ eine $ eigene <> (magie `oder` gegenmagie) <> aufDemFriedHof
+      }
+  , Card
+      { name = "Magiestein für Krieg und Sieg"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (2 + 2 Feuer) do
+            opfere selbst
+            erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
+            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges kriegsschrei
+          zahle (2 + 2 Wald) do
+            opfere selbst
+            wähleZiel (ein $ eigenes <> wesen <> aufDemFeld) $
+              wähleZiel (ein $ gegnerisches <> wesen <> aufDemFeld) . zerstöreSchwächeres
+      }
+  , Card
+      { name = "Magiestein für Mut und Flut"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (2 + 1 Licht) do
+            opfere selbst
+            heile 1
+          zahle (7 + 1 Wasser) do
+            opfere selbst
+            gibInsDeck Oben (bisZu 3 $ gegnerisches <> wesen <> aufDemFeld)
+      }
+  , Card
+      { name = "Magiestein für Neid und Leid"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 + 1 Wind) do
+            opfere selbst
+            gibAufDieHandZurück (ein $ wesen <> aufDemFeld)
+          zahle (5 + 1 Feuer) do
+            opfere selbst
+            schade 1
+      }
+  , Card
+      { name = "Magiestein für Sicht und Verzicht"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 + 1 Wasser) do
+            opfere selbst
+            vision 1
+            ziehe 1
+          zahle (2 + 1 Wind) do
+            opfere selbst
+            wähleZiel (ein $ wesen <> aufDemFeld) \ziel -> do
+              verringere Stärke ziel Dauerhaft 2000
+              gibFähigkeit ziel BisZumEndeDesZuges kannNichtAbwehren
+      }
   ]

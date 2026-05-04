@@ -12,16 +12,16 @@ module Interpreter.Game (
 import Control.Monad (forM_, replicateM_, void)
 import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
-import Data.List (isInfixOf)
+import Data.List (intercalate, isInfixOf)
 import Data.Maybe (fromMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, gets, modify)
-import EffectfulLens ((++=))
+import EffectfulLens ((++=), (-=))
 import Element (gesamtKosten)
 import GameEffects (ChoiceInput, Log)
 import GameIO qualified as Gio
-import GameState (currentPlayer, getGameState, opponentPlayer)
+import GameState (currentPlayer, getGameState, opponentPlayer, opponentPlayerL)
 import Optics (AffineTraversal', (%))
 import Optics.AffineTraversal (unsafeFiltered)
 import Optics.Label ()
@@ -117,11 +117,26 @@ runInstruction sourceId = \case
     choice <- Gio.chooseOne [1 .. length effects]
     maybe (pure ()) (\picked -> runEffect sourceId (effects !! (picked - 1))) choice
     pure next
+  WähleZiel ziel effectForTarget next -> do
+    targets <- selectTargets sourceId ziel
+    case targets of
+      [] -> pure ()
+      _ -> runEffect sourceId (effectForTarget $ concreteTarget ziel targets)
+    pure next
   Opfere ziel next -> do
     sacrificeTargets sourceId ziel
     pure next
   Heile anzahl next -> do
     modifyCurrentPlayer \player -> player{schicksalsmacht = player.schicksalsmacht + anzahlToInt anzahl}
+    pure next
+  Schade anzahl next -> do
+    damageOpponent (anzahlToInt anzahl)
+    pure next
+  ZerstöreSchwächeres zielA zielB next -> do
+    destroyWeakerTarget sourceId zielA zielB
+    pure next
+  GibInsDeck woInsDeck ziel next -> do
+    returnTargetsToDeck sourceId woInsDeck ziel
     pure next
   GibAufDieHandZurück ziel next -> do
     bounceTargets sourceId ziel
@@ -226,6 +241,22 @@ addAbilityToTargets sourceId ziel dauer triggerInstrs = do
   targets <- selectTargets sourceId ziel
   allCards % targeted targets % #modifications ++= [FähigkeitsModifikation dauer triggerInstrs]
 
+concreteTarget :: Ziel -> [CardInPlay] -> Ziel
+concreteTarget ziel selectedTargets =
+  ziel
+    { anzahl = Undefiniert
+    , ziel =
+        EinZiel
+          { description = describeConcreteTargets selectedTargets
+          , candidates = \_ _ -> selectedTargets
+          }
+    }
+
+describeConcreteTargets :: [CardInPlay] -> String
+describeConcreteTargets [] = "kein Ziel"
+describeConcreteTargets [target] = target.card.name
+describeConcreteTargets targets = intercalate ", " $ fmap (.card.name) targets
+
 countTargets :: HasStateIO r => CardId -> Ziel -> Eff r Anzahl
 countTargets sourceId ziel = Actual . length <$> selectableTargets sourceId ziel.ziel
 
@@ -316,11 +347,33 @@ selectTargets sourceId ziel = do
     Ein; Eine -> case choices of
       [] -> pure []
       _ -> maybeToList <$> chooseTargetFor triggeringPlayer choices
+    BisZu anzahl ->
+      chooseUpToTargetsFor triggeringPlayer (anzahlToInt anzahl) choices
 
 chooseTargetFor :: (Log :> es, ChoiceInput :> es, Show a) => PlayerId -> [a] -> Eff es (Maybe a)
 chooseTargetFor playerId choices = do
   Gio.logLn' $ show playerId <> " needs to choose."
   Gio.chooseOne choices
+
+data TargetChoice a = Fertig | TargetOption a
+
+instance Show a => Show (TargetChoice a) where
+  show Fertig = "Fertig"
+  show (TargetOption choice) = show choice
+
+chooseUpToTargetsFor :: (Log :> es, ChoiceInput :> es, Show a, Eq a) => PlayerId -> Int -> [a] -> Eff es [a]
+chooseUpToTargetsFor _ limit _ | limit <= 0 = pure []
+chooseUpToTargetsFor playerId limit choices = go limit choices []
+ where
+  go _ [] selected = pure $ reverse selected
+  go remaining available selected = do
+    Gio.logLn' $ show playerId <> " may choose up to " <> show limit <> " targets."
+    choice <- Gio.chooseOne (Fertig : fmap TargetOption available)
+    case choice of
+      Nothing -> pure $ reverse selected
+      Just Fertig -> pure $ reverse selected
+      Just (TargetOption picked) ->
+        go (remaining - 1) (filter (/= picked) available) (picked : selected)
 
 selectableTargets :: HasStateIO r => CardId -> EinZiel -> Eff r [CardInPlay]
 selectableTargets sourceId ziel = do
@@ -363,7 +416,7 @@ effectiveTrigger cardInPlay =
   cardInPlay.card.trigger >> grantedTrigger
  where
   grantedTrigger =
-    foldr (>>) (pure ()) [trigger | FähigkeitsModifikation _ trigger <- cardInPlay.modifications]
+    sequence_ [trigger | FähigkeitsModifikation _ trigger <- cardInPlay.modifications]
 
 fieldCardsForTarget :: GameState -> [LocatedCard]
 fieldCardsForTarget state =
@@ -384,6 +437,15 @@ returnCardToHand :: HasStateIO r => CardInPlay -> Eff r ()
 returnCardToHand card = do
   removedCards <- removeCards [card.id]
   forM_ removedCards $ const $ addToHand card.owner card
+
+returnCardToDeck :: HasStateIO r => WoInsDeck -> CardInPlay -> Eff r ()
+returnCardToDeck woInsDeck card = do
+  removedCards <- removeCards [card.id]
+  -- Replace this with a lens modification for the owning player
+  forM_ removedCards \removedCard ->
+    modifyPlayer removedCard.owner \player -> case woInsDeck of
+      Oben -> player{deck = removedCard : player.deck}
+      Unten -> player{deck = player.deck <> [removedCard]}
 
 takeLocatedCardToCurrentHand :: HasStateIO r => CardInPlay -> Eff r ()
 takeLocatedCardToCurrentHand card = do
@@ -454,6 +516,26 @@ addToHand owner card = modifyPlayer owner \player -> player{hand = player.hand <
 
 addToGraveyard :: HasStateIO r => PlayerId -> [CardInPlay] -> Eff r ()
 addToGraveyard owner cards = modifyPlayer owner \player -> player{graveyard = player.graveyard <> cards}
+
+damageOpponent :: HasStateIO r => Int -> Eff r ()
+damageOpponent amount = opponentPlayerL % #schicksalsmacht -= amount
+
+returnTargetsToDeck :: HasStateIO r => CardId -> WoInsDeck -> Ziel -> Eff r ()
+returnTargetsToDeck sourceId woInsDeck ziel = do
+  targets <- selectTargets sourceId ziel
+  forM_ targets $ returnCardToDeck woInsDeck
+
+destroyWeakerTarget :: HasStateIO r => CardId -> Ziel -> Ziel -> Eff r ()
+destroyWeakerTarget sourceId zielA zielB = do
+  targetsA <- selectTargets sourceId zielA
+  targetsB <- selectTargets sourceId zielB
+  case (targetsA, targetsB) of
+    ([targetA], [targetB]) ->
+      case compare (creatureStrength targetA) (creatureStrength targetB) of
+        LT -> destroyLocatedCard targetA
+        GT -> destroyLocatedCard targetB
+        EQ -> pure ()
+    _ -> pure ()
 
 drawCardsForCurrentPlayer :: HasStateIO r => Int -> Eff r ()
 drawCardsForCurrentPlayer n = do

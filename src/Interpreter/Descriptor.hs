@@ -50,6 +50,8 @@ describeTriggerInstruction = \case
     ["'Kann nicht abwehren'"] <> next
   Lebensentzug next ->
     ["Lebensentzug"] <> next
+  Kriegsschrei next ->
+    ["Kriegsschrei"] <> next
   BeimAngriff phase effect next ->
     let describePhase = \case
           ZuBeginn -> "angreift"
@@ -82,10 +84,18 @@ describeInstruction = \case
     "Wähle " <> intercalate ", " (map show options)
   WähleEffekt aktionen _ ->
     "Wähle aus:\n - " <> intercalate "\n - " (describeInstructionF <$> aktionen)
+  WähleZiel ziel effectForTarget _ ->
+    "Wähle " <> describeZiel ziel <> ". " <> describeEffectInline (effectForTarget $ placeholderTarget "das gewählte Ziel")
   Opfere ziel _ ->
     "Opfere " <> describeZiel ziel <> "."
   Heile n _ ->
     "Erhalte " <> show n <> " Schicksalsmacht."
+  Schade n _ ->
+    "Der Gegner verliert " <> show n <> " Schicksalsmacht."
+  ZerstöreSchwächeres _ _ _ ->
+    "Zerstöre das schwächere Wesen."
+  GibInsDeck wo ziel _ ->
+    "Gib " <> describeZiel ziel <> " " <> describeWoInsDeck wo <> " ins Deck des Besitzers zurück."
   GibAufDieHandZurück ziel _ ->
     "Gib " <> describeZiel ziel <> " auf die Hand des Besitzers zurück."
   Zerstöre ziel _ ->
@@ -150,6 +160,13 @@ describeWhenViewingDeckInstruction = \case
 describeWhenViewingDeckStep :: InstructionWhenViewingDeck [String] -> [String]
 describeWhenViewingDeckStep instruction = describeWhenViewingDeckInstruction instruction : fold instruction
 
+placeholderTarget :: String -> Ziel
+placeholderTarget description =
+  Ziel
+    { anzahl = Undefiniert
+    , ziel = EinZiel description \_ _ -> []
+    }
+
 describeSpendet :: SpendetOderSpendetNicht -> String
 describeSpendet SpendetNicht = " Sie spenden keine Schicksalspunkte"
 describeSpendet Spendet = ""
@@ -174,6 +191,7 @@ describeZiel (Ziel zielAnzahl einZiel) =
   prefix Eine = "eine "
   prefix Alle = "alle "
   prefix Undefiniert = ""
+  prefix (BisZu anzahl) = "bis zu " <> show anzahl <> " "
 
 describeDauer :: Dauer -> String
 describeDauer = \case
@@ -187,6 +205,11 @@ describeWert = \case
 describeLesbarerWert :: LesbarerWert -> String
 describeLesbarerWert = \case
   LesbarKosten -> "Kosten"
+
+describeWoInsDeck :: WoInsDeck -> String
+describeWoInsDeck = \case
+  Oben -> "oben"
+  Unten -> "unten"
 
 plural :: String -> Anzahl -> String
 plural word n

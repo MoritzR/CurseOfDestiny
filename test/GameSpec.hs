@@ -121,6 +121,25 @@ spec = do
       fmap (.card.name) player1.hand `shouldBe` ["Schicksalszug A", "Schicksalszug B"]
       fmap (.card.name) player1.graveyard `shouldBe` ["Schicksalsstudie"]
 
+    it "reuses the chosen target across follow-up effects" do
+      finalState <- runGameActionsWithChoices [2, 2] sightUndVerzichtState [PlayFromHand 0, ActivateFromField 0]
+      let opponentField = cardsForPlayer Player2 finalState
+          chosenTarget = find ((== "Sicht Ziel B") . (.card.name)) opponentField
+      fmap (.card.name) opponentField `shouldBe` ["Sicht Ziel A", "Sicht Ziel B"]
+      case chosenTarget of
+        Just cardInPlay -> do
+          creatureStrength cardInPlay `shouldBe` 1000
+          cardInPlay.modifications `shouldSatisfy` any isTemporaryGrantedAbility
+        Nothing -> expectationFailure "expected to find the chosen target on the field"
+
+    it "can return up to three enemy creatures to the top of their owner's deck" do
+      finalState <- runGameActionsWithChoices [2, 2, 2] mutUndFlutState [PlayFromHand 0, ActivateFromField 0]
+      let opponent = playerById Player2 finalState
+          player1 = playerById Player1 finalState
+      fmap (.card.name) opponent.field `shouldBe` []
+      fmap (.card.name) opponent.deck `shouldBe` ["Flut Ziel B", "Flut Ziel A"]
+      fmap (.card.name) player1.graveyard `shouldBe` ["Magiestein für Mut und Flut"]
+
     it "switches the current player and removes temporary buffs on endRound" do
       finalState <- runGameActions 1 (drawOpeningHands initialGameState) [PlayFromHand 0, PlayFromHand 0, EndRound]
       let ownField = cardsForPlayer Player1 finalState
@@ -200,6 +219,22 @@ fateDrawState =
   let player1 = createPlayerState Player1 [schicksalsstudie] [namedSpell "Schicksalszug A", namedSpell "Schicksalszug B"] []
       player2 = createPlayerState Player2 [] [] []
    in withPlayers player1{schicksalsmacht = 2} player2
+
+sightUndVerzichtState :: GameState
+sightUndVerzichtState =
+  let targetA = cardInPlayFor Player2 1000 (namedCreature "Sicht Ziel A" 1000)
+      targetB = cardInPlayFor Player2 1001 (namedCreature "Sicht Ziel B" 3000)
+   in withPlayers
+        (createPlayerState Player1 [lookupCard "Magiestein für Sicht und Verzicht"] [] [])
+        (createPlayerState Player2 [] [] [targetA, targetB])
+
+mutUndFlutState :: GameState
+mutUndFlutState =
+  let targetA = cardInPlayFor Player2 1000 (namedCreature "Flut Ziel A" 1000)
+      targetB = cardInPlayFor Player2 1001 (namedCreature "Flut Ziel B" 2000)
+   in withPlayers
+        (createPlayerState Player1 [lookupCard "Magiestein für Mut und Flut"] [] [])
+        (createPlayerState Player2 [] [] [targetA, targetB])
 
 selbststarkerAdept :: Card
 selbststarkerAdept =
@@ -369,6 +404,12 @@ lookupCard cardName =
   case find ((== cardName) . (.name)) series26 of
     Just card -> card
     Nothing -> error $ "unknown card: " <> cardName
+
+isTemporaryGrantedAbility :: Modification -> Bool
+isTemporaryGrantedAbility = \case
+  FähigkeitsModifikation BisZumEndeDesZuges _ ->
+    True
+  _ -> False
 
 cardsForPlayer :: PlayerId -> GameState -> [CardInPlay]
 cardsForPlayer owner state = (playerById owner state).field

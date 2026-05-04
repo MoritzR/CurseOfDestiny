@@ -88,6 +88,9 @@ eine = Ziel Eine
 alle :: EinZiel -> Ziel
 alle = Ziel Alle
 
+bisZu :: Anzahl -> EinZiel -> Ziel
+bisZu anzahl = Ziel (BisZu anzahl)
+
 ownerOfTriggeringCard :: GameState -> CardId -> PlayerId
 ownerOfTriggeringCard gameState sourceId =
   fromMaybe gameState.currentPlayer $
