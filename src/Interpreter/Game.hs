@@ -14,18 +14,19 @@ import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
 import Data.Function ((&))
 import Data.List (intercalate, isInfixOf, sortOn)
-import Data.Maybe (fromMaybe, maybeToList)
+import Data.Maybe (fromMaybe, listToMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, gets, modify)
-import EffectfulLens ((++=), (-=))
+import EffectfulLens (use, (%=), (++=), (+=), (-=), (.=))
 import Element (gesamtKosten)
 import GameEffects (ChoiceInput, Log)
 import GameIO qualified as Gio
-import GameState (currentPlayer, getGameState, opponentPlayer, opponentPlayerL)
+import GameState (currentPlayer, currentPlayerL, getGameState, opponentPlayer, opponentPlayerL, playerByIdL)
 import Optics (AffineTraversal', (%))
 import Optics.AffineTraversal (unsafeFiltered)
 import Optics.Label ()
+import Optics.Lens (Lens')
 import Target (ein, ownerOfTriggeringCard, wesen)
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
@@ -290,30 +291,30 @@ discardFromCurrentHand n = replicateM_ n do
 
 millCurrentDeck :: HasStateIO r => Int -> Eff r ()
 millCurrentDeck n = do
-  activePlayer <- gets currentPlayer
-  let (milled, restDeck) = splitAt n activePlayer.deck
-  modifyPlayer activePlayer.playerId \current ->
-    current{deck = restDeck, graveyard = current.graveyard <> milled}
+  deck <- use $ currentPlayerL % #deck
+  let (milled, restDeck) = splitAt n deck
+  currentPlayerL % #deck .= restDeck
+  currentPlayerL % #graveyard ++= milled
 
 inspectTopOfDeck :: HasStateIO r => Int -> InstructionWhenViewingDeckF () -> Eff r ()
 inspectTopOfDeck n instructions = do
   activePlayer <- gets currentPlayer
   let (viewedCards, restDeck) = splitAt n activePlayer.deck
-  modifyPlayer activePlayer.playerId \current -> current{deck = restDeck}
+  currentPlayerL % #deck .= restDeck
   remainingCards <- runViewedInstructions activePlayer.playerId viewedCards instructions
-  modifyPlayer activePlayer.playerId \current -> current{deck = remainingCards <> current.deck}
+  currentPlayerL % #deck %= (remainingCards <>)
 
 runViewedInstructions :: HasStateIO r => PlayerId -> [CardInPlay] -> InstructionWhenViewingDeckF () -> Eff r [CardInPlay]
 runViewedInstructions _ viewedCards (Pure ()) = pure viewedCards
 runViewedInstructions playerId viewedCards (Free instruction) = case instruction of
   ZeigeVorUndNimmAufDieHand ziel next -> do
-    remaining <- moveViewedCard viewedCards ziel \card -> modifyPlayer playerId \player -> player{hand = player.hand <> [card]}
+    remaining <- moveViewedCard viewedCards ziel \card -> playerByIdL playerId % #hand ++= [card]
     runViewedInstructions playerId remaining next
   ZeigeVorUndWirfAb ziel next -> do
-    remaining <- moveViewedCard viewedCards ziel \card -> modifyPlayer playerId \player -> player{graveyard = player.graveyard <> [card]}
+    remaining <- moveViewedCard viewedCards ziel \card -> playerByIdL playerId % #graveyard ++= [card]
     runViewedInstructions playerId remaining next
   LegeRestUnterDasDeck next -> do
-    modifyPlayer playerId \player -> player{deck = player.deck <> viewedCards}
+    playerByIdL playerId % #deck ++= viewedCards
     runViewedInstructions playerId [] next
   WähleVomDeck options next -> do
     choice <- Gio.chooseOne [1 .. length options]
@@ -439,15 +440,6 @@ returnCardToHand card = do
   removedCards <- removeCards [card.id]
   forM_ removedCards $ const $ addToHand card.owner card
 
-returnCardToDeck :: HasStateIO r => WoInsDeck -> CardInPlay -> Eff r ()
-returnCardToDeck woInsDeck card = do
-  removedCards <- removeCards [card.id]
-  -- Replace this with a lens modification for the owning player
-  forM_ removedCards \removedCard ->
-    modifyPlayer removedCard.owner \player -> case woInsDeck of
-      Oben -> player{deck = removedCard : player.deck}
-      Unten -> player{deck = player.deck <> [removedCard]}
-
 takeLocatedCardToCurrentHand :: HasStateIO r => CardInPlay -> Eff r ()
 takeLocatedCardToCurrentHand card = do
   state <- getGameState
@@ -462,15 +454,16 @@ putNewCardOnField owner card = do
 
 addCardToField :: HasStateIO r => Player -> CardInPlay -> Eff r CardInPlay
 addCardToField owner cardInPlay = do
-  let movedCard = cardInPlay{owner = owner.playerId}
-  modifyPlayer owner.playerId \player -> player{field = player.field <> [movedCard]}
+  let movedCard = cardInPlay{owner = owner.playerId} -- TODO: remove, this is incorrect, the owner stays the same
+  playerByIdL owner.playerId % #field ++= [movedCard]
   pure movedCard
 
 createCardInPlay :: State GameState :> r => PlayerId -> Card -> Eff r CardInPlay
 createCardInPlay owner card = do
   state <- getGameState
-  let cardInPlay = CardInPlay{id = CardId state.nextCardId, owner = owner, card = card, modifications = []}
-  modify \current -> current{nextCardId = current.nextCardId + 1}
+  -- TODO: instead implement a `cardId <- getNextCardId` function that auto increments the id
+  let cardInPlay = CardInPlay{id = CardId state.nextCardId, owner, card, modifications = []}
+  stateAt #nextCardId += 1
   pure cardInPlay
 
 removeCards :: HasStateIO r => [CardId] -> Eff r [CardInPlay]
@@ -479,7 +472,7 @@ removeCards cardIds = do
   let (player1, player2) = state.players
       (removedFromPlayer1, updatedPlayer1) = removeCardsFromPlayer cardIds player1
       (removedFromPlayer2, updatedPlayer2) = removeCardsFromPlayer cardIds player2
-  modify \current -> current{players = (updatedPlayer1, updatedPlayer2)}
+  stateAt #players .= (updatedPlayer1, updatedPlayer2)
   pure $ removedFromPlayer1 <> removedFromPlayer2
 
 removeCardsFromPlayer :: [CardId] -> Player -> ([CardInPlay], Player)
@@ -509,14 +502,14 @@ removeFromHand owner index =
   case removeAt index owner.hand of
     Nothing -> pure Nothing
     Just (card, remainingHand) -> do
-      modifyPlayer owner.playerId \current -> current{hand = remainingHand}
+      playerByIdL owner.playerId % #hand .= remainingHand
       pure $ Just card
 
 addToHand :: HasStateIO r => PlayerId -> CardInPlay -> Eff r ()
-addToHand owner card = modifyPlayer owner \player -> player{hand = player.hand <> [card]}
+addToHand owner card = playerByIdL owner % #hand ++= [card]
 
 addToGraveyard :: HasStateIO r => PlayerId -> [CardInPlay] -> Eff r ()
-addToGraveyard owner cards = modifyPlayer owner \player -> player{graveyard = player.graveyard <> cards}
+addToGraveyard owner cards = playerByIdL owner % #graveyard ++= cards
 
 damageOpponent :: HasStateIO r => Int -> Eff r ()
 damageOpponent amount = opponentPlayerL % #schicksalsmacht -= amount
@@ -524,7 +517,11 @@ damageOpponent amount = opponentPlayerL % #schicksalsmacht -= amount
 returnTargetsToDeck :: HasStateIO r => CardId -> WoInsDeck -> Ziel -> Eff r ()
 returnTargetsToDeck sourceId woInsDeck ziel = do
   targets <- selectTargets sourceId ziel
-  forM_ targets $ returnCardToDeck woInsDeck
+  removedCards <- removeCards $ fmap (.id) targets
+  forM_ removedCards \removedCard ->
+    case woInsDeck of
+      Oben -> playerByIdL removedCard.owner % #deck %= (removedCard :)
+      Unten -> playerByIdL removedCard.owner % #deck ++= [removedCard]
 
 destroyWeakerTarget :: HasStateIO r => CardId -> Ziel -> Ziel -> Eff r ()
 destroyWeakerTarget sourceId zielA zielB = do
@@ -535,14 +532,11 @@ destroyWeakerTarget sourceId zielA zielB = do
     destroyLocatedCard
 
 drawCardsForCurrentPlayer :: HasStateIO r => Int -> Eff r ()
-drawCardsForCurrentPlayer n = do
-  activePlayer <- gets currentPlayer
-  replicateM_ n do
-    player <- gets currentPlayer
-    case player.deck of
-      [] -> pure ()
-      card : restDeck ->
-        modifyPlayer activePlayer.playerId \current -> current{deck = restDeck, hand = current.hand <> [card]}
+drawCardsForCurrentPlayer n = replicateM_ n do
+  deck <- use $ currentPlayerL % #deck
+  forM_ (listToMaybe deck) \card -> do
+    currentPlayerL % #deck %= drop 1
+    currentPlayerL % #hand ++= [card]
 
 drawOpeningHands :: GameState -> GameState
 drawOpeningHands = drawCardsPure Player2 5 . drawCardsPure Player1 5
@@ -629,3 +623,7 @@ viewedCostMatches :: String -> Card -> Bool
 viewedCostMatches desc card = case words desc of
   ["mit", "kosten", "von", number, "oder", "weniger"] -> gesamtKosten card.cost <= read number
   _ -> True
+
+-- to help with type inference on naked fields like `#nextCardId`
+stateAt :: Lens' GameState b -> Lens' GameState b
+stateAt = id

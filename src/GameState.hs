@@ -4,7 +4,7 @@ import Cards (series26)
 import DataTypes
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, get, gets)
-import Optics (Lens')
+import Optics (Lens', lensVL)
 
 createPlayer :: PlayerId -> String -> Player
 createPlayer pid playerName =
@@ -46,11 +46,23 @@ currentPlayer state = playerById state.currentPlayer state
 opponentPlayer :: GameState -> Player
 opponentPlayer state = playerById (otherPlayerId state.currentPlayer) state
 
+playerByIdL :: PlayerId -> Lens' GameState Player
+playerByIdL playerId = lensVL \f state -> case state.players of
+  (player1, player2) -> case playerId of
+    Player1 -> (\updatedPlayer -> state{players = (updatedPlayer, player2)}) <$> f player1
+    Player2 -> (\updatedPlayer -> state{players = (player1, updatedPlayer)}) <$> f player2
+
 currentPlayerL :: Lens' GameState Player
-currentPlayerL = error "TODO implement"
+currentPlayerL = lensVL \f state ->
+  case state.currentPlayer of
+    Player1 -> (\updatedPlayer -> state{players = (updatedPlayer, snd state.players)}) <$> f (fst state.players)
+    Player2 -> (\updatedPlayer -> state{players = (fst state.players, updatedPlayer)}) <$> f (snd state.players)
 
 opponentPlayerL :: Lens' GameState Player
-opponentPlayerL = error "TODO implement"
+opponentPlayerL = lensVL \f state ->
+  case otherPlayerId state.currentPlayer of
+    Player1 -> (\updatedPlayer -> state{players = (updatedPlayer, snd state.players)}) <$> f (fst state.players)
+    Player2 -> (\updatedPlayer -> state{players = (fst state.players, updatedPlayer)}) <$> f (snd state.players)
 
 playerById :: PlayerId -> GameState -> Player
 playerById playerId state = case state.players of
