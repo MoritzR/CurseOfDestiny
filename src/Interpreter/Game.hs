@@ -130,7 +130,7 @@ runInstruction sourceId = \case
     sacrificeTargets sourceId ziel
     pure next
   Heile anzahl next -> do
-    modifyCurrentPlayer \player -> player{schicksalsmacht = player.schicksalsmacht + anzahlToInt anzahl}
+    currentPlayerL % #schicksalsmacht += anzahlToInt anzahl
     pure next
   Schade anzahl next -> do
     damageOpponent (anzahlToInt anzahl)
@@ -550,20 +550,6 @@ playerById owner state = case state.players of
   (player1, player2) -> case owner of
     Player1 -> player1
     Player2 -> player2
-
-modifyPlayer :: HasState r => PlayerId -> (Player -> Player) -> Eff r ()
-modifyPlayer owner update = modify (modifyPlayerPure owner update)
-
-modifyCurrentPlayer :: HasState r => (Player -> Player) -> Eff r ()
-modifyCurrentPlayer update = do
-  activePlayer <- gets currentPlayer
-  modifyPlayer activePlayer.playerId update
-
-modifyPlayerPure :: PlayerId -> (Player -> Player) -> GameState -> GameState
-modifyPlayerPure owner update state = case state.players of
-  (player1, player2) -> case owner of
-    Player1 -> state{players = (update player1, player2)}
-    Player2 -> state{players = (player1, update player2)}
 
 removeAt :: Int -> [a] -> Maybe (a, [a])
 removeAt index values
