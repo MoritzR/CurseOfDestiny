@@ -299,32 +299,24 @@ readSchicksalsmächte spielerZiel = do
     Gegner -> gets opponentPlayer
   pure $ Actual targetPlayer.schicksalsmacht
 
--- TODO: remove duplication between these two discard function. Take in the PlayerId as a parameter
 discardFromCurrentHand :: HasStateIO r => Int -> Eff r ()
-discardFromCurrentHand n = replicateM_ n do
-  activePlayer <- gets currentPlayer
-  case activePlayer.hand of
-    [] -> pure ()
-    cards -> do
-      choice <- Gio.chooseOne $ zip [1 ..] cards
-      case choice of
-        Nothing -> pure ()
-        Just (pickedIndex, _) -> do
-          maybeCard <- removeFromHand activePlayer (pickedIndex - 1)
-          addToGraveyard activePlayer.playerId (maybeToList maybeCard)
+discardFromCurrentHand n = gets ((.playerId) . currentPlayer) >>= discardFromPlayerHand n
 
 discardFromOpponentHand :: HasStateIO r => Int -> Eff r ()
-discardFromOpponentHand n = replicateM_ n do
-  opponent <- gets opponentPlayer
-  case opponent.hand of
+discardFromOpponentHand n = gets ((.playerId) . opponentPlayer) >>= discardFromPlayerHand n
+
+discardFromPlayerHand :: HasStateIO r => Int -> PlayerId -> Eff r ()
+discardFromPlayerHand n playerId = replicateM_ n do
+  player <- gets (playerById playerId)
+  case player.hand of
     [] -> pure ()
     cards -> do
       choice <- Gio.chooseOne $ zip [1 ..] cards
       case choice of
         Nothing -> pure ()
         Just (pickedIndex, _) -> do
-          maybeCard <- removeFromHand opponent (pickedIndex - 1)
-          addToGraveyard opponent.playerId (maybeToList maybeCard)
+          maybeCard <- removeFromHand player (pickedIndex - 1)
+          addToGraveyard player.playerId (maybeToList maybeCard)
 
 millCurrentDeck :: HasStateIO r => Int -> Eff r ()
 millCurrentDeck n = do
