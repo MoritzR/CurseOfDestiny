@@ -2,34 +2,37 @@
 
 module GameSpec where
 
-import Cards (series26)
 import CardEffect
-import Data.List (find)
+import Cards (series26)
+import Data.Function ((&))
 import Data.IORef
+import Data.List (find)
 import DataTypes
+import Effectful (runEff)
+import Effectful.State.Static.Local (execState)
 import Game
 import GameActionParser (GameAction (..))
+import GameEffects (ignoreLog, runChoiceInputConst, runChoiceInputIO)
 import GameState (initialGameState, playerById)
-import Test.Hspec
-import GameEffects ( ignoreLog, runChoiceInputConst, runChoiceInputIO )
-import Effectful.State.Static.Local (execState)
-import Effectful (runEff)
-import Data.Function ((&))
+import Interpreter.Game (creatureStrength, drawOpeningHands)
 import Target
+import Test.Hspec
 import Trigger
 
 spec :: Spec
 spec = do
   describe "Game state transitions" $ do
     it "starts with an opening hand drawn from the deck" do
-      let (player1, player2) = (drawOpeningHands initialGameState).players
+      state <- runDrawOpeningHands initialGameState
+      let (player1, player2) = state.players
       length player1.hand `shouldBe` 5
       length player2.hand `shouldBe` 5
       length player1.deck `shouldBe` length series26 - 5
       length player2.deck `shouldBe` length series26 - 5
 
     it "buffs a played creature when a spell is played afterwards" do
-      state <- runGameActions 1 (drawOpeningHands initialGameState) [PlayFromHand 0, PlayFromHand 0]
+      openingState <- runDrawOpeningHands initialGameState
+      state <- runGameActions 1 openingState [PlayFromHand 0, PlayFromHand 0]
       let ownField = cardsForPlayer Player1 state
           (player1, _) = state.players
       length ownField `shouldBe` 1
@@ -40,7 +43,8 @@ spec = do
         _ -> expectationFailure "expected exactly one card on the field"
 
     it "can activate a permanent card effect that sacrifices itself and buffs a creature" do
-      let state = withPlayer1Hand ["Edors Konstruct", "Magiestein der Erdkraft"] (drawOpeningHands initialGameState)
+      openingState <- runDrawOpeningHands initialGameState
+      let state = withPlayer1Hand ["Edors Konstruct", "Magiestein der Erdkraft"] openingState
       finalState <- runGameActions 1 state [PlayFromHand 0, PlayFromHand 0, ActivateFromField 1]
       let ownField = cardsForPlayer Player1 finalState
           (player1, _) = finalState.players
@@ -150,7 +154,8 @@ spec = do
       fmap (.card.name) player2.graveyard `shouldBe` ["Schwacher Gegner"]
 
     it "switches the current player and removes temporary buffs on endRound" do
-      finalState <- runGameActions 1 (drawOpeningHands initialGameState) [PlayFromHand 0, PlayFromHand 0, EndRound]
+      openingState <- runDrawOpeningHands initialGameState
+      finalState <- runGameActions 1 openingState [PlayFromHand 0, PlayFromHand 0, EndRound]
       let ownField = cardsForPlayer Player1 finalState
       finalState.currentPlayer `shouldBe` Player2
       case ownField of
@@ -365,13 +370,12 @@ cardInPlayFor owner idx card =
 createPlayerState :: PlayerId -> [Card] -> [Card] -> [CardInPlay] -> Player
 createPlayerState owner handCards deckCards fieldCards =
   let basePlayer = playerById owner initialGameState
-   in
-    basePlayer
-      { hand = zipWith (cardInPlayFor owner) [2000 ..] handCards
-      , deck = zipWith (cardInPlayFor owner) [3000 ..] deckCards
-      , field = fieldCards
-      , graveyard = []
-      }
+   in basePlayer
+        { hand = zipWith (cardInPlayFor owner) [2000 ..] handCards
+        , deck = zipWith (cardInPlayFor owner) [3000 ..] deckCards
+        , field = fieldCards
+        , graveyard = []
+        }
 
 withPlayers :: Player -> Player -> GameState
 withPlayers player1 player2 =
@@ -436,6 +440,12 @@ runGameActions firstChoice gameState actions =
   playGame actions
     & ignoreLog
     & runChoiceInputConst firstChoice
+    & execState gameState
+    & runEff
+
+runDrawOpeningHands :: GameState -> IO GameState
+runDrawOpeningHands gameState =
+  drawOpeningHands
     & execState gameState
     & runEff
 

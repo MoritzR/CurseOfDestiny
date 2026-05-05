@@ -14,7 +14,7 @@ import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
 import Data.Function ((&))
 import Data.List (intercalate, isInfixOf, sortOn)
-import Data.Maybe (fromMaybe, listToMaybe, maybeToList)
+import Data.Maybe (listToMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, gets, modify)
@@ -30,6 +30,7 @@ import Optics.Lens (Lens')
 import Target (ein, ownerOfTriggeringCard, wesen)
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
+type HasState es = (State GameState :> es)
 
 data LocatedCard = LocatedCard {locationOwner :: PlayerId, cardInPlay :: CardInPlay, location :: Location}
   deriving (Eq, Show)
@@ -531,29 +532,21 @@ destroyWeakerTarget sourceId zielA zielB = do
     (targetsA <> targetsB & sortOn creatureStrength & init)
     destroyLocatedCard
 
-drawCardsForCurrentPlayer :: HasStateIO r => Int -> Eff r ()
-drawCardsForCurrentPlayer n = replicateM_ n do
-  deck <- use $ currentPlayerL % #deck
+drawCardsForCurrentPlayer :: HasState r => Int -> Eff r ()
+drawCardsForCurrentPlayer n = gets ((.playerId) . currentPlayer) >>= drawCardsForPlayer n
+
+drawCardsForPlayer :: HasState r => Int -> PlayerId -> Eff r ()
+drawCardsForPlayer numberOfCards playerId = replicateM_ numberOfCards do
+  let player = playerByIdL playerId
+  deck <- use $ player % #deck
   forM_ (listToMaybe deck) \card -> do
-    currentPlayerL % #deck %= drop 1
-    currentPlayerL % #hand ++= [card]
+    player % #deck %= drop 1
+    player % #hand ++= [card]
 
-drawOpeningHands :: GameState -> GameState
-drawOpeningHands = drawCardsPure Player2 5 . drawCardsPure Player1 5
-
-drawCardsPure :: PlayerId -> Int -> GameState -> GameState
-drawCardsPure owner n state =
-  foldr (\_ current -> fromMaybe current $ drawOnePure owner current) state [1 .. n]
-
-drawOnePure :: PlayerId -> GameState -> Maybe GameState
-drawOnePure owner state = case (playerById owner state).deck of
-  [] -> Nothing
-  card : restDeck ->
-    Just $
-      modifyPlayerPure
-        owner
-        (\player -> player{deck = restDeck, hand = player.hand <> [card]})
-        state
+drawOpeningHands :: HasState r => Eff r ()
+drawOpeningHands = do
+  drawCardsForPlayer 5 Player1
+  drawCardsForPlayer 5 Player2
 
 playerById :: PlayerId -> GameState -> Player
 playerById owner state = case state.players of
@@ -561,10 +554,10 @@ playerById owner state = case state.players of
     Player1 -> player1
     Player2 -> player2
 
-modifyPlayer :: HasStateIO r => PlayerId -> (Player -> Player) -> Eff r ()
+modifyPlayer :: HasState r => PlayerId -> (Player -> Player) -> Eff r ()
 modifyPlayer owner update = modify (modifyPlayerPure owner update)
 
-modifyCurrentPlayer :: HasStateIO r => (Player -> Player) -> Eff r ()
+modifyCurrentPlayer :: HasState r => (Player -> Player) -> Eff r ()
 modifyCurrentPlayer update = do
   activePlayer <- gets currentPlayer
   modifyPlayer activePlayer.playerId update

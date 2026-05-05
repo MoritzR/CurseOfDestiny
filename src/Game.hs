@@ -9,7 +9,7 @@ import GameActionParser (GameAction (..), parseGameAction)
 import GameEffects (ChoiceInput, CommandInput, Log, readCommand)
 import GameIO qualified as Gio
 import GameState (currentPlayer, initialGameState, opponentPlayer, otherPlayerId)
-import Interpreter.Game qualified as GameInterpreter
+import Interpreter.Game (activateCardOnField, creatureStrength, drawOpeningHands, playCardFromHand, removeTemporaryModifications)
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
 type Game es a = HasStateIO es => Eff es a
@@ -45,12 +45,14 @@ gameLoop = do
       gameLoop
 
 startGame :: (IOE :> es, CommandInput :> es, ChoiceInput :> es, Log :> es) => Eff es ()
-startGame = evalState (drawOpeningHands initialGameState) gameLoop
+startGame = evalState initialGameState do
+  drawOpeningHands
+  gameLoop
 
 resolveAction :: HasStateIO r => GameAction -> Eff r ()
 resolveAction = \case
-  PlayFromHand index -> GameInterpreter.playCardFromHand index
-  ActivateFromField index -> GameInterpreter.activateCardOnField index
+  PlayFromHand index -> playCardFromHand index
+  ActivateFromField index -> activateCardOnField index
   AnnounceAttack source target ->
     Gio.logLn' $ "Angriff ist noch nicht implementiert: " <> show (source + 1) <> " -> " <> show (target + 1)
   AnnounceDirectAttack source ->
@@ -93,12 +95,3 @@ renderFieldCard cardInPlay = case cardInPlay.card.cardType of
     cardInPlay.card.name <> " [" <> show (creatureStrength cardInPlay) <> "]"
   _ ->
     cardInPlay.card.name
-
-creatureStrength :: CardInPlay -> Int
-creatureStrength = GameInterpreter.creatureStrength
-
-drawOpeningHands :: GameState -> GameState
-drawOpeningHands = GameInterpreter.drawOpeningHands
-
-removeTemporaryModifications :: CardInPlay -> CardInPlay
-removeTemporaryModifications = GameInterpreter.removeTemporaryModifications
