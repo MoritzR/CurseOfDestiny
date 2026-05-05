@@ -126,15 +126,15 @@ data Aura
 data Ziel = Ziel {anzahl :: ZielAnzahl, ziel :: EinZiel}
 data ZielAnzahl = Ein | Eine | Alle | Undefiniert | BisZu Anzahl
 
-data EinZiel = EinZiel {description :: String, candidates :: GameState -> CardId -> [CardInPlay]}
+data EinZiel = EinZiel {description :: String, candidates :: GameState -> CardId -> [CardInPlay] -> [CardInPlay]}
 
 instance Show EinZiel where
   show = (.description)
 
 instance Semigroup EinZiel where
   a <> b =
-    EinZiel (a.description <> " " <> b.description) $ \state sourceId ->
-      a.candidates state sourceId `intersect` b.candidates state sourceId
+    EinZiel (a.description <> " " <> b.description) $ \state sourceId availableCards ->
+      a.candidates state sourceId availableCards `intersect` b.candidates state sourceId availableCards
 
 data TriggerInstruction next
   = AmEndeDerRunde CardEffect next

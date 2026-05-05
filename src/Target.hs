@@ -9,74 +9,78 @@ import Data.Function ((&))
 import Data.Maybe (fromMaybe)
 import DataTypes
 import Element (gesamtKosten)
-import Optics (filtered, traversed, (%), (^..))
-import Optics.Traversal (both)
+import Optics ((^..))
 
 oder :: EinZiel -> EinZiel -> EinZiel
 oder a b =
   EinZiel (a.description <> " oder " <> b.description) $
-    \state sourceId -> a.candidates state sourceId <> b.candidates state sourceId
+    \state sourceId availableCards -> a.candidates state sourceId availableCards <> b.candidates state sourceId availableCards
 
 karte :: EinZiel
-karte = EinZiel "Karte" \state _ -> state ^.. allCards
+karte = EinZiel "Karte" \_ _ availableCards -> availableCards
 
 karten :: EinZiel
 karten = karte{description = "Karten"}
 
 wesen :: EinZiel
-wesen = EinZiel "Wesen" \state _ ->
-  (state ^.. allCards)
+wesen = EinZiel "Wesen" \_ _ availableCards ->
+  availableCards
     & filter \cardInPlay -> case cardInPlay.card.cardType of
       Wesen _ _ -> True
       _ -> False
 
 magie :: EinZiel
-magie = EinZiel "Magie" \state _ ->
-  (state ^.. allCards)
+magie = EinZiel "Magie" \_ _ availableCards ->
+  availableCards
     & filter \cardInPlay -> case cardInPlay.card.cardType of
       Allmagie; Gegenmagie; Magie; MagieDauerhaft -> True
       _ -> False
 
 gegenmagie :: EinZiel
-gegenmagie = EinZiel "Gegenmagie" \state _ ->
-  (state ^.. allCards)
+gegenmagie = EinZiel "Gegenmagie" \_ _ availableCards ->
+  availableCards
     & filter \cardInPlay -> case cardInPlay.card.cardType of
       Gegenmagie -> True
       _ -> False
 
 aufDemFeld :: EinZiel
-aufDemFeld = EinZiel "auf dem Feld" \state _ -> state ^.. #players % both % #field % traversed
+aufDemFeld = EinZiel "auf dem Feld" \state _ availableCards ->
+  availableCards & filter (\cardInPlay -> inZone (.field) state cardInPlay.id)
 
 aufDemFriedHof :: EinZiel
-aufDemFriedHof = EinZiel "auf dem Friedhof" \state _ -> state ^.. #players % both % #graveyard % traversed
+aufDemFriedHof = EinZiel "auf dem Friedhof" \state _ availableCards ->
+  availableCards & filter (\cardInPlay -> inZone (.graveyard) state cardInPlay.id)
 
 aufDerHand :: EinZiel
-aufDerHand = EinZiel "auf der Hand" \state _ -> state ^.. #players % both % #hand % traversed
+aufDerHand = EinZiel "auf der Hand" \state _ availableCards ->
+  availableCards & filter (\cardInPlay -> inZone (.hand) state cardInPlay.id)
 
 eigene :: EinZiel
-eigene = EinZiel "eigene" \state sourceId ->
-  state ^.. allCards % filtered \cardInPlay ->
-    zoneOwnerOf state cardInPlay.id == Just (ownerOfTriggeringCard state sourceId)
+eigene = EinZiel "eigene" \state sourceId availableCards ->
+  availableCards
+    & filter \cardInPlay ->
+      zoneOwnerOf state cardInPlay.id == Just (ownerOfTriggeringCard state sourceId)
 
 eigenes :: EinZiel
 eigenes = eigene{description = "eigenes"}
 
 gegnerisches :: EinZiel
-gegnerisches = EinZiel "gegnerisches" \state sourceId ->
-  state ^.. allCards % filtered \cardInPlay ->
-    zoneOwnerOf state cardInPlay.id == Just (otherPlayer $ ownerOfTriggeringCard state sourceId)
+gegnerisches = EinZiel "gegnerisches" \state sourceId availableCards ->
+  availableCards
+    & filter \cardInPlay ->
+      zoneOwnerOf state cardInPlay.id == Just (otherPlayer $ ownerOfTriggeringCard state sourceId)
 
 kostetMaximal :: Int -> EinZiel
 kostetMaximal maxKosten =
-  EinZiel ("mit kosten von " <> show maxKosten <> " oder weniger") \state _ ->
-    state ^.. allCards % filtered \cardInPlay ->
-      gesamtKosten cardInPlay.card.cost <= maxKosten
+  EinZiel ("mit kosten von " <> show maxKosten <> " oder weniger") \_ _ availableCards ->
+    availableCards & filter (\cardInPlay -> gesamtKosten cardInPlay.card.cost <= maxKosten)
 
 selbst :: Ziel
 selbst =
   Ziel
     { anzahl = Undefiniert
-    , ziel = EinZiel "diese Karte" \state sourceId -> state ^.. allCards % filtered \cardInPlay -> cardInPlay.id == sourceId
+    , ziel = EinZiel "diese Karte" \_ sourceId availableCards ->
+        availableCards & filter (\cardInPlay -> cardInPlay.id == sourceId)
     }
 
 ein :: EinZiel -> Ziel

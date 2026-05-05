@@ -164,7 +164,7 @@ placeholderTarget :: String -> Ziel
 placeholderTarget description =
   Ziel
     { anzahl = Undefiniert
-    , ziel = EinZiel description \_ _ -> []
+    , ziel = EinZiel description \_ _ _ -> []
     }
 
 describeSpendet :: SpendetOderSpendetNicht -> String

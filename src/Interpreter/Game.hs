@@ -9,21 +9,21 @@ module Interpreter.Game (
   drawOpeningHands,
 ) where
 
-import Control.Monad (forM_, replicateM_, void)
+import Control.Monad (forM_, replicateM_)
 import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
 import Data.Function ((&))
-import Data.List (intercalate, isInfixOf, sortOn)
+import Data.List (intercalate, sortOn)
 import Data.Maybe (listToMaybe, maybeToList)
 import DataTypes
 import Effectful (Eff, (:>))
-import Effectful.State.Static.Local (State, gets, modify)
+import Effectful.State.Static.Local (State, gets)
 import EffectfulLens (use, (%=), (++=), (+=), (-=), (.=))
 import Element (gesamtKosten)
 import GameEffects (ChoiceInput, Log)
 import GameIO qualified as Gio
 import GameState (currentPlayer, currentPlayerL, getGameState, opponentPlayer, opponentPlayerL, playerByIdL)
-import Optics (AffineTraversal', (%))
+import Optics (AffineTraversal', (%), (^..))
 import Optics.AffineTraversal (unsafeFiltered)
 import Optics.Label ()
 import Optics.Lens (Lens')
@@ -185,7 +185,7 @@ runInstruction sourceId = \case
     millCurrentDeck (anzahlToInt anzahl)
     pure next
   SchaueObenVomDeck anzahl instructions next -> do
-    inspectTopOfDeck (anzahlToInt anzahl) instructions
+    inspectTopOfDeck sourceId (anzahlToInt anzahl) instructions
     pure next
   SiehHandkartenAnUndEntferneEineAusDemSpiel next ->
     pure next
@@ -251,7 +251,7 @@ concreteTarget ziel selectedTargets =
     , ziel =
         EinZiel
           { description = describeConcreteTargets selectedTargets
-          , candidates = \_ _ -> selectedTargets
+          , candidates = \_ _ _ -> selectedTargets
           }
     }
 
@@ -297,36 +297,36 @@ millCurrentDeck n = do
   currentPlayerL % #deck .= restDeck
   currentPlayerL % #graveyard ++= milled
 
-inspectTopOfDeck :: HasStateIO r => Int -> InstructionWhenViewingDeckF () -> Eff r ()
-inspectTopOfDeck n instructions = do
+inspectTopOfDeck :: HasStateIO r => CardId -> Int -> InstructionWhenViewingDeckF () -> Eff r ()
+inspectTopOfDeck sourceId n instructions = do
   activePlayer <- gets currentPlayer
   let (viewedCards, restDeck) = splitAt n activePlayer.deck
   currentPlayerL % #deck .= restDeck
-  remainingCards <- runViewedInstructions activePlayer.playerId viewedCards instructions
+  remainingCards <- runViewedInstructions sourceId activePlayer.playerId viewedCards instructions
   currentPlayerL % #deck %= (remainingCards <>)
 
-runViewedInstructions :: HasStateIO r => PlayerId -> [CardInPlay] -> InstructionWhenViewingDeckF () -> Eff r [CardInPlay]
-runViewedInstructions _ viewedCards (Pure ()) = pure viewedCards
-runViewedInstructions playerId viewedCards (Free instruction) = case instruction of
+runViewedInstructions :: HasStateIO r => CardId -> PlayerId -> [CardInPlay] -> InstructionWhenViewingDeckF () -> Eff r [CardInPlay]
+runViewedInstructions _ _ viewedCards (Pure ()) = pure viewedCards
+runViewedInstructions sourceId playerId viewedCards (Free instruction) = case instruction of
   ZeigeVorUndNimmAufDieHand ziel next -> do
-    remaining <- moveViewedCard viewedCards ziel \card -> playerByIdL playerId % #hand ++= [card]
-    runViewedInstructions playerId remaining next
+    remaining <- moveViewedCard sourceId viewedCards ziel \card -> playerByIdL playerId % #hand ++= [card]
+    runViewedInstructions sourceId playerId remaining next
   ZeigeVorUndWirfAb ziel next -> do
-    remaining <- moveViewedCard viewedCards ziel \card -> playerByIdL playerId % #graveyard ++= [card]
-    runViewedInstructions playerId remaining next
+    remaining <- moveViewedCard sourceId viewedCards ziel \card -> playerByIdL playerId % #graveyard ++= [card]
+    runViewedInstructions sourceId playerId remaining next
   LegeRestUnterDasDeck next -> do
     playerByIdL playerId % #deck ++= viewedCards
-    runViewedInstructions playerId [] next
+    runViewedInstructions sourceId playerId [] next
   WähleVomDeck options next -> do
     choice <- Gio.chooseOne [1 .. length options]
     afterChoice <- case choice of
       Nothing -> pure viewedCards
-      Just picked -> runViewedInstructions playerId viewedCards (options !! (picked - 1))
-    runViewedInstructions playerId afterChoice next
+      Just picked -> runViewedInstructions sourceId playerId viewedCards (options !! (picked - 1))
+    runViewedInstructions sourceId playerId afterChoice next
 
-moveViewedCard :: HasStateIO r => [CardInPlay] -> Ziel -> (CardInPlay -> Eff r ()) -> Eff r [CardInPlay]
-moveViewedCard viewedCards ziel onMove = do
-  let options = filter (matchesViewedCard ziel) viewedCards
+moveViewedCard :: HasStateIO r => CardId -> [CardInPlay] -> Ziel -> (CardInPlay -> Eff r ()) -> Eff r [CardInPlay]
+moveViewedCard sourceId viewedCards ziel onMove = do
+  options <- selectableTargetsFromCards sourceId ziel.ziel viewedCards
   case options of
     [] -> pure viewedCards
     [singleCard] -> do
@@ -379,9 +379,13 @@ chooseUpToTargetsFor playerId limit choices = go limit choices []
         go (remaining - 1) (filter (/= picked) available) (picked : selected)
 
 selectableTargets :: HasStateIO r => CardId -> EinZiel -> Eff r [CardInPlay]
-selectableTargets sourceId ziel = do
+selectableTargets sourceId ziel =
+  selectableTargetsFromCards sourceId ziel =<< gets (^.. allCards)
+
+selectableTargetsFromCards :: HasStateIO r => CardId -> EinZiel -> [CardInPlay] -> Eff r [CardInPlay]
+selectableTargetsFromCards sourceId ziel availableCards = do
   state <- getGameState
-  pure $ ziel.candidates state sourceId
+  pure $ ziel.candidates state sourceId availableCards
 
 removeTemporaryModifications :: CardInPlay -> CardInPlay
 removeTemporaryModifications cardInPlay =
@@ -572,33 +576,6 @@ removeFirstById idToRemove = go
   go (card : rest)
     | card.id == idToRemove = rest
     | otherwise = card : go rest
-
-matchesViewedCard :: Ziel -> CardInPlay -> Bool
-matchesViewedCard ziel cardInPlay =
-  viewedTypeMatches ziel.ziel.description cardInPlay.card
-    && viewedCostMatches ziel.ziel.description cardInPlay.card
-
-viewedTypeMatches :: String -> Card -> Bool
-viewedTypeMatches desc card
-  | "Gegenmagie" `isInfixOf` desc = case card.cardType of
-      Gegenmagie -> True
-      _ -> False
-  | "Magie" `isInfixOf` desc = case card.cardType of
-      Allmagie -> True
-      Gegenmagie -> True
-      Magie -> True
-      MagieDauerhaft -> True
-      _ -> False
-  | "Wesen" `isInfixOf` desc = case card.cardType of
-      Wesen _ _ -> True
-      _ -> False
-  | "Karte" `isInfixOf` desc || "Karten" `isInfixOf` desc = True
-  | otherwise = True
-
-viewedCostMatches :: String -> Card -> Bool
-viewedCostMatches desc card = case words desc of
-  ["mit", "kosten", "von", number, "oder", "weniger"] -> gesamtKosten card.cost <= read number
-  _ -> True
 
 -- to help with type inference on naked fields like `#nextCardId`
 stateAt :: Lens' GameState b -> Lens' GameState b
