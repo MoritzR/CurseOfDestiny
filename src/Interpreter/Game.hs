@@ -51,7 +51,7 @@ playCardFromHand index = do
     Just card -> do
       runOnPlayTrigger card
       if isPermanent card.card.cardType
-        then void $ addCardToField activePlayer card
+        then addCardToField activePlayer card
         else addToGraveyard activePlayer.playerId [card]
 
 isPermanent :: CardType -> Bool
@@ -448,16 +448,13 @@ takeLocatedCardToCurrentHand card = do
   removed <- removeCards [card.id]
   forM_ removed $ addToHand triggeringPlayer
 
-putNewCardOnField :: HasStateIO r => Player -> Card -> Eff r CardInPlay
+putNewCardOnField :: HasStateIO r => Player -> Card -> Eff r ()
 putNewCardOnField owner card = do
   newCard <- createCardInPlay owner.playerId card
   addCardToField owner newCard
 
-addCardToField :: HasStateIO r => Player -> CardInPlay -> Eff r CardInPlay
-addCardToField owner cardInPlay = do
-  let movedCard = cardInPlay{owner = owner.playerId} -- TODO: remove, this is incorrect, the owner stays the same
-  playerByIdL owner.playerId % #field ++= [movedCard]
-  pure movedCard
+addCardToField :: HasStateIO r => Player -> CardInPlay -> Eff r ()
+addCardToField owner card = playerByIdL owner.playerId % #field ++= [card]
 
 createCardInPlay :: State GameState :> r => PlayerId -> Card -> Eff r CardInPlay
 createCardInPlay owner card = do
