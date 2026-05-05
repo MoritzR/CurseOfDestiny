@@ -52,6 +52,7 @@ data Wesenstyp
   | Magier
   | Krieger
   | Bestie
+  | Geist
   deriving (Eq, Show)
 
 data Card = Card
@@ -155,6 +156,7 @@ data InstructionWhenViewingDeck next
   = ZeigeVorUndNimmAufDieHand Ziel next
   | ZeigeVorUndWirfAb Ziel next
   | LegeRestUnterDasDeck next
+  | LegeRestAufDenFriedhof SpendetOderSpendetNicht next
   | WähleVomDeck [InstructionWhenViewingDeckF ()] next
   deriving (Functor, Foldable)
 
@@ -168,12 +170,14 @@ data Instruction next
   | WähleEffekt [CardEffect] next
   | WähleZiel Ziel (Ziel -> CardEffect) next
   | Opfere Ziel next
+  | GegnerOpfert Ziel next
   | Heile Anzahl next
   | Schade Anzahl next
   | ZerstöreSchwächeres Ziel Ziel next
   | GibInsDeck WoInsDeck Ziel next
   | GibAufDieHandZurück Ziel next
   | Zerstöre Ziel next
+  | EntferneAusDemSpiel Ziel next
   | Verringere Wert Ziel Dauer Höhe next
   | VerringereUndZerstöre Ziel Dauer Höhe next
   | NimmAufDieHand Ziel next
@@ -184,6 +188,7 @@ data Instruction next
   | EinSpielerOpfertEinWesen next
   | AnzahlVon Ziel (Anzahl -> CardEffect) next
   | WirfAb Anzahl SpendetOderSpendetNicht next
+  | GegnerWirfAb Anzahl SpendetOderSpendetNicht next
   | LegeVomDeckAufDenFriedhof Anzahl SpendetOderSpendetNicht next
   | SchaueObenVomDeck Anzahl (InstructionWhenViewingDeckF ()) next
   | SiehHandkartenAnUndEntferneEineAusDemSpiel next
@@ -193,7 +198,7 @@ data Instruction next
 deriving instance Functor Instruction
 deriving instance Foldable Instruction
 
-data WoInsDeck = Oben | Unten
+data WoInsDeck = Oben | Unten | AnPosition Int
 
 type TriggerInstructionF = Free TriggerInstruction
 type Trigger = TriggerInstructionF ()

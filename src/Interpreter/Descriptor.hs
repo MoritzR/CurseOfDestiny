@@ -88,6 +88,8 @@ describeInstruction = \case
     "Wähle " <> describeZiel ziel <> ". " <> describeEffectInline (effectForTarget $ placeholderTarget "das gewählte Ziel")
   Opfere ziel _ ->
     "Opfere " <> describeZiel ziel <> "."
+  GegnerOpfert ziel _ ->
+    "Der Gegner opfert " <> describeZiel ziel <> "."
   Heile n _ ->
     "Erhalte " <> show n <> " Schicksalsmacht."
   Schade n _ ->
@@ -100,6 +102,8 @@ describeInstruction = \case
     "Gib " <> describeZiel ziel <> " auf die Hand des Besitzers zurück."
   Zerstöre ziel _ ->
     "Zerstöre " <> describeZiel ziel
+  EntferneAusDemSpiel ziel _ ->
+    "Entferne " <> describeZiel ziel <> " aus dem Spiel."
   Verringere wert ziel dauer höhe _ ->
     describeZiel ziel <> " verringert " <> possessive describeWert wert <> " " <> describeDauer dauer <> " um " <> show höhe
   VerringereUndZerstöre ziel dauer höhe _ ->
@@ -114,6 +118,8 @@ describeInstruction = \case
   BringeInsSpielAusZiel ziel _ ->
     "Bringe ins Spiel: " <> describeZiel ziel
   WirfAb anzahl spendet _ -> "wirf " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
+  GegnerWirfAb anzahl spendet _ ->
+    "Der Gegner wirft " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
   LegeVomDeckAufDenFriedhof anzahl spendet _ ->
     "Lege " <> show anzahl <> " Karten vom Deck auf den Friedhof." <> describeSpendet spendet
   GibFähigkeit ziel dauer triggerInstrs _ ->
@@ -154,6 +160,8 @@ describeWhenViewingDeckInstruction = \case
     "zeige " <> describeZiel ziel <> " offen vor und wirf es ab"
   LegeRestUnterDasDeck _ ->
     "lege den Rest unter das Deck"
+  LegeRestAufDenFriedhof spendet _ ->
+    "lege den Rest auf den Friedhof" <> describeSpendet spendet
   WähleVomDeck aktionen _ ->
     "wähle aus:\n - " <> intercalate "\n - " (describeWhenViewingDeckEffect <$> aktionen)
 
@@ -210,6 +218,7 @@ describeWoInsDeck :: WoInsDeck -> String
 describeWoInsDeck = \case
   Oben -> "oben"
   Unten -> "unten"
+  AnPosition position -> "an Position " <> show position
 
 plural :: String -> Anzahl -> String
 plural word n

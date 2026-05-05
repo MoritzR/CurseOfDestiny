@@ -13,6 +13,7 @@ import Control.Monad (forM_, replicateM_)
 import Control.Monad.Free (Free (..), foldFree, iter, iterM)
 import Data.Foldable (fold)
 import Data.Function ((&))
+import Data.Functor (void)
 import Data.List (intercalate, sortOn)
 import Data.Maybe (listToMaybe, maybeToList)
 import DataTypes
@@ -129,6 +130,9 @@ runInstruction sourceId = \case
   Opfere ziel next -> do
     sacrificeTargets sourceId ziel
     pure next
+  GegnerOpfert ziel next -> do
+    opponentSacrifices sourceId ziel
+    pure next
   Heile anzahl next -> do
     currentPlayerL % #schicksalsmacht += anzahlToInt anzahl
     pure next
@@ -146,6 +150,9 @@ runInstruction sourceId = \case
     pure next
   Zerstöre ziel next -> do
     destroyTargets sourceId ziel
+    pure next
+  EntferneAusDemSpiel ziel next -> do
+    removeFromGame sourceId ziel
     pure next
   Verringere wert ziel dauer höhe next -> do
     increaseValue sourceId wert ziel dauer (negate $ anzahlToInt höhe)
@@ -181,6 +188,9 @@ runInstruction sourceId = \case
   WirfAb anzahl _ next -> do
     discardFromCurrentHand (anzahlToInt anzahl)
     pure next
+  GegnerWirfAb anzahl _ next -> do
+    discardFromOpponentHand (anzahlToInt anzahl)
+    pure next
   LegeVomDeckAufDenFriedhof anzahl _ next -> do
     millCurrentDeck (anzahlToInt anzahl)
     pure next
@@ -210,6 +220,13 @@ sacrificeTargets sourceId ziel = do
   targets <- selectTargets sourceId ziel
   mapM_ sacrificeLocatedCard targets
 
+opponentSacrifices :: HasStateIO r => CardId -> Ziel -> Eff r ()
+opponentSacrifices sourceId ziel = do
+  state <- getGameState
+  let opponent = opponentPlayer state
+  targets <- selectableTargetsFromCards sourceId ziel.ziel opponent.field
+  maybe (pure ()) sacrificeLocatedCard =<< chooseTargetFor opponent.playerId targets
+
 destroyTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
 destroyTargets sourceId ziel = do
   targets <- selectTargets sourceId ziel
@@ -224,6 +241,11 @@ takeTargetsToHand :: HasStateIO r => CardId -> Ziel -> Eff r ()
 takeTargetsToHand sourceId ziel = do
   targets <- selectTargets sourceId ziel
   mapM_ takeLocatedCardToCurrentHand targets
+
+removeFromGame :: HasStateIO r => CardId -> Ziel -> Eff r ()
+removeFromGame sourceId ziel = do
+  targets <- selectTargets sourceId ziel
+  void $ removeCards $ fmap (.id) targets
 
 bringTargetIntoPlay :: HasStateIO r => CardId -> Ziel -> Eff r ()
 bringTargetIntoPlay sourceId ziel = do
@@ -277,6 +299,7 @@ readSchicksalsmächte spielerZiel = do
     Gegner -> gets opponentPlayer
   pure $ Actual targetPlayer.schicksalsmacht
 
+-- TODO: remove duplication between these two discard function. Take in the PlayerId as a parameter
 discardFromCurrentHand :: HasStateIO r => Int -> Eff r ()
 discardFromCurrentHand n = replicateM_ n do
   activePlayer <- gets currentPlayer
@@ -289,6 +312,19 @@ discardFromCurrentHand n = replicateM_ n do
         Just (pickedIndex, _) -> do
           maybeCard <- removeFromHand activePlayer (pickedIndex - 1)
           addToGraveyard activePlayer.playerId (maybeToList maybeCard)
+
+discardFromOpponentHand :: HasStateIO r => Int -> Eff r ()
+discardFromOpponentHand n = replicateM_ n do
+  opponent <- gets opponentPlayer
+  case opponent.hand of
+    [] -> pure ()
+    cards -> do
+      choice <- Gio.chooseOne $ zip [1 ..] cards
+      case choice of
+        Nothing -> pure ()
+        Just (pickedIndex, _) -> do
+          maybeCard <- removeFromHand opponent (pickedIndex - 1)
+          addToGraveyard opponent.playerId (maybeToList maybeCard)
 
 millCurrentDeck :: HasStateIO r => Int -> Eff r ()
 millCurrentDeck n = do
@@ -316,6 +352,9 @@ runViewedInstructions sourceId playerId viewedCards (Free instruction) = case in
     runViewedInstructions sourceId playerId remaining next
   LegeRestUnterDasDeck next -> do
     playerByIdL playerId % #deck ++= viewedCards
+    runViewedInstructions sourceId playerId [] next
+  LegeRestAufDenFriedhof _ next -> do
+    playerByIdL playerId % #graveyard ++= viewedCards
     runViewedInstructions sourceId playerId [] next
   WähleVomDeck options next -> do
     choice <- Gio.chooseOne [1 .. length options]
@@ -524,6 +563,7 @@ returnTargetsToDeck sourceId woInsDeck ziel = do
     case woInsDeck of
       Oben -> playerByIdL removedCard.owner % #deck %= (removedCard :)
       Unten -> playerByIdL removedCard.owner % #deck ++= [removedCard]
+      AnPosition position -> playerByIdL removedCard.owner % #deck %= insertAt (max 0 (position - 1)) removedCard
 
 destroyWeakerTarget :: HasStateIO r => CardId -> Ziel -> Ziel -> Eff r ()
 destroyWeakerTarget sourceId zielA zielB = do
@@ -576,6 +616,11 @@ removeFirstById idToRemove = go
   go (card : rest)
     | card.id == idToRemove = rest
     | otherwise = card : go rest
+
+insertAt :: Int -> a -> [a] -> [a]
+insertAt index value values =
+  let (before, after) = splitAt index values
+   in before <> [value] <> after
 
 -- to help with type inference on naked fields like `#nextCardId`
 stateAt :: Lens' GameState b -> Lens' GameState b

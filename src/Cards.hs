@@ -1,6 +1,7 @@
 module Cards where
 
 import CardEffect
+import Control.Monad (replicateM_)
 import DataTypes
 import Target
 import Trigger
@@ -12,6 +13,14 @@ schirmBestie =
     , cardType = Wesen Bestie 4000
     , cost = 2 Wald
     , trigger = keinEffekt
+    }
+
+faehrgeist =
+  Card
+    { name = "Fährgeist"
+    , cardType = Wesen Geist 1000
+    , cost = 1 Tod + 1 Licht
+    , trigger = lebensentzug
     }
 
 -- series
@@ -401,5 +410,74 @@ series26 =
             wähleZiel (ein $ wesen <> aufDemFeld) \ziel -> do
               verringere Stärke ziel Dauerhaft 2000
               gibFähigkeit ziel BisZumEndeDesZuges kannNichtAbwehren
+      }
+  , Card
+      { name = "Magiestein für Stärke und Werke"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 Wasser) do
+            opfere selbst
+            schaueObenVomDeck 4 do
+              zeigeVorUndNimmtAufDieHand (eine magie)
+              legeRestUnterDeck
+          zahle (1 Wald) do
+            opfere selbst
+            schaueObenVomDeck 4 do
+              zeigeVorUndNimmtAufDieHand (ein wesen)
+              legeRestUnterDeck
+      }
+  , Card
+      { name = "Magiestein für Stehlen und Seelen"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (3 + 1 Tod) do
+            opfere selbst
+            gegnerOpfert (ein wesen)
+          zahle (3 + 1 Licht) do
+            opfere selbst
+            -- TODO: use a new DSL primitive that generates a better description instead of replicateM_
+            replicateM_ 3 $ bringeInsSpiel faehrgeist
+      }
+  , Card
+      { name = "Magiestein für Streckung und Erweckung"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (2 + 1 Wald) do
+            opfere selbst
+            schaueObenVomDeck 4 do
+              zeigeVorUndNimmtAufDieHand $ bisZu 1 wesen
+              legeRestAufDenFriedhof SpendetNicht
+          zahle (4 + 2 Tod) do
+            opfere selbst
+            bringeInsSpielAusZiel (ein $ wesen <> aufDemFriedHof)
+      }
+  , Card
+      { name = "Magiestein für Tribut und Armut"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (2 + 1 Tod) do
+            opfere selbst
+            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges do
+              beimAngriff ZuBeginn $ gegnerWirfAb 1 SpendetNicht
+          zahle (4 + 1 Feuer) do
+            opfere selbst
+            gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges do
+              beimAngriff ZuBeginn $ entferneAusDemSpiel (ein aufDemFriedHof)
+      }
+  , Card
+      { name = "Magiestein für Überwinden und Verschwinden"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 Wald) do
+            opfere selbst
+            erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
+          zahle (5 + 1 Wind) do
+            opfere selbst
+            gibInsDeck (AnPosition 2) (ein $ wesen <> aufDemFeld)
       }
   ]
