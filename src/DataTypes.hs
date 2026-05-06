@@ -182,7 +182,7 @@ data Instruction next
   | VerringereUndZerstöre Ziel Dauer Höhe next
   | NimmAufDieHand Ziel next
   | ZeigeObenVomDeck Anzahl LesbarerWert (Höhe -> CardEffect) next
-  | BringeInsSpiel Card next
+  | BringeInsSpiel Anzahl Card next
   | BringeInsSpielAusZiel Ziel next
   | GibFähigkeit Ziel Dauer (TriggerInstructionF ()) next
   | EinSpielerOpfertEinWesen next

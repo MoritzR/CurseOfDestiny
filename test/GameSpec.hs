@@ -112,6 +112,12 @@ spec = do
       fmap (.card.name) player1.deck `shouldBe` ["Fund C", "Fund A"]
       fmap (.card.name) player1.graveyard `shouldBe` ["Blick in die Zukunft"]
 
+    it "vision lets the player reorder chosen cards on top and puts the rest under the deck" do
+      finalState <- runGameActionsWithChoices [2, 1, 2] visionState [PlayFromHand 0]
+      let player1 = playerById Player1 finalState
+      fmap (.card.name) player1.deck `shouldBe` ["Vision B", "Vision A", "Vision D", "Vision C"]
+      fmap (.card.name) player1.graveyard `shouldBe` ["Visionstest"]
+
     it "draws cards based on AnzahlVon" do
       finalState <- runGameActions 1 countDrawState [PlayFromHand 0, PlayFromHand 0, PlayFromHand 0]
       let player1 = playerById Player1 finalState
@@ -217,6 +223,12 @@ deckViewState =
     (createPlayerState Player1 [blickInDieZukunft] [namedSpell "Fund A", namedSpell "Fund B", namedSpell "Fund C"] [])
     (createPlayerState Player2 [] [] [])
 
+visionState :: GameState
+visionState =
+  withPlayers
+    (createPlayerState Player1 [visionstest] [namedSpell "Vision A", namedSpell "Vision B", namedSpell "Vision C", namedSpell "Vision D"] [])
+    (createPlayerState Player2 [] [] [])
+
 countDrawState :: GameState
 countDrawState =
   withPlayers
@@ -308,6 +320,16 @@ blickInDieZukunft =
         schaueObenVomDeck 2 do
           zeigeVorUndNimmtAufDieHand (eine karte)
           legeRestUnterDeck
+    }
+
+visionstest :: Card
+visionstest =
+  Card
+    { name = "Visionstest"
+    , cardType = Allmagie
+    , cost = 1
+    , trigger = wennGespielt do
+        vision 3
     }
 
 zaehlruf :: Card

@@ -113,8 +113,10 @@ describeInstruction = \case
   ZeigeObenVomDeck n lesbarerWert effectForX _ ->
     let effect = describeEffectInline $ effectForX $ PlaceHolder "X"
      in "Zeige die obersten " <> show n <> plural " Karte" n <> " deines Decks, " <> effect <> " (X ist die Summe der " <> describeLesbarerWert lesbarerWert <> " der gezeigten Karten)"
-  BringeInsSpiel card _ ->
-    "Bringe " <> card.name <> " ins Spiel."
+  BringeInsSpiel anzahl card _ ->
+    case anzahl of
+      1 -> "Bringe " <> card.name <> " ins Spiel."
+      _ -> "Bringe " <> show anzahl <> " " <> card.name <> " ins Spiel."
   BringeInsSpielAusZiel ziel _ ->
     "Bringe ins Spiel: " <> describeZiel ziel
   WirfAb anzahl spendet _ -> "wirf " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet

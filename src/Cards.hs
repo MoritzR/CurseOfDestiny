@@ -1,7 +1,6 @@
 module Cards where
 
 import CardEffect
-import Control.Monad (replicateM_)
 import DataTypes
 import Target
 import Trigger
@@ -146,7 +145,7 @@ series26 =
             zeigeObenVomDeck 2 LesbarKosten \x -> erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges (x * 1000)
           zahle (2 Neutral + 2 Wald) do
             opfere selbst
-            bringeInsSpiel schirmBestie
+            bringeInsSpiel 1 schirmBestie
       }
   , Card
       { name = "Magiestein der Feuerkraft"
@@ -437,8 +436,7 @@ series26 =
             gegnerOpfert (ein wesen)
           zahle (3 + 1 Licht) do
             opfere selbst
-            -- TODO: use a new DSL primitive that generates a better description instead of replicateM_
-            replicateM_ 3 $ bringeInsSpiel faehrgeist
+            bringeInsSpiel 3 faehrgeist
       }
   , Card
       { name = "Magiestein für Streckung und Erweckung"

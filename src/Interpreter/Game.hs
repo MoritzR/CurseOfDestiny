@@ -106,7 +106,8 @@ runInstruction sourceId = \case
   Erhöhe wert ziel dauer höhe next -> do
     increaseValue sourceId wert ziel dauer (anzahlToInt höhe)
     pure next
-  Vision _ next ->
+  Vision anzahl next -> do
+    resolveVision (anzahlToInt anzahl)
     pure next
   Prisma effectForX next -> do
     runEffect sourceId (effectForX 0)
@@ -168,9 +169,9 @@ runInstruction sourceId = \case
     value <- readTopOfDeckValue (anzahlToInt anzahl) lesbarerWert
     runEffect sourceId (effectForX value)
     pure next
-  BringeInsSpiel card next -> do
+  BringeInsSpiel anzahl card next -> do
     activePlayer <- gets currentPlayer
-    _ <- putNewCardOnField activePlayer card
+    replicateM_ (anzahlToInt anzahl) $ putNewCardOnField activePlayer card
     pure next
   BringeInsSpielAusZiel ziel next -> do
     bringTargetIntoPlay sourceId ziel
@@ -298,6 +299,30 @@ readSchicksalsmächte spielerZiel = do
     Du -> pure activePlayer
     Gegner -> gets opponentPlayer
   pure $ Actual targetPlayer.schicksalsmacht
+
+resolveVision :: HasStateIO r => Int -> Eff r ()
+resolveVision n = do
+  deck <- use $ currentPlayerL % #deck
+  let (viewedCards, restOfDeck) = splitAt n deck
+  orderedTopCards <- chooseVisionOrder viewedCards
+  let remainingViewedCards = removeSelectedCards orderedTopCards viewedCards
+  currentPlayerL % #deck .= (orderedTopCards <> restOfDeck <> remainingViewedCards)
+
+chooseVisionOrder :: HasStateIO r => [CardInPlay] -> Eff r [CardInPlay]
+chooseVisionOrder = go []
+ where
+  go chosenCards [] = pure $ reverse chosenCards
+  go chosenCards availableCards = do
+    choice <- Gio.chooseOne (fmap TargetOption availableCards <> [Fertig])
+    case choice of
+      Nothing -> pure $ reverse chosenCards
+      Just Fertig -> pure $ reverse chosenCards
+      Just (TargetOption chosenCard) ->
+        go (chosenCard : chosenCards) (removeFirstById chosenCard.id availableCards)
+
+removeSelectedCards :: [CardInPlay] -> [CardInPlay] -> [CardInPlay]
+removeSelectedCards selectedCards availableCards =
+  foldl (flip $ removeFirstById . (.id)) availableCards selectedCards
 
 discardFromCurrentHand :: HasStateIO r => Int -> Eff r ()
 discardFromCurrentHand n = gets ((.playerId) . currentPlayer) >>= discardFromPlayerHand n
