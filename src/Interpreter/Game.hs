@@ -518,11 +518,14 @@ addCardToField owner card = playerByIdL owner.playerId % #field ++= [card]
 
 createCardInPlay :: State GameState :> r => PlayerId -> Card -> Eff r CardInPlay
 createCardInPlay owner card = do
-  state <- getGameState
-  -- TODO: instead implement a `cardId <- getNextCardId` function that auto increments the id
-  let cardInPlay = CardInPlay{id = CardId state.nextCardId, owner, card, modifications = []}
+  cardId <- getNextCardId
+  pure CardInPlay{id = cardId, owner, card, modifications = []}
+
+getNextCardId :: State GameState :> r => Eff r CardId
+getNextCardId = do
+  nextCardId <- use $ stateAt #nextCardId
   stateAt #nextCardId += 1
-  pure cardInPlay
+  pure $ CardId nextCardId
 
 removeCards :: HasStateIO r => [CardId] -> Eff r [CardInPlay]
 removeCards cardIds = do
