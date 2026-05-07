@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Cards where
 
 import CardEffect
@@ -14,50 +15,8 @@ mkWesen name cost wesenstyp stärke trigger =
     , trigger = trigger
     }
 
-mkMagie :: String -> Kosten -> Trigger -> Card
-mkMagie name cost trigger =
-  Card
-    { name = name
-    , cardType = Magie
-    , cost = cost
-    , trigger = trigger
-    }
-
-mkGegenmagie :: String -> Kosten -> Trigger -> Card
-mkGegenmagie name cost trigger =
-  Card
-    { name = name
-    , cardType = Gegenmagie
-    , cost = cost
-    , trigger = trigger
-    }
-
-mkAllmagie :: String -> Kosten -> Trigger -> Card
-mkAllmagie name cost trigger =
-  Card
-    { name = name
-    , cardType = Allmagie
-    , cost = cost
-    , trigger = trigger
-    }
-
-mkMagieDauerHaft :: String -> Kosten -> Trigger -> Card
-mkMagieDauerHaft name cost trigger =
-  Card
-    { name = name
-    , cardType = MagieDauerhaft
-    , cost = cost
-    , trigger = trigger
-    }
-
-mkAusrüstung :: String -> Kosten -> Trigger -> Card
-mkAusrüstung name cost trigger =
-  Card
-    { name = name
-    , cardType = Ausrüstung
-    , cost = cost
-    , trigger = trigger
-    }
+mk :: String -> CardType -> Kosten -> Trigger -> Card
+mk name cardType cost trigger = Card {..}
 
 -- tokens
 schirmBestie =
@@ -71,10 +30,10 @@ series26 =
   [ mkWesen "Edors Konstruct" (1 Neutral) Konstrukt 1000 $
       zahle (5 Neutral) do
         erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 1000
-  , mkAllmagie "Energieladung" (2 Neutral) $
+  , mk "Energieladung" Allmagie (2 Neutral) $
       wennGespielt do
         erhöhe Stärke (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges 2000
-  , mkMagieDauerHaft "Fehrens Obelisk" (3 Neutral) do
+  , mk "Fehrens Obelisk" MagieDauerhaft (3 Neutral) do
       wennGespielt do
         ziehe 1
       zahle (5 Neutral) do
@@ -88,15 +47,15 @@ series26 =
           erhöhe Stärke selbst Dauerhaft (x * 1000)
       zahle (5 Neutral) do
         vision 1
-  , mkAllmagie "Kolossale Stärke" (6 Neutral) do
+  , mk "Kolossale Stärke" Allmagie (6 Neutral) do
       wennGespielt do
         erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 8000
-  , mkMagieDauerHaft "Kristallobelisk" (3 Neutral) $
+  , mk "Kristallobelisk" MagieDauerhaft (3 Neutral) $
       einmalProRunde $ wähle $ spende 1
   , mkWesen "Lurs Konstrukt" (5 Neutral) Konstrukt 1000 do
       wennGespielt $ ziehe 1
       blockierung
-  , mkMagieDauerHaft "Magiestein der Arkanen Seele" (1 Neutral) do
+  , mk "Magiestein der Arkanen Seele" MagieDauerhaft (1 Neutral) do
       zahle (1 Neutral + 1 Licht) do
         opfere selbst
         heile 1
@@ -106,14 +65,14 @@ series26 =
       zahle (1 Neutral + 1 Wind) do
         opfere selbst
         gibAufDieHandZurück (ein $ wesen <> aufDemFeld)
-  , mkMagieDauerHaft "Magiestein der Erdkraft" (1 Neutral) do
+  , mk "Magiestein der Erdkraft" MagieDauerhaft (1 Neutral) do
       zahle (1 Neutral + 1 Wald) do
         opfere selbst
         erhöhe Stärke (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges 3000
       zahle (3 Neutral + 2 Wald) do
         opfere selbst
         erhöhe Stärke (alle $ eigene <> wesen) Dauerhaft 3000
-  , mkMagieDauerHaft "Magiestein der Erhebung" (1 Neutral) do
+  , mk "Magiestein der Erhebung" MagieDauerhaft (1 Neutral) do
       zahle (1 Neutral + 1 Wald) do
         opfere selbst
         zerstöre $ eine magie
@@ -123,7 +82,7 @@ series26 =
       zahle (2 Neutral + 1 Tod) do
         opfere selbst
         verringereUndZerstöre (alle wesen) BisZumEndeDesZuges 3000
-  , mkMagieDauerHaft "Magiestein der Erzürnung" (1 Neutral) do
+  , mk "Magiestein der Erzürnung" MagieDauerhaft (1 Neutral) do
       zahle (2 Neutral + 1 Tod) do
         opfere selbst
         nimmAufDieHand (ein $ wesen <> aufDemFriedHof)
@@ -134,7 +93,7 @@ series26 =
       zahle (2 Neutral + 2 Wald) do
         opfere selbst
         bringeInsSpiel 1 schirmBestie
-  , mkMagieDauerHaft "Magiestein der Feuerkraft" (1 Neutral) do
+  , mk "Magiestein der Feuerkraft" MagieDauerhaft (1 Neutral) do
       zahle (1 Feuer) do
         opfere selbst
         gibFähigkeit (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges doppelzerstörung
@@ -142,21 +101,21 @@ series26 =
         opfere selbst
         verringere Stärke (ein $ gegnerisches <> wesen) BisZumEndeDesZuges 2000
         erhöhe Stärke (ein $ eigenes <> wesen) BisZumEndeDesZuges 2000
-  , mkMagieDauerHaft "Magiestein der Finsterkraft" (1 Neutral) do
+  , mk "Magiestein der Finsterkraft" MagieDauerhaft (1 Neutral) do
       zahle (2 Neutral + 1 Tod) do
         opfere selbst
         nimmAufDieHand (ein $ wesen <> aufDemFriedHof)
       zahle (5 Neutral + 1 Tod) do
         opfere selbst
         einSpielerOpfertEinWesen
-  , mkMagieDauerHaft "Magiestein der Lichtkraft" (1 Neutral) do
+  , mk "Magiestein der Lichtkraft" MagieDauerhaft (1 Neutral) do
       zahle (1 Neutral + 1 Licht) do
         opfere selbst
         erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
       zahle (1 Neutral + 2 Licht) do
         opfere selbst
         heile 1
-  , mkMagieDauerHaft "Magiestein der Manipulation" (1 Neutral) do
+  , mk "Magiestein der Manipulation" MagieDauerhaft (1 Neutral) do
       zahle (2 Neutral + 1 Tod) do
         opfere selbst
         siehHandkartenAnUndEntferneEineAusDemSpiel
@@ -166,7 +125,7 @@ series26 =
       zahle (4 Neutral + 2 Wasser) do
         opfere selbst
         ziehe 2
-  , mkMagieDauerHaft "Magiestein der Säuberung" (1 Neutral) do
+  , mk "Magiestein der Säuberung" MagieDauerhaft (1 Neutral) do
       zahle (2 Neutral + 1 Licht) do
         opfere selbst
         anzahlVon (alle $ eigene <> wesen <> aufDemFeld) heile
@@ -177,14 +136,14 @@ series26 =
       zahle (4 Neutral + 1 Wasser) do
         opfere selbst
         anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
-  , mkMagieDauerHaft "Magiestein der Wasserkraft" (1 Neutral) do
+  , mk "Magiestein der Wasserkraft" MagieDauerhaft (1 Neutral) do
       zahle (1 Wasser) do
         opfere selbst
         vision 3
       zahle (5 Neutral + 1 Wasser) do
         opfere selbst
         ziehe 2
-  , mkMagieDauerHaft "Magiestein der Windkraft" (1 Neutral) do
+  , mk "Magiestein der Windkraft" MagieDauerhaft (1 Neutral) do
       zahle (2 Neutral + 1 Wind) do
         opfere selbst
         gibAufDieHandZurück (ein $ wesen <> aufDemFeld)
@@ -192,7 +151,7 @@ series26 =
         opfere selbst
         ziehe 3
         wirfAb 2 SpendetNicht
-  , mkMagieDauerHaft "Magiestein des Chaos" (1 Neutral) do
+  , mk "Magiestein des Chaos" MagieDauerhaft (1 Neutral) do
       zahle (1 Neutral + 1 Feuer) do
         opfere selbst
         gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges doppelzerstörung
@@ -207,7 +166,7 @@ series26 =
       zahle (4 Neutral + 2 Tod) do
         opfere selbst
         zerstöre $ ein wesen
-  , mkMagieDauerHaft "Magiestein des Nexus" (1 Neutral) do
+  , mk "Magiestein des Nexus" MagieDauerhaft (1 Neutral) do
       zahle (1 Feuer) do
         opfere selbst
         gibFähigkeit (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges kannNichtAbwehren
@@ -218,7 +177,7 @@ series26 =
       zahle (2 Neutral + 2 Licht) do
         opfere selbst
         bringeInsSpielAusZiel (ein $ wesen <> aufDemFriedHof <> kostetMaximal 3)
-  , mkMagieDauerHaft "Magiestein des Strahlens" (1 Neutral) do
+  , mk "Magiestein des Strahlens" MagieDauerhaft (1 Neutral) do
       zahle (1 + 1 Feuer) do
         opfere selbst
         zerstöre (ein $ wesen <> kostetMaximal 3)
@@ -229,7 +188,7 @@ series26 =
       zahle (1 + 2 Licht) do
         opfere selbst
         verringereUndZerstöre (alle wesen) BisZumEndeDesZuges 3000
-  , mkMagieDauerHaft "Magiestein für Belebung und Erhebung" (1 Neutral) do
+  , mk "Magiestein für Belebung und Erhebung" MagieDauerhaft (1 Neutral) do
       zahle (1 Licht) do
         opfere selbst
         erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
@@ -238,14 +197,14 @@ series26 =
         opfere selbst
         erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
         gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges doppelzerstörung
-  , mkMagieDauerHaft "Magiestein für Einheit und Reinheit" (1 Neutral) do
+  , mk "Magiestein für Einheit und Reinheit" MagieDauerhaft (1 Neutral) do
       zahle (3 + 1 Wald) do
         opfere selbst
         anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
       zahle (4 + 1 Licht) do
         opfere selbst
         bringeKopieInsSpiel (ein $ eigene <> wesen <> aufDemFeld)
-  , mkMagieDauerHaft "Magiestein für Entdeckung und Vollstreckung" (1 Neutral) do
+  , mk "Magiestein für Entdeckung und Vollstreckung" MagieDauerhaft (1 Neutral) do
       zahle (1 + 1 Wind) do
         opfere selbst
         gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges do
@@ -253,7 +212,7 @@ series26 =
       zahle (1 + 3 Tod) do
         opfere selbst
         siehHandkartenAnUndEntferneEineAusDemSpiel
-  , mkMagieDauerHaft "Magiestein für Gabe und Habe" (1 Neutral) do
+  , mk "Magiestein für Gabe und Habe" MagieDauerhaft (1 Neutral) do
       zahle (2 + 2 Licht) do
         opfere selbst
         heile 2
@@ -262,14 +221,14 @@ series26 =
         anzahlVon (alle $ eigene <> karten <> aufDerHand) \kartenAufDerHand ->
           anzahlSchicksalsmächte Du \schicksalsmächte ->
             ziehe $ schicksalsmächte - kartenAufDerHand
-  , mkMagieDauerHaft "Magiestein für Hingabe und Eingabe" (1 Neutral) do
+  , mk "Magiestein für Hingabe und Eingabe" MagieDauerhaft (1 Neutral) do
       zahle (1 + 1 Tod) do
         opfere selbst
         nimmAufDieHand (ein $ eigenes <> wesen <> aufDemFriedHof)
       zahle (1 + 1 Wasser) do
         opfere selbst
         nimmAufDieHand $ eine $ eigene <> (magie `oder` gegenmagie) <> aufDemFriedHof
-  , mkMagieDauerHaft "Magiestein für Krieg und Sieg" (1 Neutral) do
+  , mk "Magiestein für Krieg und Sieg" MagieDauerhaft (1 Neutral) do
       zahle (2 + 2 Feuer) do
         opfere selbst
         erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
@@ -278,21 +237,21 @@ series26 =
         opfere selbst
         wähleZiel (ein $ eigenes <> wesen <> aufDemFeld) $
           wähleZiel (ein $ gegnerisches <> wesen <> aufDemFeld) . zerstöreSchwächeres
-  , mkMagieDauerHaft "Magiestein für Mut und Flut" (1 Neutral) do
+  , mk "Magiestein für Mut und Flut" MagieDauerhaft (1 Neutral) do
       zahle (2 + 1 Licht) do
         opfere selbst
         heile 1
       zahle (7 + 1 Wasser) do
         opfere selbst
         gibInsDeck Oben (bisZu 3 $ gegnerisches <> wesen <> aufDemFeld)
-  , mkMagieDauerHaft "Magiestein für Neid und Leid" (1 Neutral) do
+  , mk "Magiestein für Neid und Leid" MagieDauerhaft (1 Neutral) do
       zahle (1 + 1 Wind) do
         opfere selbst
         gibAufDieHandZurück (ein $ wesen <> aufDemFeld)
       zahle (5 + 1 Feuer) do
         opfere selbst
         schade 1
-  , mkMagieDauerHaft "Magiestein für Sicht und Verzicht" (1 Neutral) do
+  , mk "Magiestein für Sicht und Verzicht" MagieDauerhaft (1 Neutral) do
       zahle (1 + 1 Wasser) do
         opfere selbst
         vision 1
@@ -302,7 +261,7 @@ series26 =
         wähleZiel (ein $ wesen <> aufDemFeld) \ziel -> do
           verringere Stärke ziel Dauerhaft 2000
           gibFähigkeit ziel BisZumEndeDesZuges kannNichtAbwehren
-  , mkMagieDauerHaft "Magiestein für Stärke und Werke" (1 Neutral) do
+  , mk "Magiestein für Stärke und Werke" MagieDauerhaft (1 Neutral) do
       zahle (1 Wasser) do
         opfere selbst
         schaueObenVomDeck 4 do
@@ -313,14 +272,14 @@ series26 =
         schaueObenVomDeck 4 do
           zeigeVorUndNimmtAufDieHand (ein wesen)
           legeRestUnterDeck
-  , mkMagieDauerHaft "Magiestein für Stehlen und Seelen" (1 Neutral) do
+  , mk "Magiestein für Stehlen und Seelen" MagieDauerhaft (1 Neutral) do
       zahle (3 + 1 Tod) do
         opfere selbst
         gegnerOpfert (ein wesen)
       zahle (3 + 1 Licht) do
         opfere selbst
         bringeInsSpiel 3 faehrgeist
-  , mkMagieDauerHaft "Magiestein für Streckung und Erweckung" (1 Neutral) do
+  , mk "Magiestein für Streckung und Erweckung" MagieDauerhaft (1 Neutral) do
       zahle (2 + 1 Wald) do
         opfere selbst
         schaueObenVomDeck 4 do
@@ -329,7 +288,7 @@ series26 =
       zahle (4 + 2 Tod) do
         opfere selbst
         bringeInsSpielAusZiel (ein $ wesen <> aufDemFriedHof)
-  , mkMagieDauerHaft "Magiestein für Tribut und Armut" (1 Neutral) do
+  , mk "Magiestein für Tribut und Armut" MagieDauerhaft (1 Neutral) do
       zahle (2 + 1 Tod) do
         opfere selbst
         gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges do
@@ -338,21 +297,21 @@ series26 =
         opfere selbst
         gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges do
           beimAngriff ZuBeginn $ entferneAusDemSpiel (ein aufDemFriedHof)
-  , mkMagieDauerHaft "Magiestein für Überwinden und Verschwinden" (1 Neutral) do
+  , mk "Magiestein für Überwinden und Verschwinden" MagieDauerhaft (1 Neutral) do
       zahle (1 Wald) do
         opfere selbst
         erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
       zahle (5 + 1 Wind) do
         opfere selbst
         gibInsDeck (AnPosition 2) (ein $ wesen <> aufDemFeld)
-  , mkMagieDauerHaft "Magiestein für Zunder und Wunder" (1 Neutral) do
+  , mk "Magiestein für Zunder und Wunder" MagieDauerhaft (1 Neutral) do
       zahle (1 + 1 Feuer) do
         opfere selbst
         zerstöre (ein $ wesen <> stärkeMaximal 4000)
       zahle (2 + 2 Wasser) do
         opfere selbst
         ziehe 2
-  , mkMagieDauerHaft "Planumstein" (1 Neutral) do
+  , mk "Planumstein" MagieDauerhaft (1 Neutral) do
       zahle (X Neutral) do
         opfere selbst
         -- TODO: add a test, X is the number of elements used to pay this effect
@@ -363,10 +322,10 @@ series26 =
       --   erhöhe Stärke selbst Dauerhaft (x * 1000)
       --   ziehe x
       keinEffekt
-  , mkAusrüstung "Stahlschwert" (2 Neutral) $
+  , mk "Stahlschwert" Ausrüstung (2 Neutral) $
       wennGespielt do
         erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
-  , mkMagie "Steinbeseelung" (1 Neutral) do
+  , mk "Steinbeseelung" Magie (1 Neutral) do
       -- nimmAufDieHand (bisZu 2 $ hatTag Magiestein <> aufDemFriedHof)
       keinEffekt
   ]
