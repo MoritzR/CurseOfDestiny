@@ -356,9 +356,9 @@ series26 =
         prisma \x ->
           verringere Stärke (ein $ gegnerisches <> wesen) BisZumEndeDesZuges (x * 1000)
   , mkWesen "Runensteinmagier" (2 Neutral) Magier 2000 do
-      -- ermaechtigung 6 \x -> do
-      --   erhöhe Stärke selbst Dauerhaft (x * 1000)
-      --   ziehe x
+      ermächtigung 6 \x -> do
+        erhöhe Stärke selbst Dauerhaft (x * 1000)
+        ziehe x
       keinEffekt
   , mk "Stahlschwert" Ausrüstung (2 Neutral) $
       wennGespielt do

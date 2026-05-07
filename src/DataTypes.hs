@@ -153,6 +153,7 @@ data TriggerInstruction next
   | Lebensentzug next
   | KannNichtAbwehren next
   | Kriegsschrei next
+  | Ermächtigung Kosten (Anzahl -> CardEffect) next
   deriving (Functor, Foldable)
 
 data InstructionWhenViewingDeck next

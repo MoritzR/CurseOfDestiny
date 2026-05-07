@@ -52,6 +52,8 @@ describeTriggerInstruction = \case
     ["Lebensentzug"] <> next
   Kriegsschrei next ->
     ["Kriegsschrei"] <> next
+  Ermächtigung kosten effectForX next ->
+    ["Ermächtigung " <> describeKosten kosten <> ": " <> describeEffectInline (effectForX $ PlaceHolder "X") <> " (X ist wie oft Ermächtigung bezahlt wurde.)"] <> next
   BeimAngriff phase effect next ->
     let describePhase = \case
           ZuBeginn -> "angreift"
