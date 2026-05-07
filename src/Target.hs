@@ -75,6 +75,13 @@ kostetMaximal maxKosten =
   EinZiel ("mit kosten von " <> show maxKosten <> " oder weniger") \_ _ availableCards ->
     availableCards & filter (\cardInPlay -> gesamtKosten cardInPlay.card.cost <= maxKosten)
 
+stärkeMaximal :: Int -> EinZiel
+stärkeMaximal maxStärke =
+  EinZiel ("mit Stärke von " <> show maxStärke <> " oder weniger") \_ _ availableCards ->
+    availableCards & filter (\cardInPlay -> case cardInPlay.card.cardType of
+      Wesen _ stärke -> stärke <= maxStärke
+      _ -> False)
+
 selbst :: Ziel
 selbst =
   Ziel

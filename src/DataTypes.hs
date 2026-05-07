@@ -43,6 +43,7 @@ data CardType
   = Allmagie
   | Gegenmagie
   | Magie
+  | Ausrüstung
   | MagieDauerhaft
   | Wesen Wesenstyp Int
   deriving (Eq, Show)

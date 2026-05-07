@@ -478,4 +478,52 @@ series26 =
             opfere selbst
             gibInsDeck (AnPosition 2) (ein $ wesen <> aufDemFeld)
       }
+  , Card
+      { name = "Magiestein für Zunder und Wunder"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (1 + 1 Feuer) do
+            opfere selbst
+            zerstöre (ein $ wesen <> stärkeMaximal 4000)
+          zahle (2 + 2 Wasser) do
+            opfere selbst
+            ziehe 2
+      }
+  , Card
+      { name = "Planumstein"
+      , cardType = MagieDauerhaft
+      , cost = 1 Neutral
+      , trigger = do
+          zahle (X Neutral) do
+            opfere selbst
+            -- TODO: add a test, X is the number of elements used to pay this effect
+            prisma \x ->
+              verringere Stärke (ein $ gegnerisches <> wesen) BisZumEndeDesZuges (x * 1000)
+      }
+  , Card
+      { name = "Runensteinmagier"
+      , cardType = Wesen Magier 2000
+      , cost = 2 Neutral
+      , trigger = do
+          -- ermaechtigung 6 \x -> do
+          --   erhöhe Stärke selbst Dauerhaft (x * 1000)
+          --   ziehe x
+          keinEffekt
+      }
+  , Card
+      { name = "Stahlschwert"
+      , cardType = Ausrüstung
+      , cost = 2 Neutral
+      , trigger = wennGespielt do
+          erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
+      }
+  , Card
+      { name = "Steinbeseelung"
+      , cardType = Magie
+      , cost = 1 Neutral
+      , trigger = do
+          -- nimmAufDieHand (bisZu 2 $ hatTag Magiestein <> aufDemFriedHof)
+          keinEffekt
+      }
   ]

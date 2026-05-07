@@ -57,7 +57,7 @@ playCardFromHand index = do
 
 isPermanent :: CardType -> Bool
 isPermanent = \case
-  Wesen{}; MagieDauerhaft -> True
+  Wesen{}; MagieDauerhaft; Ausrüstung -> True
   Magie; Allmagie; Gegenmagie -> False
 
 activateCardOnField :: HasStateIO r => Int -> Eff r ()
