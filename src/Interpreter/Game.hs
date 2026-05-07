@@ -21,7 +21,7 @@ import Effectful (Eff, (:>))
 import Effectful.State.Static.Local (State, gets)
 import EffectfulLens (use, (%=), (++=), (+=), (-=), (.=))
 import Element (gesamtKosten)
-import GameEffects (ChoiceInput, Log)
+import GameEffects (ChoiceInput, Log, readChoice)
 import GameIO qualified as Gio
 import GameState (currentPlayer, currentPlayerL, getGameState, opponentPlayer, opponentPlayerL, playerByIdL)
 import Optics (AffineTraversal', (%), (^..))
@@ -85,7 +85,16 @@ runOnPlayTrigger source =
 runPlayTriggerInstruction :: HasStateIO r => CardInPlay -> TriggerInstruction (Eff r ()) -> Eff r ()
 runPlayTriggerInstruction source = \case
   WennGespielt effect _ -> runEffect source.id effect
+  Ermächtigung _ effectForX _ -> do
+    anzahlErmächtigungen <- promptErmächtigungCount
+    runEffect source.id (effectForX anzahlErmächtigungen)
   _ -> pure ()
+
+promptErmächtigungCount :: (ChoiceInput :> es, Log :> es) => Eff es Anzahl
+promptErmächtigungCount = do
+  Gio.logLn' "Wie oft moechtest du Ermaechtigung bezahlen?"
+  -- TODO actually check what the player can affort once cost paying is implemented
+  Actual . max 0 <$> readChoice
 
 collectActivations :: Trigger -> [CardEffect]
 collectActivations = iter collectActivation . fmap (const [])
