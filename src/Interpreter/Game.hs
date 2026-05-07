@@ -461,12 +461,12 @@ destroyDeadCreatures = do
 
 isDeadCreature :: CardInPlay -> Bool
 isDeadCreature cardInPlay = case cardInPlay.card.cardType of
-  Wesen _ _ -> creatureStrength cardInPlay <= 0
+  Wesen _ -> creatureStrength cardInPlay <= 0
   _ -> False
 
 baseStrength :: Card -> Int
 baseStrength card = case card.cardType of
-  Wesen _ strength -> strength
+  Wesen strength -> strength
   _ -> 0
 
 strengthDelta :: Modification -> Int

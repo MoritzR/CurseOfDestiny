@@ -26,7 +26,7 @@ wesen :: EinZiel
 wesen = EinZiel "Wesen" \_ _ availableCards ->
   availableCards
     & filter \cardInPlay -> case cardInPlay.card.cardType of
-      Wesen _ _ -> True
+      Wesen _ -> True
       _ -> False
 
 magie :: EinZiel
@@ -55,6 +55,10 @@ aufDerHand :: EinZiel
 aufDerHand = EinZiel "auf der Hand" \state _ availableCards ->
   availableCards & filter (\cardInPlay -> inZone (.hand) state cardInPlay.id)
 
+hatTag :: Tag -> EinZiel
+hatTag tag = EinZiel "Magiestein" \_ _ availableCards ->
+  availableCards & filter (\cardInPlay -> tag `elem` cardInPlay.card.tags)
+
 eigene :: EinZiel
 eigene = EinZiel "eigene" \state sourceId availableCards ->
   availableCards
@@ -81,7 +85,7 @@ stärkeMaximal maxStärke =
     availableCards
       & filter
         ( \cardInPlay -> case cardInPlay.card.cardType of
-            Wesen _ stärke -> stärke <= maxStärke
+            Wesen stärke -> stärke <= maxStärke
             _ -> False
         )
 

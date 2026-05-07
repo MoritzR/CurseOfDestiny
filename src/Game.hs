@@ -91,7 +91,7 @@ logHand player =
 
 renderFieldCard :: CardInPlay -> String
 renderFieldCard cardInPlay = case cardInPlay.card.cardType of
-  Wesen _ _ ->
+  Wesen _ ->
     cardInPlay.card.name <> " [" <> show (creatureStrength cardInPlay) <> "]"
   _ ->
     cardInPlay.card.name

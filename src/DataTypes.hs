@@ -45,15 +45,16 @@ data CardType
   | Magie
   | Ausrüstung
   | MagieDauerhaft
-  | Wesen Wesenstyp Int
+  | Wesen Int
   deriving (Eq, Show)
 
-data Wesenstyp
+data Tag
   = Konstrukt
   | Magier
   | Krieger
   | Bestie
   | Geist
+  | Magiestein
   deriving (Eq, Show)
 
 data Card = Card
@@ -61,6 +62,7 @@ data Card = Card
   , cost :: Kosten
   , cardType :: CardType
   , trigger :: Trigger
+  , tags :: [Tag]
   }
 instance Show Card where
   show = (.name)

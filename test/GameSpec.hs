@@ -274,10 +274,11 @@ selbststarkerAdept :: Card
 selbststarkerAdept =
   Card
     { name = "Selbststarker Adept"
-    , cardType = Wesen Magier 1000
+    , cardType = Wesen 1000
     , cost = 1
     , trigger = einmalProRunde do
         erhöhe Stärke selbst Dauerhaft 1000
+    , tags = []
     }
 
 zielwahlZauber :: Card
@@ -288,6 +289,7 @@ zielwahlZauber =
     , cost = 1
     , trigger = wennGespielt do
         zerstöre (ein $ gegnerisches <> wesen)
+    , tags = []
     }
 
 feldzerstoerung :: Card
@@ -298,6 +300,7 @@ feldzerstoerung =
     , cost = 1
     , trigger = wennGespielt do
         zerstöre (ein $ wesen <> aufDemFeld)
+    , tags = []
     }
 
 grabruf :: Card
@@ -308,6 +311,7 @@ grabruf =
     , cost = 1
     , trigger = wennGespielt do
         nimmAufDieHand (ein $ wesen <> aufDemFriedHof <> kostetMaximal 3)
+    , tags = []
     }
 
 blickInDieZukunft :: Card
@@ -320,6 +324,7 @@ blickInDieZukunft =
         schaueObenVomDeck 2 do
           zeigeVorUndNimmtAufDieHand (eine karte)
           legeRestUnterDeck
+    , tags = []
     }
 
 visionstest :: Card
@@ -330,6 +335,7 @@ visionstest =
     , cost = 1
     , trigger = wennGespielt do
         vision 3
+    , tags = []
     }
 
 zaehlruf :: Card
@@ -340,6 +346,7 @@ zaehlruf =
     , cost = 1
     , trigger = wennGespielt do
         anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
+    , tags = []
     }
 
 schicksalsstudie :: Card
@@ -350,6 +357,7 @@ schicksalsstudie =
     , cost = 1
     , trigger = wennGespielt do
         anzahlSchicksalsmächte Du ziehe
+    , tags = []
     }
 
 grantedAbilityState :: GameState
@@ -369,9 +377,10 @@ schülerDerAktivierung :: Card
 schülerDerAktivierung =
   Card
     { name = "Schüler der Aktivierung"
-    , cardType = Wesen Magier 1000
+    , cardType = Wesen 1000
     , cost = 1
     , trigger = keinEffekt
+    , tags = []
     }
 
 lehrmeisterDerAktivierung :: Card
@@ -383,6 +392,7 @@ lehrmeisterDerAktivierung =
     , trigger = wennGespielt do
         gibFähigkeit (ein $ wesen <> aufDemFeld) Dauerhaft do
           einmalProRunde $ ziehe 1
+    , tags = []
     }
 
 cardInPlayFor :: PlayerId -> Int -> Card -> CardInPlay
@@ -410,27 +420,30 @@ namedCreature :: String -> Int -> Card
 namedCreature creatureName strength =
   Card
     { name = creatureName
-    , cardType = Wesen Krieger strength
+    , cardType = Wesen strength
     , cost = 1
     , trigger = keinEffekt
+    , tags = []
     }
 
 cheapCreature :: String -> Card
 cheapCreature creatureName =
   Card
     { name = creatureName
-    , cardType = Wesen Magier 1000
+    , cardType = Wesen 1000
     , cost = 3
     , trigger = keinEffekt
+    , tags = []
     }
 
 expensiveCreature :: Card
 expensiveCreature =
   Card
     { name = "Uralter Drache"
-    , cardType = Wesen Bestie 5000
+    , cardType = Wesen 5000
     , cost = 5
     , trigger = keinEffekt
+    , tags = []
     }
 
 namedSpell :: String -> Card
@@ -440,6 +453,7 @@ namedSpell spellName =
     , cardType = Allmagie
     , cost = 1
     , trigger = keinEffekt
+    , tags = []
     }
 
 lookupCard :: String -> Card
