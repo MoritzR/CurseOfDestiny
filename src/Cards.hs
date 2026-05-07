@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+
 module Cards where
 
 import CardEffect
@@ -16,7 +17,7 @@ mkWesen name cost wesenstyp stärke trigger =
     }
 
 mk :: String -> CardType -> Kosten -> Trigger -> Card
-mk name cardType cost trigger = Card {..}
+mk name cardType cost trigger = Card{..}
 
 -- tokens
 schirmBestie =
@@ -51,7 +52,9 @@ series26 =
       wennGespielt do
         erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 8000
   , mk "Kristallobelisk" MagieDauerhaft (3 Neutral) $
-      einmalProRunde $ wähle $ spende 1
+      einmalProRunde $
+        wähle $
+          spende 1
   , mkWesen "Lurs Konstrukt" (5 Neutral) Konstrukt 1000 do
       wennGespielt $ ziehe 1
       blockierung
