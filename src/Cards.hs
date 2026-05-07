@@ -9,10 +9,10 @@ import Trigger
 mkWesen :: String -> Kosten -> Wesenstyp -> Int -> Trigger -> Card
 mkWesen name cost wesenstyp stärke trigger =
   Card
-    { name = name
+    { name
     , cardType = Wesen wesenstyp stärke
-    , cost = cost
-    , trigger = trigger
+    , cost
+    , trigger
     }
 
 mk :: String -> CardType -> Kosten -> Trigger -> Card
