@@ -366,4 +366,22 @@ series26 =
   , mk "Steinbeseelung" Magie (1 Neutral) do
       wennGespielt do
         nimmAufDieHand (bisZu 2 $ hatTag Magiestein <> aufDemFriedHof)
+  , mk "Zaubernetzwerk" Magie (12 Neutral) do
+      -- TODO: support static cost reduction, e.g. `kostenReduktion (fürJeden $ hatTag Magiestein <> aufDemFriedHof) 1`
+      wennGespielt do
+        bringeInsSpielAusZiel (alle $ hatTag Magiestein <> aufDemFriedHof)
+  , mkWesen "Abenteurer von Alzoth" (2 + 1 Licht) Krieger 3000 do
+      wirdZielVon (einer $ anderen <> eigenen <> karte) do
+        erhöhe Stärke selbst Dauerhaft 1000
+  , mkWesen "Ahnenbeschwörer" (2 + 3 Licht) Magier 4000 do
+      wennGespielt do
+        bringeInsSpiel 1 faehrgeist
+  , mkWesen "Anrufer der Arkanen Macht" (1 + 1 Licht) Magier 2000 do
+      blockierung
+      zahle 12 do
+        erhöhe Stärke (alle $ eigene <> wesen) Dauerhaft 3000
+  , mk "Antike Klinge" Ausrüstung (1 + 2 Licht) do
+      wennGespielt do
+        erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
+        bringeInsSpiel 1 faehrgeist
   ]

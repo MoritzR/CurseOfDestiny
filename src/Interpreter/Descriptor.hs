@@ -59,6 +59,8 @@ describeTriggerInstruction = \case
           ZuBeginn -> "angreift"
           WennNichtAbgewehrtWird -> "angreift und nicht abgewehrt wird"
      in ["Wenn diese Karte " <> describePhase phase <> ": " <> describeEffectInline effect] <> next
+  WirdZielVon ziel effect next ->
+    ["Wenn diese Karte Ziel von " <> describeZiel ziel <> " wird: " <> describeEffectInline effect] <> next
 
 describeEffect :: CardEffect -> String
 describeEffect = unlines . describeEffectLines

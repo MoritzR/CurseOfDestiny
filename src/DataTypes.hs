@@ -154,6 +154,7 @@ data TriggerInstruction next
   | KannNichtAbwehren next
   | Kriegsschrei next
   | Ermächtigung Kosten (Anzahl -> CardEffect) next
+  | WirdZielVon Ziel CardEffect next
   deriving (Functor, Foldable)
 
 data InstructionWhenViewingDeck next

@@ -65,8 +65,12 @@ eigene = EinZiel "eigene" \state sourceId availableCards ->
     & filter \cardInPlay ->
       zoneOwnerOf state cardInPlay.id == Just (ownerOfTriggeringCard state sourceId)
 
-eigenes :: EinZiel
+anderen :: EinZiel
+anderen = EinZiel "anderen" \_ sourceId availableCards ->
+  availableCards & filter \cardInPlay -> cardInPlay.id /= sourceId
+
 eigenes = eigene{description = "eigenes"}
+eigenen = eigene{description = "eigenen"}
 
 gegnerisches :: EinZiel
 gegnerisches = EinZiel "gegnerisches" \state sourceId availableCards ->
@@ -102,6 +106,8 @@ ein = Ziel Ein
 
 eine :: EinZiel -> Ziel
 eine = Ziel Eine
+
+einer = eine
 
 alle :: EinZiel -> Ziel
 alle = Ziel Alle
