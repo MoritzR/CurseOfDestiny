@@ -86,7 +86,7 @@ describeInstruction = \case
      in "Prisma - " <> effect <> " (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)"
   Spende n element _ ->
     "Spende " <> show n <> " " <> show element
-  WähleAus options _ _ ->
+  WähleAus options effekt _ -> -- TODO: for every choice of choosable types there needs to be a neutral element like 'Fähigkeit' or 'Effekt', which does nothing but can be used as an input for the description here
     "Wähle " <> intercalate ", " (map beschreibeWahl options)
   WähleZiel ziel effectForTarget _ ->
     "Wähle " <> describeZiel ziel <> ". " <> describeEffectInline (effectForTarget $ placeholderTarget "das gewählte Ziel")
