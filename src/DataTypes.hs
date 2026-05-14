@@ -54,6 +54,7 @@ data Tag
   | Krieger
   | Bestie
   | Geist
+  | Archon
   | Magiestein
   deriving (Eq, Show)
 
@@ -143,6 +144,7 @@ instance Semigroup EinZiel where
 data TriggerInstruction next
   = AmEndeDerRunde CardEffect next
   | AmBeginnDerRunde CardEffect next
+  | AmBeginnDerKampfPhase CardEffect next
   | Zahle Kosten CardEffect next
   | WennGespielt CardEffect next
   | WennAufDemFeld Aura next
@@ -150,6 +152,7 @@ data TriggerInstruction next
   | BeimAngriff AngriffsPhase CardEffect next
   | Blockierung next
   | Doppelzerstörung next
+  | Doppelangriff next
   | Lebensentzug next
   | KannNichtAbwehren next
   | Kriegsschrei next

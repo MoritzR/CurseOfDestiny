@@ -34,6 +34,8 @@ describeTriggerInstruction = \case
     ["Am Ende der Runde: " <> describeEffectInline effect] <> next
   AmBeginnDerRunde effect next ->
     ["Am Beginn der Runde: " <> describeEffectInline effect] <> next
+  AmBeginnDerKampfPhase effect next ->
+    ["Am Beginn der Kampfphase: " <> describeEffectInline effect] <> next
   Zahle kosten effect next ->
     [describeKosten kosten <> ": " <> describeEffectInline effect] <> next
   WennGespielt effect next ->
@@ -46,6 +48,8 @@ describeTriggerInstruction = \case
     ["Blockierung"] <> next
   Doppelzerstörung next ->
     ["Doppelzerstörung"] <> next
+  Doppelangriff next ->
+    ["Doppelangriff"] <> next
   KannNichtAbwehren next ->
     ["'Kann nicht abwehren'"] <> next
   Lebensentzug next ->

@@ -359,7 +359,6 @@ series26 =
       ermächtigung 6 \x -> do
         erhöhe Stärke selbst Dauerhaft (x * 1000)
         ziehe x
-      keinEffekt
   , mk "Stahlschwert" Ausrüstung (2 Neutral) $
       wennGespielt do
         erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
@@ -384,4 +383,25 @@ series26 =
       wennGespielt do
         erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
         bringeInsSpiel 1 faehrgeist
+  , mkWesen "Archon des gleißenden Lichts" (3 + 2 Licht) Archon 5500 do
+      amBeginnDerKampfPhase do
+        wähleZiel (ein $ wesen <> aufDemFeld) \ziel -> do
+          erhöhe Stärke ziel BisZumEndeDesZuges 3000
+          -- wähleAus [doppelzerstörung, lebensentzug, doppelangriff] $
+            -- gibFähigkeit ziel BisZumEndeDesZuges
+  , mkWesen "Atos-Hellebarier" (1 Licht) Krieger 1000 do
+      keinEffekt
+      -- wenn (eigenes <> wesen) insSpielKommt do
+      --   erhöhe Stärke selbst Dauerhaft 1000
+  , mkWesen "Azokur-Brigarde" (1 + 1 Licht) Krieger 2000 do
+      wirdZielVon (einer $ anderen <> eigenen <> karte) do
+        erhöhe Stärke selbst Dauerhaft 1000
+        ziehe 1
+        heile 1
+  , mk "Beherrschung der Mächte" Magie (3 + 1 Licht) do
+      keinEffekt
+      wennGespielt do
+        prisma \x ->
+        -- TODO: check if we can remove `aufDemFeld` restriction from `erhöhe` and imply it instead
+          erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft (x * 1000)
   ]
