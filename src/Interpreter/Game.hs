@@ -39,6 +39,11 @@ data LocatedCard = LocatedCard {locationOwner :: PlayerId, cardInPlay :: CardInP
 data Location = Hand | Graveyard | Field
   deriving (Eq, Show)
 
+data MenuChoice a = MenuChoice a
+
+instance WahlOption a => Show (MenuChoice a) where
+  show (MenuChoice choice) = beschreibeWahl choice
+
 creatureStrength :: CardInPlay -> Int
 creatureStrength cardInPlay = baseStrength cardInPlay.card + sum (strengthDelta <$> cardInPlay.modifications)
 
@@ -124,12 +129,8 @@ runInstruction sourceId = \case
   Spende _ _ next ->
     pure next
   WähleAus options effectForOption next -> do
-    choice <- Gio.chooseOne options
-    maybe (pure ()) (runEffect sourceId . effectForOption) choice
-    pure next
-  WähleEffekt effects next -> do
-    choice <- Gio.chooseOne [1 .. length effects]
-    maybe (pure ()) (\picked -> runEffect sourceId (effects !! (picked - 1))) choice
+    choice <- Gio.chooseOne (MenuChoice <$> options)
+    maybe (pure ()) (\(MenuChoice picked) -> runEffect sourceId (effectForOption picked)) choice
     pure next
   WähleZiel ziel effectForTarget next -> do
     targets <- selectTargets sourceId ziel

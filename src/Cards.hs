@@ -387,13 +387,13 @@ series26 =
       amBeginnDerKampfPhase do
         wähleZiel (ein $ wesen <> aufDemFeld) \ziel -> do
           erhöhe Stärke ziel BisZumEndeDesZuges 3000
-          -- wähleAus [doppelzerstörung, lebensentzug, doppelangriff] $
-            -- gibFähigkeit ziel BisZumEndeDesZuges
+          wähleAus [doppelangriff, doppelzerstörung, lebensentzug] $
+            gibFähigkeit ziel BisZumEndeDesZuges
   , mkWesen "Atos-Hellebarier" (1 Licht) Krieger 1000 do
       keinEffekt
-      -- wenn (eigenes <> wesen) insSpielKommt do
-      --   erhöhe Stärke selbst Dauerhaft 1000
-  , mkWesen "Azokur-Brigarde" (1 + 1 Licht) Krieger 2000 do
+  , -- wenn (eigenes <> wesen) insSpielKommt do
+    --   erhöhe Stärke selbst Dauerhaft 1000
+    mkWesen "Azokur-Brigarde" (1 + 1 Licht) Krieger 2000 do
       wirdZielVon (einer $ anderen <> eigenen <> karte) do
         erhöhe Stärke selbst Dauerhaft 1000
         ziehe 1
@@ -402,6 +402,6 @@ series26 =
       keinEffekt
       wennGespielt do
         prisma \x ->
-        -- TODO: check if we can remove `aufDemFeld` restriction from `erhöhe` and imply it instead
+          -- TODO: check if we can remove `aufDemFeld` restriction from `erhöhe` and imply it instead
           erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft (x * 1000)
   ]

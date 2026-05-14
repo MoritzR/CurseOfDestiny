@@ -174,8 +174,7 @@ data Instruction next
   | Vision Anzahl next
   | Prisma (Anzahl -> CardEffect) next
   | Spende Anzahl Element next
-  | forall a. Wählbar a => WähleAus [a] (a -> CardEffect) next
-  | WähleEffekt [CardEffect] next
+  | forall a. WahlOption a => WähleAus [a] (a -> CardEffect) next
   | WähleZiel Ziel (Ziel -> CardEffect) next
   | Opfere Ziel next
   | GegnerOpfert Ziel next
@@ -216,11 +215,17 @@ type InstructionWhenViewingDeckF = Free InstructionWhenViewingDeck
 type InstructionF = Free Instruction
 type CardEffect = InstructionF ()
 
-class Show a => Wählbar a where
+class WahlOption a where
+  beschreibeWahl :: a -> String
+
+class WahlOption a => Wählbar a where
   wahlmöglichkeiten :: [a]
 
 instance Wählbar Element where
   wahlmöglichkeiten = [Neutral, Feuer, Wald, Wasser, Wind, Licht, Tod]
+
+instance WahlOption Element where
+  beschreibeWahl = show
 
 instance Num (Element -> Kosten) where
   fromInteger n e = Kosten [ElementKosten (fromInteger n) e]

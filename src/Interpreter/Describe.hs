@@ -1,23 +1,21 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Interpreter.Descriptor (
+module Interpreter.Describe (
   describeCard,
   describeTrigger,
   describeTriggerLines,
   describeEffect,
+  describeEffectInline,
   describeInstruction,
-  testRenderCard,
+  describeWhenViewingDeckEffect,
+  describeGrantedTrigger,
 ) where
 
-import Cards (series26)
 import Control.Monad.Free (iter)
 import Data.Foldable (fold)
 import Data.List (intercalate)
 import DataTypes
-
-testRenderCard :: String
-testRenderCard = intercalate "\n\n" $ describeCard <$> series26
 
 describeCard :: Card -> String
 describeCard card = unlines (card.name <> " - " <> describeKosten card.cost : describeTriggerLines card.trigger)
@@ -89,9 +87,7 @@ describeInstruction = \case
   Spende n element _ ->
     "Spende " <> show n <> " " <> show element
   WähleAus options _ _ ->
-    "Wähle " <> intercalate ", " (map show options)
-  WähleEffekt aktionen _ ->
-    "Wähle aus:\n - " <> intercalate "\n - " (describeInstructionF <$> aktionen)
+    "Wähle " <> intercalate ", " (map beschreibeWahl options)
   WähleZiel ziel effectForTarget _ ->
     "Wähle " <> describeZiel ziel <> ". " <> describeEffectInline (effectForTarget $ placeholderTarget "das gewählte Ziel")
   Opfere ziel _ ->
@@ -102,7 +98,7 @@ describeInstruction = \case
     "Erhalte " <> show n <> " Schicksalsmacht."
   Schade n _ ->
     "Der Gegner verliert " <> show n <> " Schicksalsmacht."
-  ZerstöreSchwächeres _ _ _ ->
+  ZerstöreSchwächeres{} ->
     "Zerstöre das schwächere Wesen."
   GibInsDeck wo ziel _ ->
     "Gib " <> describeZiel ziel <> " " <> describeWoInsDeck wo <> " ins Deck des Besitzers zurück."
@@ -127,7 +123,8 @@ describeInstruction = \case
       _ -> "Bringe " <> show anzahl <> " " <> card.name <> " ins Spiel."
   BringeInsSpielAusZiel ziel _ ->
     "Bringe ins Spiel: " <> describeZiel ziel
-  WirfAb anzahl spendet _ -> "wirf " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
+  WirfAb anzahl spendet _ ->
+    "wirf " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
   GegnerWirfAb anzahl spendet _ ->
     "Der Gegner wirft " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
   LegeVomDeckAufDenFriedhof anzahl spendet _ ->
@@ -152,9 +149,6 @@ describeInstruction = \case
 
 describeInstructionStep :: Instruction [String] -> [String]
 describeInstructionStep instruction = describeInstruction instruction : fold instruction
-
-describeInstructionF :: InstructionF () -> String
-describeInstructionF = intercalate ", " . describeEffectLines
 
 describeWhenViewingDeckEffect :: InstructionWhenViewingDeckF () -> String
 describeWhenViewingDeckEffect = intercalate ", " . describeWhenViewingDeckSteps

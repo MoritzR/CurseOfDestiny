@@ -75,7 +75,7 @@ library
       GameState
       GameIO
       Interpreter.Game
-      Interpreter.Descriptor
+      Interpreter.Describe
   other-modules:
       Paths_cod
   hs-source-dirs:
