@@ -126,11 +126,12 @@ runInstruction sourceId = \case
   Prisma effectForX next -> do
     runEffect sourceId (effectForX 0)
     pure next
-  Spende _ _ next ->
+  SpendeValue _ element next -> do
+    forM_ element \_ -> pure ()
     pure next
   WähleAus options effectForOption next -> do
     choice <- Gio.chooseOne (MenuChoice <$> options)
-    maybe (pure ()) (\(MenuChoice picked) -> runEffect sourceId (effectForOption picked)) choice
+    maybe (pure ()) (\(MenuChoice picked) -> runEffect sourceId (effectForOption $ Concrete picked)) choice
     pure next
   WähleZiel ziel effectForTarget next -> do
     targets <- selectTargets sourceId ziel
@@ -186,8 +187,9 @@ runInstruction sourceId = \case
   BringeInsSpielAusZiel ziel next -> do
     bringTargetIntoPlay sourceId ziel
     pure next
-  GibFähigkeit ziel dauer triggerInstrs next -> do
-    addAbilityToTargets sourceId ziel dauer triggerInstrs
+  GibFähigkeitValue ziel dauer triggerInstrs next -> do
+    forM_ triggerInstrs \trigger ->
+      addAbilityToTargets sourceId ziel dauer trigger
     pure next
   EinSpielerOpfertEinWesen next -> do
     sacrificeTargets sourceId (ein wesen)

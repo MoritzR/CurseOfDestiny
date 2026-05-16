@@ -84,10 +84,19 @@ describeInstruction = \case
   Prisma effectForX _ ->
     let effect = describeEffectInline $ effectForX $ PlaceHolder "X"
      in "Prisma - " <> effect <> " (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)"
-  Spende n element _ ->
-    "Spende " <> show n <> " " <> show element
-  WähleAus options effekt _ -> -- TODO: for every choice of choosable types there needs to be a neutral element like 'Fähigkeit' or 'Effekt', which does nothing but can be used as an input for the description here
-    "Wähle " <> intercalate ", " (map beschreibeWahl options)
+  SpendeValue n element _ ->
+    "Spende " <> show n <> " " <> describeValue show element
+  WähleAus options effekt _ ->
+    case options of
+      [] -> "Wähle."
+      firstOption : _ ->
+        "Wähle " <> describeChoices (map beschreibeWahl options)
+          <> ". "
+          <> describeEffectInline (effekt $ Placeholder $ placeholderText firstOption)
+   where
+    describeChoices [choice] = choice
+    describeChoices [left, right] = left <> " oder " <> right
+    describeChoices choices = intercalate ", " (init choices) <> " oder " <> last choices
   WähleZiel ziel effectForTarget _ ->
     "Wähle " <> describeZiel ziel <> ". " <> describeEffectInline (effectForTarget $ placeholderTarget "das gewählte Ziel")
   Opfere ziel _ ->
@@ -129,8 +138,8 @@ describeInstruction = \case
     "Der Gegner wirft " <> show anzahl <> " Karten von der Hand ab." <> describeSpendet spendet
   LegeVomDeckAufDenFriedhof anzahl spendet _ ->
     "Lege " <> show anzahl <> " Karten vom Deck auf den Friedhof." <> describeSpendet spendet
-  GibFähigkeit ziel dauer triggerInstrs _ ->
-    describeZiel ziel <> " erhält " <> describeDauer dauer <> " " <> describeGrantedTrigger triggerInstrs
+  GibFähigkeitValue ziel dauer triggerInstrs _ ->
+    describeZiel ziel <> " erhält " <> describeDauer dauer <> " " <> describeValue describeGrantedTrigger triggerInstrs
   EinSpielerOpfertEinWesen _ ->
     "Ein Spieler opfert ein Wesen."
   SiehHandkartenAnUndEntferneEineAusDemSpiel _ ->
@@ -171,6 +180,11 @@ describeWhenViewingDeckInstruction = \case
 
 describeWhenViewingDeckStep :: InstructionWhenViewingDeck [String] -> [String]
 describeWhenViewingDeckStep instruction = describeWhenViewingDeckInstruction instruction : fold instruction
+
+describeValue :: (a -> String) -> Value a -> String
+describeValue describe = \case
+  Concrete value -> describe value
+  Placeholder placeholder -> placeholder
 
 placeholderTarget :: String -> Ziel
 placeholderTarget description =

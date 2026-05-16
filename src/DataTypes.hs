@@ -168,13 +168,15 @@ data InstructionWhenViewingDeck next
   | WähleVomDeck [InstructionWhenViewingDeckF ()] next
   deriving (Functor, Foldable)
 
+data Value a = Concrete a | Placeholder String deriving Foldable
+
 data Instruction next
   = Ziehe Anzahl next
   | Erhöhe Wert Ziel Dauer Höhe next
   | Vision Anzahl next
   | Prisma (Anzahl -> CardEffect) next
-  | Spende Anzahl Element next
-  | forall a. WahlOption a => WähleAus [a] (a -> CardEffect) next
+  | SpendeValue Anzahl (Value Element) next
+  | forall a. WahlOption a => WähleAus [a] (Value a -> CardEffect) next
   | WähleZiel Ziel (Ziel -> CardEffect) next
   | Opfere Ziel next
   | GegnerOpfert Ziel next
@@ -191,7 +193,7 @@ data Instruction next
   | ZeigeObenVomDeck Anzahl LesbarerWert (Höhe -> CardEffect) next
   | BringeInsSpiel Anzahl Card next
   | BringeInsSpielAusZiel Ziel next
-  | GibFähigkeit Ziel Dauer (TriggerInstructionF ()) next
+  | GibFähigkeitValue Ziel Dauer (Value (TriggerInstructionF ())) next
   | EinSpielerOpfertEinWesen next
   | AnzahlVon Ziel (Anzahl -> CardEffect) next
   | WirfAb Anzahl SpendetOderSpendetNicht next
@@ -217,6 +219,7 @@ type CardEffect = InstructionF ()
 
 class WahlOption a where
   beschreibeWahl :: a -> String
+  placeholderText :: a -> String
 
 class WahlOption a => Wählbar a where
   wahlmöglichkeiten :: [a]
@@ -226,6 +229,7 @@ instance Wählbar Element where
 
 instance WahlOption Element where
   beschreibeWahl = show
+  placeholderText _ = "dieses Elements"
 
 instance Num (Element -> Kosten) where
   fromInteger n e = Kosten [ElementKosten (fromInteger n) e]
