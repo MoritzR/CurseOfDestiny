@@ -188,8 +188,7 @@ runInstruction sourceId = \case
     bringTargetIntoPlay sourceId ziel
     pure next
   GibFähigkeitValue ziel dauer triggerInstrs next -> do
-    forM_ triggerInstrs \trigger ->
-      addAbilityToTargets sourceId ziel dauer trigger
+    forM_ triggerInstrs $ addAbilityToTargets sourceId ziel dauer
     pure next
   EinSpielerOpfertEinWesen next -> do
     sacrificeTargets sourceId (ein wesen)
