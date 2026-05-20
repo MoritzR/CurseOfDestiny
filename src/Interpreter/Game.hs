@@ -39,7 +39,7 @@ data LocatedCard = LocatedCard {locationOwner :: PlayerId, cardInPlay :: CardInP
 data Location = Hand | Graveyard | Field
   deriving (Eq, Show)
 
-data MenuChoice a = MenuChoice a
+newtype MenuChoice a = MenuChoice a
 
 instance WahlOption a => Show (MenuChoice a) where
   show (MenuChoice choice) = beschreibeWahl choice
