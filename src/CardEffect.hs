@@ -48,15 +48,15 @@ instance WählbareAktion (Free InstructionWhenViewingDeck) where
 
 instance WahlOption Trigger where
   beschreibeWahl = describeGrantedTrigger
-  placeholderText _ = "diese Fähigkeit"
+  placeholderText = "diese Fähigkeit"
 
 instance WahlOption (InstructionF ()) where
   beschreibeWahl = describeEffectInline
-  placeholderText _ = "diesen Effekt"
+  placeholderText = "diesen Effekt"
 
 instance WahlOption (InstructionWhenViewingDeckF ()) where
   beschreibeWahl = describeWhenViewingDeckEffect
-  placeholderText _ = "diesen Effekt"
+  placeholderText = "diesen Effekt"
 
 legeRestUnterDeck :: InstructionWhenViewingDeckF ()
 legeRestUnterDeck = legeRestUnterDasDeck

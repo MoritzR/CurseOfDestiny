@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE NoFieldSelectors #-}
@@ -219,7 +220,7 @@ type CardEffect = InstructionF ()
 
 class WahlOption a where
   beschreibeWahl :: a -> String
-  placeholderText :: a -> String
+  placeholderText :: String
 
 class WahlOption a => Wählbar a where
   wahlmöglichkeiten :: [a]
@@ -229,7 +230,7 @@ instance Wählbar Element where
 
 instance WahlOption Element where
   beschreibeWahl = show
-  placeholderText _ = "dieses Elements"
+  placeholderText = "dieses Elements"
 
 instance Num (Element -> Kosten) where
   fromInteger n e = Kosten [ElementKosten (fromInteger n) e]

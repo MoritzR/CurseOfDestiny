@@ -86,14 +86,11 @@ describeInstruction = \case
      in "Prisma - " <> effect <> " (X ist die Anzahl der Elemente die zum Bezahlen verwendet wurden)"
   SpendeValue n element _ ->
     "Spende " <> show n <> " " <> describeValue show element
-  WähleAus options effekt _ ->
-    case options of
-      [] -> "Wähle."
-      firstOption : _ ->
-        "Wähle "
-          <> describeChoices (map beschreibeWahl options)
-          <> ". "
-          <> describeEffectInline (effekt $ Placeholder $ placeholderText firstOption)
+  WähleAus (options :: [a]) effekt _ ->
+    "Wähle "
+      <> describeChoices (map beschreibeWahl options)
+      <> ". "
+      <> describeEffectInline (effekt $ Placeholder $ placeholderText @a)
    where
     describeChoices [choice] = choice
     describeChoices [left, right] = left <> " oder " <> right
