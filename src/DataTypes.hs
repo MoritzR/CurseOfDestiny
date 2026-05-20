@@ -307,3 +307,6 @@ allCards = #players % both % playerCards
     [#field, #deck, #hand, #graveyard]
       <&> (% traversed)
       & foldr1 adjoin
+
+fieldCards :: Traversal' GameState CardInPlay
+fieldCards = #players % both % #field % traversed

@@ -223,7 +223,7 @@ runInstruction sourceId = \case
 increaseValue :: HasStateIO r => CardId -> Wert -> Ziel -> Dauer -> Int -> Eff r ()
 increaseValue sourceId Stärke ziel dauer höhe = do
   targets <- selectTargets sourceId ziel
-  allCards % targeted targets % #modifications ++= [StärkeModifikation dauer höhe]
+  fieldCards % targeted targets % #modifications ++= [StärkeModifikation dauer höhe]
 
 targeted :: [CardInPlay] -> AffineTraversal' CardInPlay CardInPlay
 targeted targets = unsafeFiltered (\card -> card.id `elem` fmap (.id) targets)
@@ -466,8 +466,8 @@ removeTemporaryModifications cardInPlay =
 
 destroyDeadCreatures :: HasStateIO r => Eff r ()
 destroyDeadCreatures = do
-  fieldCards <- gets fieldCardsForTarget
-  let fieldCardsInPlay = fmap (.cardInPlay) fieldCards
+  locatedFieldCards <- gets fieldCardsForTarget
+  let fieldCardsInPlay = fmap (.cardInPlay) locatedFieldCards
   let deadCards = filter isDeadCreature fieldCardsInPlay
   mapM_ destroyLocatedCard deadCards
 

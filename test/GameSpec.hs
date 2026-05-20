@@ -400,12 +400,12 @@ cardInPlayFor owner idx card =
   CardInPlay{id = CardId idx, owner = owner, card = card, modifications = []}
 
 createPlayerState :: PlayerId -> [Card] -> [Card] -> [CardInPlay] -> Player
-createPlayerState owner handCards deckCards fieldCards =
+createPlayerState owner handCards deckCards theFieldCards =
   let basePlayer = playerById owner initialGameState
    in basePlayer
         { hand = zipWith (cardInPlayFor owner) [2000 ..] handCards
         , deck = zipWith (cardInPlayFor owner) [3000 ..] deckCards
-        , field = fieldCards
+        , field = theFieldCards
         , graveyard = []
         }
 

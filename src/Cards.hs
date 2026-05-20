@@ -36,10 +36,10 @@ faehrgeist =
 series26 =
   [ mkWesen "Edors Konstruct" (1 Neutral) Konstrukt 1000 $
       zahle (5 Neutral) do
-        erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 1000
+        erhöhe Stärke (ein wesen) Dauerhaft 1000
   , mk "Energieladung" Allmagie (2 Neutral) $
       wennGespielt do
-        erhöhe Stärke (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges 2000
+        erhöhe Stärke (ein wesen) BisZumEndeDesZuges 2000
   , mk "Fehrens Obelisk" MagieDauerhaft (3 Neutral) do
       wennGespielt do
         ziehe 1
@@ -56,7 +56,7 @@ series26 =
         vision 1
   , mk "Kolossale Stärke" Allmagie (6 Neutral) do
       wennGespielt do
-        erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 8000
+        erhöhe Stärke (ein wesen) Dauerhaft 8000
   , mk "Kristallobelisk" MagieDauerhaft (3 Neutral) $
       einmalProRunde $
         wähle $
@@ -78,10 +78,10 @@ series26 =
   , mk "Magiestein der Erdkraft" MagieDauerhaft (1 Neutral) do
       zahle (1 Neutral + 1 Wald) do
         opfere selbst
-        erhöhe Stärke (ein $ wesen <> aufDemFeld) BisZumEndeDesZuges 3000
+        erhöhe Stärke (ein wesen) BisZumEndeDesZuges 3000
       zahle (3 Neutral + 2 Wald) do
         opfere selbst
-        erhöhe Stärke (alle $ eigene <> wesen) Dauerhaft 3000
+        erhöhe Stärke (alle $ eigenen <> wesen) Dauerhaft 3000
       & tag Magiestein
   , mk "Magiestein der Erhebung" MagieDauerhaft (1 Neutral) do
       zahle (1 Neutral + 1 Wald) do
@@ -101,7 +101,7 @@ series26 =
       zahle (2 Neutral + 1 Feuer) do
         opfere selbst
         vision 2
-        zeigeObenVomDeck 2 LesbarKosten \x -> erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges (x * 1000)
+        zeigeObenVomDeck 2 LesbarKosten \x -> erhöhe Stärke (alle $ eigenen <> wesen) BisZumEndeDesZuges (x * 1000)
       zahle (2 Neutral + 2 Wald) do
         opfere selbst
         bringeInsSpiel 1 schirmBestie
@@ -126,7 +126,7 @@ series26 =
   , mk "Magiestein der Lichtkraft" MagieDauerhaft (1 Neutral) do
       zahle (1 Neutral + 1 Licht) do
         opfere selbst
-        erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
+        erhöhe Stärke (ein wesen) Dauerhaft 2000
       zahle (1 Neutral + 2 Licht) do
         opfere selbst
         heile 1
@@ -214,12 +214,12 @@ series26 =
   , mk "Magiestein für Belebung und Erhebung" MagieDauerhaft (1 Neutral) do
       zahle (1 Licht) do
         opfere selbst
-        erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
-        gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges lebensentzug
+        erhöhe Stärke (alle $ eigenen <> wesen) BisZumEndeDesZuges 2000
+        gibFähigkeit (alle $ eigenen <> wesen) BisZumEndeDesZuges lebensentzug
       zahle (1 Feuer) do
         opfere selbst
-        erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
-        gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges doppelzerstörung
+        erhöhe Stärke (alle $ eigenen <> wesen) BisZumEndeDesZuges 2000
+        gibFähigkeit (alle $ eigenen <> wesen) BisZumEndeDesZuges doppelzerstörung
       & tag Magiestein
   , mk "Magiestein für Einheit und Reinheit" MagieDauerhaft (1 Neutral) do
       zahle (3 + 1 Wald) do
@@ -259,7 +259,7 @@ series26 =
   , mk "Magiestein für Krieg und Sieg" MagieDauerhaft (1 Neutral) do
       zahle (2 + 2 Feuer) do
         opfere selbst
-        erhöhe Stärke (alle $ eigene <> wesen) BisZumEndeDesZuges 2000
+        erhöhe Stärke (alle $ eigenen <> wesen) BisZumEndeDesZuges 2000
         gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges kriegsschrei
       zahle (2 + 2 Wald) do
         opfere selbst
@@ -326,17 +326,17 @@ series26 =
   , mk "Magiestein für Tribut und Armut" MagieDauerhaft (1 Neutral) do
       zahle (2 + 1 Tod) do
         opfere selbst
-        gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges do
+        gibFähigkeit (alle $ eigenen <> wesen) BisZumEndeDesZuges do
           beimAngriff ZuBeginn $ gegnerWirfAb 1 SpendetNicht
       zahle (4 + 1 Feuer) do
         opfere selbst
-        gibFähigkeit (alle $ eigene <> wesen) BisZumEndeDesZuges do
+        gibFähigkeit (alle $ eigenen <> wesen) BisZumEndeDesZuges do
           beimAngriff ZuBeginn $ entferneAusDemSpiel (ein aufDemFriedHof)
       & tag Magiestein
   , mk "Magiestein für Überwinden und Verschwinden" MagieDauerhaft (1 Neutral) do
       zahle (1 Wald) do
         opfere selbst
-        erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
+        erhöhe Stärke (ein wesen) Dauerhaft 2000
       zahle (5 + 1 Wind) do
         opfere selbst
         gibInsDeck (AnPosition 2) (ein $ wesen <> aufDemFeld)
@@ -361,7 +361,7 @@ series26 =
         ziehe x
   , mk "Stahlschwert" Ausrüstung (2 Neutral) $
       wennGespielt do
-        erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
+        erhöhe Stärke (ein wesen) Dauerhaft 2000
   , mk "Steinbeseelung" Magie (1 Neutral) do
       wennGespielt do
         nimmAufDieHand (bisZu 2 $ hatTag Magiestein <> aufDemFriedHof)
@@ -378,10 +378,10 @@ series26 =
   , mkWesen "Anrufer der Arkanen Macht" (1 + 1 Licht) Magier 2000 do
       blockierung
       zahle 12 do
-        erhöhe Stärke (alle $ eigene <> wesen) Dauerhaft 3000
+        erhöhe Stärke (alle $ eigenen <> wesen) Dauerhaft 3000
   , mk "Antike Klinge" Ausrüstung (1 + 2 Licht) do
       wennGespielt do
-        erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft 2000
+        erhöhe Stärke (ein wesen) Dauerhaft 2000
         bringeInsSpiel 1 faehrgeist
   , mkWesen "Archon des gleißenden Lichts" (3 + 2 Licht) Archon 5500 do
       amBeginnDerKampfPhase do
@@ -402,6 +402,5 @@ series26 =
       keinEffekt
       wennGespielt do
         prisma \x ->
-          -- TODO: check if we can remove `aufDemFeld` restriction from `erhöhe` and imply it instead
-          erhöhe Stärke (ein $ wesen <> aufDemFeld) Dauerhaft (x * 1000)
+          erhöhe Stärke (ein wesen) Dauerhaft (x * 1000)
   ]

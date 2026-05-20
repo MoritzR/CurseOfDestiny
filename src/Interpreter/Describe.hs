@@ -90,7 +90,8 @@ describeInstruction = \case
     case options of
       [] -> "Wähle."
       firstOption : _ ->
-        "Wähle " <> describeChoices (map beschreibeWahl options)
+        "Wähle "
+          <> describeChoices (map beschreibeWahl options)
           <> ". "
           <> describeEffectInline (effekt $ Placeholder $ placeholderText firstOption)
    where
