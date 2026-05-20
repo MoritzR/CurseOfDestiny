@@ -228,11 +228,6 @@ increaseValue sourceId Stärke ziel dauer höhe = do
 targeted :: [CardInPlay] -> AffineTraversal' CardInPlay CardInPlay
 targeted targets = unsafeFiltered (\card -> card.id `elem` fmap (.id) targets)
 
-sacrificeTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
-sacrificeTargets sourceId ziel = do
-  targets <- selectTargets sourceId ziel
-  mapM_ sacrificeLocatedCard targets
-
 opponentSacrifices :: HasStateIO r => CardId -> Ziel -> Eff r ()
 opponentSacrifices sourceId ziel = do
   state <- getGameState
@@ -240,20 +235,20 @@ opponentSacrifices sourceId ziel = do
   targets <- selectableTargetsFromCards sourceId ziel.ziel opponent.field
   maybe (pure ()) sacrificeLocatedCard =<< chooseTargetFor opponent.playerId targets
 
+forTargets :: HasStateIO r => (CardInPlay -> Eff r ()) -> CardId -> Ziel -> Eff r ()
+forTargets f sourceId ziel = selectTargets sourceId ziel >>= mapM_ f
+
+sacrificeTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
+sacrificeTargets = forTargets sacrificeLocatedCard
+
 destroyTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
-destroyTargets sourceId ziel = do
-  targets <- selectTargets sourceId ziel
-  mapM_ destroyLocatedCard targets
+destroyTargets = forTargets destroyLocatedCard
 
 bounceTargets :: HasStateIO r => CardId -> Ziel -> Eff r ()
-bounceTargets sourceId ziel = do
-  targets <- selectTargets sourceId ziel
-  mapM_ returnCardToHand targets
+bounceTargets = forTargets returnCardToHand
 
 takeTargetsToHand :: HasStateIO r => CardId -> Ziel -> Eff r ()
-takeTargetsToHand sourceId ziel = do
-  targets <- selectTargets sourceId ziel
-  mapM_ takeLocatedCardToCurrentHand targets
+takeTargetsToHand = forTargets takeLocatedCardToCurrentHand
 
 removeFromGame :: HasStateIO r => CardId -> Ziel -> Eff r ()
 removeFromGame sourceId ziel = do
