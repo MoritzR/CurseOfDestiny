@@ -11,6 +11,11 @@ devenv.local.yaml
 # pre-commit
 .pre-commit-config.yaml
 
+# frontend
+.angular
+frontend/dist
+node_modules
+
 # hspec-golden tests
 .golden/**/actual
 

@@ -97,9 +97,8 @@ runPlayTriggerInstruction source = \case
 
 promptErmächtigungCount :: (ChoiceInput :> es, Log :> es) => Eff es Anzahl
 promptErmächtigungCount = do
-  Gio.logLn' "Wie oft moechtest du Ermaechtigung bezahlen?"
   -- TODO actually check what the player can affort once cost paying is implemented
-  Actual . max 0 <$> readChoice
+  Actual . max 0 <$> readChoice "Wie oft moechtest du Ermaechtigung bezahlen?"
 
 collectActivations :: Trigger -> [CardEffect]
 collectActivations = iter collectActivation . fmap (const [])

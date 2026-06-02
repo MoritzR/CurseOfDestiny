@@ -8,4 +8,8 @@
     enable = true;
     package = pkgs.haskell.compiler.ghc912;
   };
+  languages.javascript = {
+    enable = true;
+    npm.enable = true;
+  };
 }

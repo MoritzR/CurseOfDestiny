@@ -1,0 +1,104 @@
+<main class="layout">
+  <section class="status-panel">
+    <h1>Curse Of Destiny</h1>
+    <p>Connection: {{ game.connectionState() }}</p>
+    <p *ngIf="currentPlayer()">Current player: {{ currentPlayer() }}</p>
+  </section>
+
+  <section class="prompt-panel" *ngIf="game.prompt() as prompt">
+    <h2>Prompt</h2>
+
+    <ng-container *ngIf="isCommandPrompt(prompt)">
+        <p>{{ prompt.payload.message }}</p>
+        <form (ngSubmit)="submitCommand()">
+          <input
+            [(ngModel)]="command"
+            name="command"
+            placeholder="p1, c2, pass, end..."
+            autocomplete="off">
+          <button type="submit">Send</button>
+        </form>
+    </ng-container>
+
+    <ng-container *ngIf="isChoicePrompt(prompt)">
+        <p>{{ prompt.payload.message }}</p>
+        <div class="choices">
+          <button
+            *ngFor="let option of prompt.payload.options; let i = index"
+            type="button"
+            (click)="game.submitChoice(i)">
+            {{ option }}
+          </button>
+        </div>
+    </ng-container>
+
+    <ng-container *ngIf="isNumberPrompt(prompt)">
+        <p>{{ prompt.payload.message }}</p>
+        <form (ngSubmit)="submitNumber()">
+          <input
+            [(ngModel)]="numberValue"
+            name="numberValue"
+            type="number">
+          <button type="submit">Send</button>
+        </form>
+    </ng-container>
+  </section>
+
+  <section class="players" *ngIf="players().length">
+    <article class="player" *ngFor="let player of players(); trackBy: trackPlayer">
+      <header>
+        <h2>{{ player.name }}</h2>
+        <p>{{ player.playerId }} · Schicksalsmacht {{ player.schicksalsmacht }}</p>
+      </header>
+
+      <div class="zone">
+        <h3>Hand ({{ player.hand.length }})</h3>
+        <div class="cards">
+          <article class="card" *ngFor="let card of player.hand; trackBy: trackCard">
+            <strong>{{ card.name }}</strong>
+            <span>{{ card.cardType }}</span>
+            <span *ngIf="card.currentStrength !== null">STR {{ card.currentStrength }}</span>
+            <pre>{{ card.description }}</pre>
+          </article>
+        </div>
+      </div>
+
+      <div class="zone">
+        <h3>Field ({{ player.field.length }})</h3>
+        <div class="cards">
+          <article class="card" *ngFor="let card of player.field; trackBy: trackCard">
+            <strong>{{ card.name }}</strong>
+            <span>{{ card.cardType }}</span>
+            <span *ngIf="card.currentStrength !== null">STR {{ card.currentStrength }}</span>
+            <pre>{{ card.description }}</pre>
+          </article>
+        </div>
+      </div>
+
+      <div class="zone">
+        <h3>Graveyard ({{ player.graveyard.length }})</h3>
+        <div class="cards compact">
+          <article class="card" *ngFor="let card of player.graveyard; trackBy: trackCard">
+            <strong>{{ card.name }}</strong>
+          </article>
+        </div>
+      </div>
+
+      <div class="zone">
+        <h3>Deck ({{ player.deck.length }})</h3>
+        <div class="cards compact">
+          <article class="card" *ngFor="let card of player.deck; trackBy: trackCard">
+            <strong>{{ card.name }}</strong>
+          </article>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="notices">
+    <h2>Notices</h2>
+    <ul>
+      <li *ngFor="let notice of game.notices()">{{ notice }}</li>
+    </ul>
+  </section>
+</main>

@@ -3,12 +3,12 @@
 module Game where
 
 import DataTypes
-import Effectful (Eff, IOE, (:>))
-import Effectful.State.Static.Local (State, evalState, gets, modify)
+import Effectful (Eff, (:>))
+import Effectful.State.Static.Local (State, modify)
 import GameActionParser (GameAction (..), parseGameAction)
 import GameEffects (ChoiceInput, CommandInput, Log, readCommand)
 import GameIO qualified as Gio
-import GameState (currentPlayer, initialGameState, opponentPlayer, otherPlayerId)
+import GameState (otherPlayerId)
 import Interpreter.Game (activateCardOnField, creatureStrength, drawOpeningHands, playCardFromHand, removeTemporaryModifications)
 
 type HasStateIO es = (State GameState :> es, ChoiceInput :> es, Log :> es)
@@ -19,23 +19,7 @@ playGame = mapM_ resolveAction
 
 gameLoop :: (CommandInput :> es, HasStateIO es) => Eff es ()
 gameLoop = do
-  activePlayer <- gets currentPlayer
-  opponent <- gets opponentPlayer
-
-  Gio.logLn' $ "Am Zug: " <> activePlayer.name
-  Gio.logLn' $ "Gegnerische Schicksalsmacht: " <> show opponent.schicksalsmacht
-  Gio.logLn' "Enemy field:"
-  logField opponent
-
-  Gio.logLn' $ "Deine Schicksalsmacht: " <> show activePlayer.schicksalsmacht
-  Gio.logLn' "Your field:"
-  logField activePlayer
-
-  Gio.logLn' "Player Hand:"
-  logHand activePlayer
-
-  Gio.log' "Select action (pass/end/p/c/a/d): "
-  inp <- readCommand
+  inp <- readCommand "Select action (pass/end/p/c/a/d):"
   if inp == "exit" || inp == "q"
     then Gio.logLn' "k bye"
     else do
@@ -44,8 +28,8 @@ gameLoop = do
         Just action -> playGame [action]
       gameLoop
 
-startGame :: (IOE :> es, CommandInput :> es, ChoiceInput :> es, Log :> es) => Eff es ()
-startGame = evalState initialGameState do
+startGame :: (CommandInput :> es, ChoiceInput :> es, Log :> es, State GameState :> es) => Eff es ()
+startGame = do
   drawOpeningHands
   gameLoop
 

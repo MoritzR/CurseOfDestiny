@@ -76,6 +76,9 @@ library
       GameIO
       Interpreter.Game
       Interpreter.Describe
+      Web.Protocol
+      Web.Session
+      Web.Snapshot
   other-modules:
       Paths_cod
   hs-source-dirs:
@@ -83,9 +86,18 @@ library
   ghc-options: -O2 -flate-specialise -fspecialise-aggressively
   build-depends:
       base >=4.7 && <5
+    , aeson ^>=2.2
+    , bytestring ^>=0.12
     , effectful ^>=2.6.1.0
     , free ^>=5.2
+    , http-types ^>=0.12
     , optics
+    , stm ^>=2.5
+    , text ^>=2.1
+    , wai ^>=3.2
+    , wai-websockets ^>=3.0
+    , warp ^>=3.4
+    , websockets ^>=0.13
 
 executable cod-exe
   import: common
