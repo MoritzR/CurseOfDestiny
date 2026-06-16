@@ -37,16 +37,16 @@ export class AppComponent {
     this.game.submitNumber(this.numberValue);
   }
 
-  isCommandPrompt(prompt: Prompt): prompt is Extract<Prompt, { type: 'CommandPrompt' }> {
-    return prompt.type === 'CommandPrompt';
+  isCommandPrompt(prompt: Prompt): prompt is Extract<Prompt, { tag: 'CommandPrompt' }> {
+    return prompt.tag === 'CommandPrompt';
   }
 
-  isChoicePrompt(prompt: Prompt): prompt is Extract<Prompt, { type: 'ChoicePrompt' }> {
-    return prompt.type === 'ChoicePrompt';
+  isChoicePrompt(prompt: Prompt): prompt is Extract<Prompt, { tag: 'ChoicePrompt' }> {
+    return prompt.tag === 'ChoicePrompt';
   }
 
-  isNumberPrompt(prompt: Prompt): prompt is Extract<Prompt, { type: 'NumberPrompt' }> {
-    return prompt.type === 'NumberPrompt';
+  isNumberPrompt(prompt: Prompt): prompt is Extract<Prompt, { tag: 'NumberPrompt' }> {
+    return prompt.tag === 'NumberPrompt';
   }
 
   trackPlayer(_: number, player: PlayerSnapshot): string {

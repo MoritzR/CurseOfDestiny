@@ -35,18 +35,18 @@ export interface ModificationSnapshot {
 }
 
 export type Prompt =
-  | { type: 'CommandPrompt'; payload: { message: string } }
-  | { type: 'ChoicePrompt'; payload: { message: string; options: string[] } }
-  | { type: 'NumberPrompt'; payload: { message: string } };
+  | { tag: 'CommandPrompt'; message: string }
+  | { tag: 'ChoicePrompt'; message: string; options: string[] }
+  | { tag: 'NumberPrompt'; message: string };
 
 export type ServerMessage =
-  | { type: 'Connected'; payload: { message: string } }
-  | { type: 'StateSnapshot'; payload: { state: GameSnapshot } }
-  | { type: 'PromptMessage'; payload: { prompt: Prompt } }
-  | { type: 'NoticeMessage'; payload: { message: string } }
-  | { type: 'ErrorMessage'; payload: { message: string } };
+  | { type: 'Connected'; message: string }
+  | { type: 'StateSnapshot'; state: GameSnapshot }
+  | { type: 'PromptMessage'; prompt: Prompt }
+  | { type: 'NoticeMessage'; message: string }
+  | { type: 'ErrorMessage'; message: string };
 
 export type ClientMessage =
-  | { type: 'SubmitCommand'; payload: { command: string } }
-  | { type: 'SubmitChoice'; payload: { choiceIndex: number } }
-  | { type: 'SubmitNumber'; payload: { number: number } };
+  | { type: 'SubmitCommand'; command: string }
+  | { type: 'SubmitChoice'; choiceIndex: number }
+  | { type: 'SubmitNumber'; number: number };

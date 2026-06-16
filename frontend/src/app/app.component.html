@@ -9,7 +9,7 @@
     <h2>Prompt</h2>
 
     <ng-container *ngIf="isCommandPrompt(prompt)">
-        <p>{{ prompt.payload.message }}</p>
+        <p>{{ prompt.message }}</p>
         <form (ngSubmit)="submitCommand()">
           <input
             [(ngModel)]="command"
@@ -21,10 +21,10 @@
     </ng-container>
 
     <ng-container *ngIf="isChoicePrompt(prompt)">
-        <p>{{ prompt.payload.message }}</p>
+        <p>{{ prompt.message }}</p>
         <div class="choices">
           <button
-            *ngFor="let option of prompt.payload.options; let i = index"
+            *ngFor="let option of prompt.options; let i = index"
             type="button"
             (click)="game.submitChoice(i)">
             {{ option }}
@@ -33,7 +33,7 @@
     </ng-container>
 
     <ng-container *ngIf="isNumberPrompt(prompt)">
-        <p>{{ prompt.payload.message }}</p>
+        <p>{{ prompt.message }}</p>
         <form (ngSubmit)="submitNumber()">
           <input
             [(ngModel)]="numberValue"
@@ -45,13 +45,16 @@
   </section>
 
   <section class="players" *ngIf="players().length">
-    <article class="player" *ngFor="let player of players(); trackBy: trackPlayer">
+    <article
+      class="player"
+      *ngFor="let player of players(); trackBy: trackPlayer"
+      [attr.data-testid]="'player-' + player.playerId">
       <header>
         <h2>{{ player.name }}</h2>
         <p>{{ player.playerId }} · Schicksalsmacht {{ player.schicksalsmacht }}</p>
       </header>
 
-      <div class="zone">
+      <div class="zone" data-testid="hand-zone">
         <h3>Hand ({{ player.hand.length }})</h3>
         <div class="cards">
           <article class="card" *ngFor="let card of player.hand; trackBy: trackCard">
@@ -63,7 +66,7 @@
         </div>
       </div>
 
-      <div class="zone">
+      <div class="zone" data-testid="field-zone">
         <h3>Field ({{ player.field.length }})</h3>
         <div class="cards">
           <article class="card" *ngFor="let card of player.field; trackBy: trackCard">
@@ -75,7 +78,7 @@
         </div>
       </div>
 
-      <div class="zone">
+      <div class="zone" data-testid="graveyard-zone">
         <h3>Graveyard ({{ player.graveyard.length }})</h3>
         <div class="cards compact">
           <article class="card" *ngFor="let card of player.graveyard; trackBy: trackCard">
@@ -84,7 +87,7 @@
         </div>
       </div>
 
-      <div class="zone">
+      <div class="zone" data-testid="deck-zone">
         <h3>Deck ({{ player.deck.length }})</h3>
         <div class="cards compact">
           <article class="card" *ngFor="let card of player.deck; trackBy: trackCard">

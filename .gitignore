@@ -20,3 +20,5 @@ node_modules
 .golden/**/actual
 
 .codex
+
+frontend/test-results

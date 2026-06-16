@@ -32,15 +32,15 @@ export class GameClientService {
   }
 
   submitCommand(command: string): void {
-    this.send({ type: 'SubmitCommand', payload: { command } });
+    this.send({ type: 'SubmitCommand', command });
   }
 
   submitChoice(choiceIndex: number): void {
-    this.send({ type: 'SubmitChoice', payload: { choiceIndex } });
+    this.send({ type: 'SubmitChoice', choiceIndex });
   }
 
   submitNumber(number: number): void {
-    this.send({ type: 'SubmitNumber', payload: { number } });
+    this.send({ type: 'SubmitNumber', number });
   }
 
   private send(message: ClientMessage): void {
@@ -54,19 +54,19 @@ export class GameClientService {
   private handleMessage(message: ServerMessage): void {
     switch (message.type) {
       case 'Connected':
-        this.pushNotice(message.payload.message);
+        this.pushNotice(message.message);
         break;
       case 'StateSnapshot':
-        this.snapshot.set(message.payload.state);
+        this.snapshot.set(message.state);
         break;
       case 'PromptMessage':
-        this.prompt.set(message.payload.prompt);
+        this.prompt.set(message.prompt);
         break;
       case 'NoticeMessage':
-        this.pushNotice(message.payload.message);
+        this.pushNotice(message.message);
         break;
       case 'ErrorMessage':
-        this.pushNotice(`Error: ${message.payload.message}`);
+        this.pushNotice(`Error: ${message.message}`);
         break;
     }
   }
