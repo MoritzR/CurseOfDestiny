@@ -227,7 +227,7 @@ series26 =
         anzahlVon (alle $ eigene <> wesen <> aufDemFeld) ziehe
       zahle (4 + 1 Licht) do
         opfere selbst
-        bringeKopieInsSpiel (ein $ eigene <> wesen <> aufDemFeld)
+        bringeKopieInsSpiel (ein $ eigenes <> wesen <> aufDemFeld)
       & tag Magiestein
   , mk "Magiestein für Entdeckung und Vollstreckung" MagieDauerhaft (1 Neutral) do
       zahle (1 + 1 Wind) do
